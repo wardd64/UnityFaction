@@ -41,7 +41,7 @@ public class VPPUnpacker {
         if(string.IsNullOrEmpty(exportFolder))
             return;
 
-        AlertProblem(IsAssetPath(exportFolder), "Can only export files into an Asset folder!");
+        AlertProblem(UFUtils.IsAssetPath(exportFolder), "Can only export files into an Asset folder!");
 
         TryReadFile(vppPath, exportFolder);
 
@@ -95,14 +95,6 @@ public class VPPUnpacker {
         for(int i = 0; i < length; i++)
             fileBytes[i] = bytes[start + i];
         File.WriteAllBytes(exportFolder + '/' + name, fileBytes);
-    }
-
-    private static bool IsAssetPath(string path) {
-        return path.StartsWith(Application.dataPath);
-    }
-
-    private static string GetRelativeUnityPath(string path) {
-        return "Assets" + path.Substring(Application.dataPath.Length);
     }
 
     /// <summary>
