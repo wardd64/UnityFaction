@@ -3,6 +3,7 @@ using System.IO;
 using System;
 using System.Text;
 using UnityEditor;
+using System.Collections.Generic;
 
 public class LevelBuilder : EditorWindow {
 
@@ -21,7 +22,7 @@ public class LevelBuilder : EditorWindow {
     const uint RFL_SIGNATURE = 0xD4BADA55;
     const uint RFL_LAST_KNOWN_VERSION = 0x000000C8;
 
-    //----------------------- graphics ------------------------------
+    //----------------------------------------- Editor window ---------------------------------------------
 
     [MenuItem("UnityFaction/Build Level")]
     public static void BuildLevel() {
@@ -35,11 +36,12 @@ public class LevelBuilder : EditorWindow {
         if(string.IsNullOrEmpty(rflPath))
             return;
 
+        LevelBuilder builder = (LevelBuilder)EditorWindow.GetWindow(typeof(LevelBuilder));
+
         lastRFLPath = UFUtils.GetRelativeUnityPath(rflPath);
         byte[] bytes = File.ReadAllBytes(rflPath);
         level = new UFLevel();
 
-        LevelBuilder builder = (LevelBuilder)EditorWindow.GetWindow(typeof(LevelBuilder));
         builder.ReadRFL(bytes);
         builder.Show();
     }
@@ -59,7 +61,7 @@ public class LevelBuilder : EditorWindow {
         level.author = EditorGUILayout.TextField("Author name", level.author);
     }
 
-    //--------------------- RFL reading ---------------------------------
+    //----------------------------------------------- RFL reading --------------------------------------------
 
     //various info
     private bool signatureCheck;
@@ -73,13 +75,67 @@ public class LevelBuilder : EditorWindow {
         //read header
         ReadHeader(bytes);
 
+        Debug.Log("Level info at " + UFUtils.GetHex(levelInfoOffset) + 
+            ", player start at " + UFUtils.GetHex(playerStartOffset));
+
         //loop over all the sections
         pointer = 32 + level.name.Length;
         for(int i = 0; i < sectionsCount; i++) {
             RFLSection nextSection = (RFLSection)BitConverter.ToInt32(bytes, pointer);
+            Debug.Log("At " + UFUtils.GetHex(pointer) + " looking at section " + nextSection);
+
+            switch(nextSection) {
+
+            case RFLSection.TGA:  
+            pointer += 20;
+            SkipStringList(bytes);
+            break;
+
+            case RFLSection.VCM:
+            pointer += 16;
+            SkipStringList(bytes);
             pointer += 4;
+            break;
+
+            case RFLSection.MVF:
+            pointer += 16;
+            SkipStringList(bytes);
+            SkipUntil(bytes, RFLSection.V3D);
+            break;
+
+            case RFLSection.V3D:
+            pointer += 16;
+            SkipStringList(bytes);
+            SkipUntil(bytes, RFLSection.VFX);
+            break;
+
+            case RFLSection.VFX:
+            pointer += 16;
+            SkipStringList(bytes);
+            SkipUntil(bytes, RFLSection.LevelProperties);
+            break;
+
+            case RFLSection.LevelProperties:
+            PrintRemainingHeaderPossibilities(bytes, 50000);
+            ReadLevelProperties(bytes);
+            
+            break;
+
+            case RFLSection.StaticGeometry:
+
+            
+            break;
+
+            
+
+            default: Debug.LogError("Encountered unknown section at " + 
+                UFUtils.GetHex(pointer) + ": " + UFUtils.GetHex(bytes, pointer, 4)); 
+            return;
+            }
         }
     }
+
+    //--------------------------------------------- RFL reading helper methods ------------------------------------------------
 
     private void ReadHeader(Byte[] bytes) {
 
@@ -101,10 +157,96 @@ public class LevelBuilder : EditorWindow {
         level.author = UFUtils.ReadStringUntilNull(bytes, authorOffset);
     }
 
+    private void ReadLevelProperties(Byte[] bytes) {
+        pointer += 10;
+        string defaultTexture = UFUtils.ReadStringUntilNull(bytes, pointer);
+        defaultTexture.Remove(defaultTexture.Length - 1);
+        level.defaultTexture = defaultTexture;
+
+        //...
+    }
+
+    private void PrintRemainingHeaderPossibilities(byte[] bytes) {
+        PrintRemainingHeaderPossibilities(bytes, int.MaxValue);
+    }
+
+    private void PrintRemainingHeaderPossibilities(byte[] bytes, int limit) {
+        List<RFLSection> exclusions = new List<RFLSection>() {
+            RFLSection.End, RFLSection.Unkown1, RFLSection.Unkown2,
+            RFLSection.TGA, RFLSection.VCM, RFLSection.MVF,
+            RFLSection.V3D, RFLSection.VFX, RFLSection.LevelProperties
+        };
+        limit = Mathf.Min(pointer + limit, bytes.Length - 3);
+
+        for(int i = pointer; i < limit; i++) {
+            RFLSection section = (RFLSection)BitConverter.ToInt32(bytes, i);
+            if(MatchesSectionHeader(bytes, i) && !exclusions.Contains(section))
+                Debug.Log(UFUtils.GetHex(i) + " - " + section);
+        }
+    }
+
+    /// <summary>
+    /// Skips pointer trough list of strings
+    /// </summary>
+    private void SkipStringList(Byte[] bytes) {
+        int nonReadableCount = 0;
+        int readableCount = 0;
+
+        while(true) {
+            pointer++;
+            if(UFUtils.IsReadable(bytes[pointer])) {
+                readableCount++;
+                nonReadableCount = 0;
+            }
+            else {
+                //Found fake string, return
+                if(nonReadableCount == 0 && readableCount < 3) {
+                    pointer = pointer - readableCount - 1;
+                    return;
+                }
+
+                readableCount = 0;
+                nonReadableCount++;
+
+                //Not finding more strings, return
+                if(nonReadableCount > 2) {
+                    pointer = pointer - nonReadableCount + 1;
+                    return;
+                }
+            }
+        }
+    }
+
+    private void SkipUntil(Byte[] bytes, RFLSection header) {
+        SkipUntil(bytes, (int)header);
+    }
+
+    private void SkipUntil(Byte[] bytes, string text) {
+        byte[] match = Encoding.UTF8.GetBytes(text);
+        int matchIndex = 0;
+        while(matchIndex < match.Length) {
+            if(bytes[pointer++] == match[matchIndex])
+                matchIndex++;
+            else
+                matchIndex = 0;
+        }
+        matchIndex++;
+    }
+
+    private void SkipUntil(Byte[] bytes, int value) {
+        int candidate = BitConverter.ToInt32(bytes, pointer);
+        while(candidate != value) {
+            pointer++;
+            candidate = BitConverter.ToInt32(bytes, pointer);
+        }
+    }
+
     private bool MatchesSectionHeader(Byte[] bytes, int pointer) {
         int value = BitConverter.ToInt32(bytes, pointer);
         return Enum.IsDefined(typeof(RFLSection), value);
     }
+
+    //-------------------------------------- RFL section enum -----------------------------------------------------
 
     private enum RFLSection {
         //correct order
@@ -114,6 +256,7 @@ public class LevelBuilder : EditorWindow {
         V3D = 0x00007003,
         VFX = 0x00007004,
         LevelProperties = 0x00000900,
+
 
         //unkown order
         StaticGeometry = 0x00000100,
@@ -135,7 +278,7 @@ public class LevelBuilder : EditorWindow {
         MovingGroups = 0x00003000,
         CutscenePathNodes = 0x00005000,
         Unkown1 = 0x00006000, // ?????
-        EAX = 0x00008000,
+        EAXEffects = 0x00008000,
         Unkown2 = 0x00010000, // ?????
         NavPoints = 0x00020000,
         Entities = 0x00030000,

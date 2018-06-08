@@ -43,4 +43,11 @@ public class UFUtils {
             toReturn.Append(BitConverter.ToString(bytes, start + i, 1));
         return toReturn.ToString();
     }
+
+    /// <summary>
+    /// Returns true if given byte encodes a readable character
+    /// </summary>
+    public static bool IsReadable(Byte b) {
+        return b >= 32;
+    }
 }

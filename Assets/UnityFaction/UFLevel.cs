@@ -6,5 +6,6 @@ public class UFLevel {
 
     public string name, author;
 
+    public string defaultTexture;
 
 }
