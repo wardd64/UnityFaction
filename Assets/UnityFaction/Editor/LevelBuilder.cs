@@ -69,8 +69,11 @@ public class LevelBuilder : EditorWindow {
     //file structure parameters
     private int pointer;
     private int playerStartOffset, levelInfoOffset, sectionsCount;
+    private bool fileHasLightMaps;
 
     private void ReadRFL(Byte[] bytes) {
+
+        fileHasLightMaps = false;
 
         //read header
         ReadHeader(bytes);
@@ -86,7 +89,7 @@ public class LevelBuilder : EditorWindow {
 
             switch(nextSection) {
 
-            case RFLSection.TGA:  
+            case RFLSection.TGA:
             pointer += 20;
             SkipStringList(bytes);
             break;
@@ -94,7 +97,7 @@ public class LevelBuilder : EditorWindow {
             case RFLSection.VCM:
             pointer += 16;
             SkipStringList(bytes);
-            pointer += 4;
+            SkipUntil(bytes, RFLSection.MVF);
             break;
 
             case RFLSection.MVF:
@@ -115,27 +118,22 @@ public class LevelBuilder : EditorWindow {
             SkipUntil(bytes, RFLSection.LevelProperties);
             break;
 
-            case RFLSection.LevelProperties:
-            PrintRemainingHeaderPossibilities(bytes, 50000);
-            ReadLevelProperties(bytes);
-            
+            case RFLSection.LevelProperties: ReadLevelProperties(bytes); break;
+
+            case RFLSection.LightMaps:
+            fileHasLightMaps = true;
+            SkipLightMaps(bytes);
             break;
 
-            case RFLSection.StaticGeometry:
-
-            
-            break;
-
-            
+            case RFLSection.StaticGeometry: ReadGeometry(bytes); break;
 
             default: Debug.LogError("Encountered unknown section at " + 
-                UFUtils.GetHex(pointer) + ": " + UFUtils.GetHex(bytes, pointer, 4)); 
+                UFUtils.GetHex(pointer) + ": " + nextSection);
+            PrintRemainingHeaderPossibilities(bytes, 5000);
             return;
             }
         }
     }
-
-    //--------------------------------------------- RFL reading helper methods ------------------------------------------------
 
     private void ReadHeader(Byte[] bytes) {
 
@@ -150,31 +148,182 @@ public class LevelBuilder : EditorWindow {
         bool signatureCheck = signature == RFL_SIGNATURE;
         signatureCheck &= version <= RFL_LAST_KNOWN_VERSION;
 
-        level.name = UFUtils.ReadStringUntilNull(bytes, 30);
+        level.name = UFUtils.ReadNullTerminatedString(bytes, 30);
 
         //immediately extract author name from level info
         int authorOffset = levelInfoOffset + level.name.Length + 16;
-        level.author = UFUtils.ReadStringUntilNull(bytes, authorOffset);
+        level.author = UFUtils.ReadNullTerminatedString(bytes, authorOffset);
     }
 
     private void ReadLevelProperties(Byte[] bytes) {
-        pointer += 10;
-        string defaultTexture = UFUtils.ReadStringUntilNull(bytes, pointer);
-        defaultTexture.Remove(defaultTexture.Length - 1);
-        level.defaultTexture = defaultTexture;
+        pointer += 8;
 
-        //...
+        string defaultTexture = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+        defaultTexture.Remove(defaultTexture.Length - 1);
+        level.geomodTexture = defaultTexture;
+
+        level.hardness = BitConverter.ToInt32(bytes, pointer);
+        level.ambientColor = UFUtils.GetRGBAColor(bytes, pointer + 4);
+        level.fogColor = UFUtils.GetRGBAColor(bytes, pointer + 9);
+        level.nearPlane = BitConverter.ToSingle(bytes, pointer + 13);
+        level.farPlane = BitConverter.ToSingle(bytes, pointer + 17);
+
+        pointer += 21;
+
     }
+
+    /// <summary>
+    /// The light maps section is a straight forward list of images.
+    /// Each light map is headed by an id, width and height value
+    /// followed by a list of 24-bit RGB values.
+    /// These maps are useless to us, since Unity has a superior lighting engine.
+    /// Therefore we qiuckly skip trough them.
+    /// </summary>
+    private void SkipLightMaps(Byte[] bytes) {
+        pointer += 8;
+        int nbLightMaps = BitConverter.ToInt32(bytes, pointer);
+        pointer += 4;
+        
+        for(int i = 0; i < nbLightMaps; i++) {
+            int width = BitConverter.ToInt32(bytes, pointer);
+            int height = BitConverter.ToInt32(bytes, pointer + 4);
+            pointer += 8 + (width * height * 3); 
+        }
+
+    }
+
+    private void ReadGeometry(Byte[] bytes) {
+        pointer += 18;
+
+        int nboTextures = BitConverter.ToInt32(bytes, pointer);
+        pointer += 4;
+        level.textures = new string[nboTextures];
+        for(int i = 0; i < nboTextures; i++)
+            level.textures[i] = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+
+        int nboScrolls = BitConverter.ToInt32(bytes, pointer);
+        pointer += 4;
+        if(nboScrolls > 0)
+            Debug.LogError("Cannot yet ready files with scrolling textures");
+
+        int nboRooms = BitConverter.ToInt32(bytes, pointer);
+        pointer += 4 + (42 * nboRooms);
+
+        int unkown1Count = BitConverter.ToInt32(bytes, pointer);
+        pointer += 4;
+        for(int i = 0; i < unkown1Count; i++) {
+            int unkown1SubCount = BitConverter.ToInt32(bytes, pointer + 4);
+            pointer += 8 + (4 * unkown1SubCount);
+        }
+
+        int unkown2Count = BitConverter.ToInt32(bytes, pointer);
+        pointer += 4 + (unkown2Count * 32);
+
+        int nboVertices = BitConverter.ToInt32(bytes, pointer);
+        pointer += 4;
+        level.vertices = new Vector3[nboVertices];
+        for(int i = 0; i < nboVertices; i++) {
+            float x = BitConverter.ToSingle(bytes, pointer);
+            float y = BitConverter.ToSingle(bytes, pointer + 4);
+            float z = BitConverter.ToSingle(bytes, pointer + 8);
+            level.vertices[i] = new Vector3(x, y, z);
+            pointer += 12;
+        }
+
+        int nboFaces = BitConverter.ToInt32(bytes, pointer);
+        pointer += 4;
+        level.vertices = new Vector3[nboFaces];
+        for(int i = 0; i < nboFaces; i++) {
+            UFLevel.UFFace nextFace;
+            pointer += 16;
+            nextFace.texture = BitConverter.ToInt32(bytes, pointer);
+            pointer += 24;
+
+            byte flags = bytes[pointer];
+            nextFace.showSky = (flags & (byte)FaceFlags.ShowSky) != 0;
+            nextFace.mirrored = (flags & (byte)FaceFlags.Mirrored) != 0;
+            nextFace.fullBright = (flags & (byte)FaceFlags.FullBright) != 0;
+            pointer += 12;
+
+            int nboFaceVertices = BitConverter.ToInt32(bytes, pointer);
+            bool hasExtraCoords = false;
+            
+            nextFace.vertices = new UFLevel.UFFaceVertex[nboFaceVertices];
+            pointer += 4;
+            for(int j = 0; j < nboFaceVertices; j++) {
+                UFLevel.UFFaceVertex vertex;
+                vertex.id = BitConverter.ToInt32(bytes, pointer);
+                vertex.u = BitConverter.ToSingle(bytes, pointer + 4);
+                vertex.v = BitConverter.ToSingle(bytes, pointer + 8);
+                pointer += 12;
+
+                if(j == 0)
+                    hasExtraCoords = ProbablyHasExtraCoords(bytes, nboVertices);
+
+                if(hasExtraCoords)
+                    pointer += 8;
+            }
+        }
+
+        int unknownCount2 = BitConverter.ToInt32(bytes, pointer);
+        Debug.Log("u2: " + unknownCount2 + " @" + UFUtils.GetHex(pointer));
+        pointer += 4 + (unknownCount2 * 96);
+    }
+
+    /// <summary>
+    /// Helper function for reading texture vertex coords (UV).
+    /// Returns true if the data structure probably contains 2 extra coordinates.
+    /// Appearantly this can change from texture to texture, necessetating this method.
+    /// </summary>
+    private bool ProbablyHasExtraCoords(byte[] bytes, int nboVertices) {
+        int evidence = 0;
+
+        if(!UFUtils.IsPlausibleIndex(bytes, pointer + 12, nboVertices))
+            evidence++;
+        if(!UFUtils.IsPlausibleIndex(bytes, pointer + 24, nboVertices))
+            evidence++;
+
+        return evidence > 0;
+    }
+
+    private enum FaceFlags {
+        ShowSky = 0x01,
+        Mirrored = 0x02,
+        FullBright = 0x20,
+    }
+
+    private void ReadLevelInfo(Byte[] bytes) {
+        pointer += 8;
+
+        //level name, author and date
+        for(int i = 0; i < 3; i++)
+            UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+
+        pointer += 1;
+        level.multiplayer = BitConverter.ToBoolean(bytes, pointer);
+        pointer += 221;
+    }
+
+
+
+
+
+    //--------------------------------------------- RFL reading helper methods ------------------------------------------------
 
     private void PrintRemainingHeaderPossibilities(byte[] bytes) {
-        PrintRemainingHeaderPossibilities(bytes, int.MaxValue);
+        PrintRemainingHeaderPossibilities(bytes, bytes.Length - 3 - pointer);
     }
 
+    /// <summary>
+    /// Temporary method to help decode rfl binary
+    /// </summary>
     private void PrintRemainingHeaderPossibilities(byte[] bytes, int limit) {
         List<RFLSection> exclusions = new List<RFLSection>() {
             RFLSection.End, RFLSection.Unkown1, RFLSection.Unkown2,
             RFLSection.TGA, RFLSection.VCM, RFLSection.MVF,
-            RFLSection.V3D, RFLSection.VFX, RFLSection.LevelProperties
+            RFLSection.V3D, RFLSection.VFX, RFLSection.LevelProperties,
+            RFLSection.StaticGeometry, RFLSection.LightMaps,
+            RFLSection.PlayerStart, RFLSection.LevelInfo
         };
         limit = Mathf.Min(pointer + limit, bytes.Length - 3);
 
@@ -249,17 +398,17 @@ public class LevelBuilder : EditorWindow {
     //-------------------------------------- RFL section enum -----------------------------------------------------
 
     private enum RFLSection {
-        //correct order
-        TGA = 0x00007000,
-        VCM = 0x00007001,
-        MVF = 0x00007002,
-        V3D = 0x00007003,
-        VFX = 0x00007004,
-        LevelProperties = 0x00000900,
-
+        TGA = 0x00007000, //required, list of files
+        VCM = 0x00007001, //required, list of files
+        MVF = 0x00007002, //required, list of files
+        V3D = 0x00007003, //required, list of files
+        VFX = 0x00007004, //required, list of files
+        LevelProperties = 0x00000900, //required, set amount of data
+        LightMaps = 0x00001200, //optional, list of uncompressed images
+        StaticGeometry = 0x00000100, //required (player spawn must be in level to save), complex
 
         //unkown order
-        StaticGeometry = 0x00000100,
+
         GeoRegions = 0x00000200,
         Lights = 0x00000300,
         CutsceneCameras = 0x00000400,
@@ -273,7 +422,6 @@ public class LevelBuilder : EditorWindow {
         Targets = 0x00000F00,
         Decals = 0x00001000,
         PushRegions = 0x00001100,
-        LightMaps = 0x00001200,
         Movers = 0x00002000,
         MovingGroups = 0x00003000,
         CutscenePathNodes = 0x00005000,
