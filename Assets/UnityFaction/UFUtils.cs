@@ -70,6 +70,46 @@ public class UFUtils {
         return new Color(r, g, b, a);
     }
 
+    public static Vector3 Getvector3(byte[] bytes, int start) {
+        float x = BitConverter.ToSingle(bytes, start);
+        float y = BitConverter.ToSingle(bytes, start + 4);
+        float z = BitConverter.ToSingle(bytes, start + 8);
+        return new Vector3(x, y, z);
+    }
+
+    public static Vector3 Getvector2(byte[] bytes, int start) {
+        float x = BitConverter.ToSingle(bytes, start);
+        float y = BitConverter.ToSingle(bytes, start + 4);
+        return new Vector2(x, y);
+    }
+
+    /// <summary>
+    /// Rotations are stored as 3x3 matrices of floats, so they consist of 4x3x3=36 bytes.
+    /// the entries of this matrix are stored in an awkard order, so make sure to refer to this method.
+    /// </summary>
+    public static Quaternion GetRotation(byte[] bytes, int start) {
+        Vector3 row2 = Getvector3(bytes, start);
+        Vector3 row3 = Getvector3(bytes, start + 12);
+        Vector3 row1 = Getvector3(bytes, start + 24);
+
+        Vector4 col1 = new Vector4(row1.x, row2.x, row3.x);
+        Vector4 col2 = new Vector4(row1.y, row2.y, row3.y);
+        Vector4 col3 = new Vector4(row1.z, row2.z, row3.z);
+        Vector4 col4 = new Vector4(0f, 0f, 0f, 1f);
+
+        Matrix4x4 mat = new Matrix4x4(col1, col2, col3, col4);
+        return mat.rotation;
+    }
+
+    /// <summary>
+    /// Reads position followed by rotation: 48 bytes total
+    /// </summary>
+    public static UFLevel.PosRot GetTransform(byte[] bytes, int start) {
+        Vector3 position = Getvector3(bytes, start);
+        Quaternion rotation = GetRotation(bytes, start + 12);
+        return new UFLevel.PosRot(position, rotation);
+    }
+
     public static bool IsPlausibleIndex(byte[] bytes, int start, int max) {
         int value = BitConverter.ToInt32(bytes, start);
         return value >= 0 && value < max;
@@ -84,6 +124,10 @@ public class UFUtils {
         return pointer.ToString("X");
     }
 
+    public static string GetBinary(byte[] bytes, int pointer) {
+        return Convert.ToString(bytes[pointer], 2).PadLeft(8, '0');
+    }
+
     public static string GetHex(byte[] bytes, int start, int length) {
         StringBuilder toReturn = new StringBuilder();
         for(int i = 0; i < length; i++)
@@ -91,10 +135,36 @@ public class UFUtils {
         return toReturn.ToString();
     }
 
+    public static bool GetFlag(byte[] bytes, int pointer, int bit) {
+        byte flags = bytes[pointer];
+        byte match = (byte)(1 << bit);
+        return (flags & match) != 0;
+    }
+
+    public static byte GetNibble(byte[] bytes, int pointer, bool first) {
+        byte value = bytes[pointer];
+
+        if(first)
+            return (byte)(value % 16);
+        else
+            return (byte)(value / 16);
+    }
+
     /// <summary>
     /// Returns true if given byte encodes a readable character
     /// </summary>
     public static bool IsReadable(Byte b) {
         return b >= 32;
+    }
+
+    /// <summary>
+    /// Returns true only if all bytes in the given range encode reabable characters
+    /// </summary>
+    public static bool IsReadable(byte[] bytes, int start, int length) {
+        for(int i = start; i < start + length; i++) {
+            if(!IsReadable(bytes[i]))
+                return false;
+        }
+        return true;
     }
 }

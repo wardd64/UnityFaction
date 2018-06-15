@@ -3,6 +3,7 @@ using System.IO;
 using System;
 using System.Text;
 using UnityEditor;
+using System.Collections.Generic;
 
 public class VPPUnpacker {
 
@@ -46,6 +47,36 @@ public class VPPUnpacker {
         TryReadFile(vppPath, exportFolder);
 
         Debug.Log("Unpacked successfully! Refresh the assets folder (Ctrl-R) to see its contents.");
+    }
+
+    [MenuItem("UnityFaction/Import RF Source")]
+    public static void ReadSource() {
+        //let user select source folder with all the vpp goodies
+        string fileSearchMessage = "Select RF source folder (contains .exe and multiple VPP files)";
+        string importFolder = EditorUtility.OpenFolderPanel(fileSearchMessage, "..", "");
+        if(string.IsNullOrEmpty(importFolder))
+            return;
+
+        List<string> vppPaths = new List<string>();
+        DirectoryInfo info = new DirectoryInfo(importFolder);
+        FileInfo[] fileInfo = info.GetFiles();
+        foreach(FileInfo file in fileInfo) {
+            if(file.Extension == ".vpp")
+                vppPaths.Add(file.ToString());
+        }
+
+        AlertProblem(vppPaths.Count > 0, "Selected folder did not contain any .vpp files. Please select proper source folder!");
+
+        AssetDatabase.CreateFolder("Assets/UnityFaction", "RFSource");
+
+        foreach(string vppPath in vppPaths)
+            TryReadFile(vppPath, GetRFSourceFolder());
+
+        Debug.Log("All contents has been moved. Refresh the assets folder (Ctrl-R) but beware long loading time.");
+    }
+
+    public static string GetRFSourceFolder() {
+        return "Assets/UnityFaction/RFSource/";
     }
 
     private static void TryReadFile(string vppPath, string exportFolder){
