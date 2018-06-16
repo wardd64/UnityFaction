@@ -1,8 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 using UnityEngine;
 using System;
+using UFLevelStructure;
 
 public class UFUtils {
 
@@ -53,6 +52,9 @@ public class UFUtils {
         return toReturn;
     }
 
+    /// <summary>
+    /// Reads 3 bytes and returns the color they would encode (with max alpha)
+    /// </summary>
     public static Color GetRGBColor(byte[] bytes, int start) {
         float f = 1f / 255;
         float r = f * bytes[start];
@@ -61,6 +63,9 @@ public class UFUtils {
         return new Color(r, g, b);
     }
 
+    /// <summary>
+    /// Reads 4 bytes and returns the color they would encode (including alpha value)
+    /// </summary>
     public static Color GetRGBAColor(byte[] bytes, int start) {
         float f = 1f / 255;
         float r = f * bytes[start];
@@ -70,6 +75,9 @@ public class UFUtils {
         return new Color(r, g, b, a);
     }
 
+    /// <summary>
+    /// Reads 3 consecutive floats and returns them inside a vector.
+    /// </summary>
     public static Vector3 Getvector3(byte[] bytes, int start) {
         float x = BitConverter.ToSingle(bytes, start);
         float y = BitConverter.ToSingle(bytes, start + 4);
@@ -77,6 +85,9 @@ public class UFUtils {
         return new Vector3(x, y, z);
     }
 
+    /// <summary>
+    /// Reads 2 consecutive floats and returns them inside a vector.
+    /// </summary>
     public static Vector3 Getvector2(byte[] bytes, int start) {
         float x = BitConverter.ToSingle(bytes, start);
         float y = BitConverter.ToSingle(bytes, start + 4);
@@ -104,30 +115,54 @@ public class UFUtils {
     /// <summary>
     /// Reads position followed by rotation: 48 bytes total
     /// </summary>
-    public static UFLevel.PosRot GetTransform(byte[] bytes, int start) {
+    public static PosRot GetPosRot(byte[] bytes, int start) {
         Vector3 position = Getvector3(bytes, start);
         Quaternion rotation = GetRotation(bytes, start + 12);
-        return new UFLevel.PosRot(position, rotation);
+        return new PosRot(position, rotation);
     }
 
+    /// <summary>
+    /// True if the given bytes can be reasonably expected to encode
+    /// an index for an array with the size 'max'
+    /// </summary>
     public static bool IsPlausibleIndex(byte[] bytes, int start, int max) {
         int value = BitConverter.ToInt32(bytes, start);
         return value >= 0 && value < max;
     }
 
+    /// <summary>
+    /// True if the given bytes can be reasonably expected to encode
+    /// a floating point value such as a coordinate or matrix element.
+    /// </summary>
     public static bool IsPlausibleFloat(byte[] bytes, int start) {
         float value = Mathf.Abs(BitConverter.ToSingle(bytes, start));
         return value == 0f || (value > 1e-10f && value < 1e+10f);
     }
 
-    public static string GetHex(int pointer) {
-        return pointer.ToString("X");
+    /// <summary>
+    /// Return hexadecimal form of the given number
+    /// </summary>
+    public static string GetHex(int value) {
+        return value.ToString("X");
     }
 
+    /// <summary>
+    /// Return hexadecimal form of the given number
+    /// </summary>
+    public static string GetHex(float value) {
+        return value.ToString("X");
+    }
+
+    /// <summary>
+    /// Return given byte as a string containing its binary form
+    /// </summary>
     public static string GetBinary(byte[] bytes, int pointer) {
         return Convert.ToString(bytes[pointer], 2).PadLeft(8, '0');
     }
 
+    /// <summary>
+    /// Return given length of bytes as a string containg hexadecimal
+    /// </summary>
     public static string GetHex(byte[] bytes, int start, int length) {
         StringBuilder toReturn = new StringBuilder();
         for(int i = 0; i < length; i++)
@@ -135,12 +170,18 @@ public class UFUtils {
         return toReturn.ToString();
     }
 
+    /// <summary>
+    /// Return value of a specific bit
+    /// </summary>
     public static bool GetFlag(byte[] bytes, int pointer, int bit) {
         byte flags = bytes[pointer];
         byte match = (byte)(1 << bit);
         return (flags & match) != 0;
     }
 
+    /// <summary>
+    /// Return 4-bit integer encoded as a half of a byte
+    /// </summary>
     public static byte GetNibble(byte[] bytes, int pointer, bool first) {
         byte value = bytes[pointer];
 
