@@ -67,16 +67,19 @@ namespace UFLevelStructure {
     }
 
     public struct AxisAlignedBoundingBox {
-        public Vector3 point1, point2;
+        public Vector3 min, max;
 
         public AxisAlignedBoundingBox(Vector3 point1, Vector3 point2) {
-            this.point1 = point1;
-            this.point2 = point2;
-        }
+            float xMin = Mathf.Min(point1.x, point2.x);
+            float xMax = Mathf.Max(point1.x, point2.x);
+            float yMin = Mathf.Min(point1.y, point2.y);
+            float yMax = Mathf.Max(point1.y, point2.y);
+            float zMin = Mathf.Min(point1.z, point2.z);
+            float zMax = Mathf.Max(point1.z, point2.z);
 
-        public Vector3 min { get {
-            return new Vector3(Mathf.Min(point1.x, point2.x), 0f, 0f);
-        } }
+            min = new Vector3(xMin, yMin, zMin);
+            max = new Vector3(xMax, yMax, zMax);
+        }
     }
 
     /* -----------------------------------------------------------------------------------------------

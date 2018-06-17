@@ -1,14 +1,16 @@
-﻿using UFLevelStructure;
+﻿using System.Collections.Generic;
+using UFLevelStructure;
+using UnityEngine;
 
 public class UFLevel {
 
     public UFLevel() {
         brushes = new Brush[0];
-        lights = new Light[0];
+        lights = new UFLevelStructure.Light[0];
         ambSounds = new AmbSound[0];
-        events = new Event[0];
+        events = new UFLevelStructure.Event[0];
         spawnPoints = new SpawnPoint[0];
-        particleEmiters = new ParticleEmitter[0];
+        particleEmiters = new UFLevelStructure.ParticleEmitter[0];
         decals = new Decal[0];
         climbingRegions = new ClimbingRegion[0];
         boltEmiters = new BoltEmiter[0];
@@ -28,7 +30,7 @@ public class UFLevel {
     //level properties
     public string geomodTexture;
     public int hardness;
-    public UnityEngine.Color ambientColor, fogColor;
+    public Color ambientColor, fogColor;
     public float nearPlane, farPlane;
     public bool multiplayer;
 
@@ -37,11 +39,11 @@ public class UFLevel {
     public Brush[] brushes;
 
     //objects
-    public Light[] lights;
+    public UFLevelStructure.Light[] lights;
     public AmbSound[] ambSounds;
-    public Event[] events;
+    public UFLevelStructure.Event[] events;
     public SpawnPoint[] spawnPoints;
-    public ParticleEmitter[] particleEmiters;
+    public UFLevelStructure.ParticleEmitter[] particleEmiters;
     public Decal[] decals;
     public ClimbingRegion[] climbingRegions;
     public BoltEmiter[] boltEmiters;
@@ -54,5 +56,4 @@ public class UFLevel {
     //moving stuff
     public Brush[] movingGeometry;
     public MovingGroup[] movingGroups;
-
 }

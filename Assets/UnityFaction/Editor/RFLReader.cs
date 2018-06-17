@@ -1223,6 +1223,8 @@ public class RFLReader {
 
                 if(hasExtraCoords)
                     pointer += 8;
+
+                nextFace.vertices[j] = vertex;
             }
             geometry.faces[i] = nextFace;
         }
