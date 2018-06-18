@@ -207,5 +207,13 @@ public class UFUtils {
                 return false;
         }
         return true;
-    }    
+    }
+
+    public static int Count(bool[] values) {
+        int toReturn = 0;
+        for(int i = 0; i < values.Length; i++)
+            if(values[i])
+                toReturn++;
+        return toReturn;
+    }
 }

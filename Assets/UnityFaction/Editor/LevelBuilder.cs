@@ -12,7 +12,11 @@ public class LevelBuilder : EditorWindow {
     private UFLevel level;
 
     //GUI variables
-    bool showGeneralContents, showGeometryContents, showObjectContents, showMoverContents;
+    bool showGeneralContents, showGeometryContents, 
+        showObjectContents, showMoverContents;
+
+    //Build options
+    //...
 
     [MenuItem("UnityFaction/Build Level")]
     public static void BuildLevel() {
@@ -115,61 +119,34 @@ public class LevelBuilder : EditorWindow {
      */
 
     private void BuildStaticGeometry() {
-        //make object
-        GameObject g = new GameObject("StaticGeometry");
-        g.transform.SetParent(root);
-        Mesh mesh = new Mesh();
+        int split = 2;
+        List<Face>[] faceSplit = new List<Face>[split];
 
-        //mesh
-        List<Vector3> vertices = new List<Vector3>();
-        List<Vector2> uvs = new List<Vector2>();
-        List<int>[] triangles = new List<int>[level.staticGeometry.textures.Length];
-        for(int i = 0; i < triangles.Length; i++)
-            triangles[i] = new List<int>();
+        for(int i = 0; i < split; i++)
+            faceSplit[i] = new List<Face>();
 
-        foreach(Face face in level.staticGeometry.faces) {
-            //extract required data
-            int nboPoints = face.vertices.Length;
-            Vector3[] faceVertices = new Vector3[nboPoints];
-            Vector2[] faceUVs = new Vector2[nboPoints];
-            for(int i = 0; i < nboPoints; i++) {
-                faceVertices[i] = level.staticGeometry.vertices[face.vertices[i].vertexRef];
-                faceUVs[i] = new Vector2(face.vertices[i].uv.x, -face.vertices[i].uv.y);
-            }
+        //split faces
+        int nboFace = level.staticGeometry.faces.Length;
+        for(int i = 0; i < nboFace; i++) {
+            Face nextFace = level.staticGeometry.faces[i];
+            int texIdx = Mathf.Max(0, nextFace.texture);
+            string nextTex = level.staticGeometry.textures[texIdx];
+            bool invis = nextTex.ToLower().Contains("invis");
+            int sort = invis ? 1 : 0;
 
-            //do triangulation
-            int[] faceTriangles = Triangulator.BasePoint(faceVertices);
-
-            //shift vertex references to match those in the mesh list
-            for(int i = 0; i < faceTriangles.Length; i++)
-                faceTriangles[i] += vertices.Count;
-
-            //add results to mesh
-            vertices.AddRange(faceVertices);
-            uvs.AddRange(faceUVs);
-            int subIdx = face.texture;
-            if(subIdx < 0)
-                subIdx = 0;
-            triangles[subIdx].AddRange(faceTriangles);
+            faceSplit[sort].Add(nextFace);
         }
 
-        mesh.SetVertices(vertices);
-        mesh.SetUVs(0, uvs);
-        mesh.subMeshCount = triangles.Length;
-        for(int i = 0; i < triangles.Length; i++)
-            mesh.SetTriangles(triangles[i], i);
-        
-        mesh.RecalculateNormals();
-        mesh.name = level.name + "StaticGeometry";
-        mesh.RecalculateBounds();
 
-        (g.AddComponent<MeshFilter>()).sharedMesh = mesh;
-
-        //materials
-        Material[] materials = new Material[level.staticGeometry.textures.Length];
-        for(int i = 0; i < materials.Length; i++)
-            materials[i] = GetMaterial(level.staticGeometry.textures[i]);
-        (g.AddComponent<MeshRenderer>()).materials = materials;
+        //make objects
+        Transform p = MakeParent("StaticGeometry");
+        GameObject visG = MakeMeshObject(level.staticGeometry, faceSplit[0], "StaticVisible");
+        visG.transform.SetParent(p);
+        visG.AddComponent<MeshCollider>();
+        GameObject invisG = MakeMeshObject(level.staticGeometry, faceSplit[1], "StaticInvisible");
+        invisG.GetComponent<MeshRenderer>().enabled = false;
+        invisG.AddComponent<MeshCollider>();
+        invisG.transform.SetParent(p);
     }
 
     /* -----------------------------------------------------------------------------------------------
@@ -178,7 +155,8 @@ public class LevelBuilder : EditorWindow {
      */
 
     private string assetPath {  get { return Path.GetDirectoryName(lastRFLPath) + "/_UFAssets/"; } }
-    private string[] searchFolders { get { return new string[] { assetPath }; } }
+    private string[] searchFolders { get { return new string[] { assetPath.TrimEnd('/') }; } }
+    private string rootName { get { return "UF_<" + level.name + ">"; } }
 
     private Transform root
     {
@@ -186,7 +164,7 @@ public class LevelBuilder : EditorWindow {
         {
             if(level == null)
                 return null;
-            GameObject toReturn = GameObject.Find(level.name);
+            GameObject toReturn = GameObject.Find(rootName);
             if(toReturn != null)
                 return toReturn.transform;
             return null;
@@ -195,7 +173,53 @@ public class LevelBuilder : EditorWindow {
 
     private void MakeRoot() {
         if(root == null)
-            new GameObject(level.name);
+            new GameObject(rootName);
+    }
+
+    private Transform MakeParent(string name) {
+        for(int i = 0; i < root.childCount; i++) {
+            if(name == root.GetChild(i).name)
+                DestroyImmediate(root.GetChild(i).gameObject);
+        }
+        GameObject parent = new GameObject(name);
+        parent.transform.SetParent(root);
+        return parent.transform;
+    }
+
+    private GameObject MakeMeshObject(Geometry geometry, List<Face> faces, string name) {
+        //make object
+        GameObject g = new GameObject(name);
+
+        //materials
+        List<String> usedTextures = new List<string>();
+        int[] texMap = new int[geometry.textures.Length];
+
+        foreach(Face face in faces) {
+            int texIdx = Mathf.Max(0, face.texture);
+            string nextTex = level.staticGeometry.textures[texIdx];
+            if(!usedTextures.Contains(nextTex)) {
+                texMap[face.texture] = usedTextures.Count;
+                usedTextures.Add(nextTex);
+            }
+        }
+
+        //mesh
+        Mesh mesh = MakeMesh(geometry, faces, texMap, usedTextures.Count);
+        mesh.name = name;
+        MeshFilter mf = g.AddComponent<MeshFilter>();
+        mf.sharedMesh = mesh;
+
+        MeshRenderer mr = g.AddComponent<MeshRenderer>();
+        mr.materials = GetMaterials(usedTextures);
+
+        return g;
+    }
+
+    private Material[] GetMaterials(List<string> textures) {
+        Material[] materials = new Material[textures.Count];
+        for(int i = 0; i < materials.Length; i++)
+            materials[i] = GetMaterial(textures[i]);
+        return materials;
     }
 
     private Material GetMaterial(string texture) {
@@ -228,6 +252,58 @@ public class LevelBuilder : EditorWindow {
 
     private Material GenerateDefaultMat() {
         return new Material(Shader.Find("Standard"));
+    }
+
+    private Mesh MakeMesh(Geometry geometry, List<Face> faces, int[] texMap, int texCount) {
+        Mesh mesh = new Mesh();
+
+        //mesh
+        List<Vector3> vertices = new List<Vector3>();
+        List<Vector2> uvs = new List<Vector2>();
+        List<int>[] triangles = new List<int>[texCount];
+        for(int i = 0; i < triangles.Length; i++)
+            triangles[i] = new List<int>();
+        List<int> texRefs = new List<int>();
+
+        foreach(Face face in faces) {
+            //extract required data
+            int nboPoints = face.vertices.Length;
+            Vector3[] faceVertices = new Vector3[nboPoints];
+            Vector2[] faceUVs = new Vector2[nboPoints];
+            for(int i = 0; i < nboPoints; i++) {
+                faceVertices[i] = geometry.vertices[face.vertices[i].vertexRef];
+                faceUVs[i] = new Vector2(face.vertices[i].uv.x, -face.vertices[i].uv.y);
+            }
+
+            //do triangulation
+            int[] faceTriangles = Triangulator.BasePoint(faceVertices);
+
+            //shift vertex references to match those in the mesh list
+            for(int i = 0; i < faceTriangles.Length; i++)
+                faceTriangles[i] += vertices.Count;
+
+            //add results to mesh
+            vertices.AddRange(faceVertices);
+            uvs.AddRange(faceUVs);
+
+            int texRef = Mathf.Max(0, face.texture);
+            texRef = texMap[texRef];
+
+            triangles[texRef].AddRange(faceTriangles);
+        }
+
+        //mesh data is ready, insert all of it
+        mesh.SetVertices(vertices);
+        mesh.SetUVs(0, uvs);
+        mesh.subMeshCount = triangles.Length;
+
+        for(int i = 0; i < triangles.Length; i++)
+            mesh.SetTriangles(triangles[i], i);
+
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+
+        return mesh;
     }
 }
 
