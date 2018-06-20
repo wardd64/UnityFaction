@@ -1172,6 +1172,8 @@ public class RFLReader {
             }
             else
                 nextRoom.ambientLightColor = default(Color);
+
+            geometry.rooms[i] = nextRoom;
         }
 
 
