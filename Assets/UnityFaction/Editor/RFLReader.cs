@@ -212,6 +212,8 @@ public class RFLReader {
 
         level.hardness = BitConverter.ToInt32(bytes, pointer);
         level.ambientColor = UFUtils.GetRGBAColor(bytes, pointer + 4);
+        Debug.Log(UFUtils.GetHex(bytes, pointer + 4, 4));
+        Debug.Log(level.ambientColor);
         level.fogColor = UFUtils.GetRGBAColor(bytes, pointer + 9);
         level.nearPlane = BitConverter.ToSingle(bytes, pointer + 13);
         level.farPlane = BitConverter.ToSingle(bytes, pointer + 17);
@@ -1172,6 +1174,8 @@ public class RFLReader {
             }
             else
                 nextRoom.ambientLightColor = default(Color);
+
+            geometry.rooms[i] = nextRoom;
         }
 
 

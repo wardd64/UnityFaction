@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace UFLevelStructure {
 
@@ -7,6 +8,7 @@ namespace UFLevelStructure {
      * -----------------------------------------------------------------------------------------------
      */
 
+    [Serializable]
     public struct PosRot {
         public Vector3 position;
         public Quaternion rotation;
@@ -19,6 +21,7 @@ namespace UFLevelStructure {
         public PosRot(Vector3 position) : this(position, Quaternion.identity) {}
     }
 
+    [Serializable]
     public struct UFTransform {
 
         public PosRot posRot;
@@ -46,6 +49,7 @@ namespace UFLevelStructure {
         }
     }
 
+    [Serializable]
     public struct CenteredBox {
         public UFTransform transform;
         public Vector3 extents;
@@ -66,6 +70,7 @@ namespace UFLevelStructure {
         }
     }
 
+    [Serializable]
     public struct AxisAlignedBoundingBox {
         public Vector3 min, max;
 
@@ -80,6 +85,17 @@ namespace UFLevelStructure {
             min = new Vector3(xMin, yMin, zMin);
             max = new Vector3(xMax, yMax, zMax);
         }
+
+        public bool IsInside(Vector3 point) {
+            bool toReturn = true;
+            toReturn &= point.x > min.x;
+            toReturn &= point.y > min.y;
+            toReturn &= point.z > min.z;
+            toReturn &= point.x < max.x;
+            toReturn &= point.y < max.y;
+            toReturn &= point.z < max.z;
+            return toReturn;
+        }
     }
 
     /* -----------------------------------------------------------------------------------------------
@@ -87,6 +103,7 @@ namespace UFLevelStructure {
      * -----------------------------------------------------------------------------------------------
      */
 
+    [Serializable]
     public struct Brush {
         public UFTransform transform;
 
@@ -95,6 +112,7 @@ namespace UFLevelStructure {
         public int life;
     }
 
+    [Serializable]
     public struct Geometry {
         public string[] textures;
         public Vector3[] vertices;
@@ -102,17 +120,20 @@ namespace UFLevelStructure {
         public Room[] rooms;
     }
 
+    [Serializable]
     public struct Face {
         public int texture;
         public bool showSky, mirrored, fullBright;
         public FaceVertex[] vertices;
     }
 
+    [Serializable]
     public struct FaceVertex {
         public int vertexRef;
         public Vector2 uv;
     }
 
+    [Serializable]
     public struct Room {
         public AxisAlignedBoundingBox aabb;
         public bool isSkyRoom, isCold, isOutside, isAirlock, hasLiquid, hasAmbientLight, isSubRoom;
@@ -121,6 +142,7 @@ namespace UFLevelStructure {
 
         //only available when hasLiquid == true
         public LiquidProperties liquidProperties;
+        [Serializable]
         public struct LiquidProperties {
 
             //liquid properties
@@ -155,6 +177,7 @@ namespace UFLevelStructure {
      * -----------------------------------------------------------------------------------------------
      */
 
+    [Serializable]
     public struct MovingGroup {
         public string name;
         public Keyframe[] keys;
@@ -174,6 +197,7 @@ namespace UFLevelStructure {
         public int[] contents; //list of ID of brushes and objects moved in this group
     }
 
+    [Serializable]
     public struct KeyFrame {
         public UFTransform transform;
 
@@ -191,6 +215,7 @@ namespace UFLevelStructure {
      * -----------------------------------------------------------------------------------------------
      */
 
+    [Serializable]
     public struct Light {
         public UFTransform transform;
 
@@ -208,6 +233,7 @@ namespace UFLevelStructure {
         //intensity at max is fractional multiplier for intensity
     }
 
+    [Serializable]
     public struct AmbSound {
         public UFTransform transform;
 
@@ -216,6 +242,7 @@ namespace UFLevelStructure {
         //volume 0-1, delay in miliseconds
     }
 
+    [Serializable]
     public struct SpawnPoint {
         public UFTransform transform;
 
@@ -223,6 +250,7 @@ namespace UFLevelStructure {
         public bool redTeam, blueTeam, bot;
     }
 
+    [Serializable]
     public struct ParticleEmitter {
         public UFTransform transform;
 
@@ -252,6 +280,7 @@ namespace UFLevelStructure {
         public float activeDistance;
     }
 
+    [Serializable]
     public struct GeoRegion {
         public UFTransform transform;
 
@@ -267,6 +296,7 @@ namespace UFLevelStructure {
         public float sphereRadius; //when sphere
     }
 
+    [Serializable]
     public struct Decal {
         public CenteredBox cbTransform;
 
@@ -281,6 +311,7 @@ namespace UFLevelStructure {
         public float scale;
     }
 
+    [Serializable]
     public struct ClimbingRegion {
         public CenteredBox cbTransform;
 
@@ -290,6 +321,7 @@ namespace UFLevelStructure {
         }
     }
 
+    [Serializable]
     public struct BoltEmiter {
         public UFTransform transform;
 
@@ -304,6 +336,7 @@ namespace UFLevelStructure {
         public bool fade, glow, srcDirLock, trgDirLock, initOn;
     }
 
+    [Serializable]
     public struct Item {
         public UFTransform transform;
 
@@ -329,6 +362,7 @@ namespace UFLevelStructure {
         public int team;
     }
 
+    [Serializable]
     public struct Clutter {
         public UFTransform transform;
 
@@ -336,6 +370,7 @@ namespace UFLevelStructure {
         public int[] links; //list of object IDs
     }
 
+    [Serializable]
     public struct Event {
         public UFTransform transform;
 
@@ -374,6 +409,7 @@ namespace UFLevelStructure {
         public Color color;
     }
 
+    [Serializable]
     public struct Entity {
         public UFTransform transform;
 
@@ -397,6 +433,7 @@ namespace UFLevelStructure {
         public string leftHandHolding, rightHandHolding;
     }
 
+    [Serializable]
     public struct Trigger {
         public UFTransform transform;
 

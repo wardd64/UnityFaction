@@ -2,6 +2,7 @@
 using UnityEngine;
 using System;
 using UFLevelStructure;
+using System.Collections.Generic;
 
 public class UFUtils {
 
@@ -215,5 +216,50 @@ public class UFUtils {
             if(values[i])
                 toReturn++;
         return toReturn;
+    }
+
+    public static T GetRandom<T>(T[] list) {
+        int index = UnityEngine.Random.Range(0, list.Length);
+        return list[index];
+    }
+
+    public static T GetRandom<T>(List<T> list) {
+        int index = UnityEngine.Random.Range(0, list.Count);
+        return list[index];
+    }
+
+    /// <summary>
+    /// Returns lerp factor needed to perform an exponential decay time step, 
+    /// using the given half life time and Time.deltaTime.
+    /// Use as follows: value = Lerp(value, goalValue, factor);
+    /// </summary>
+    public static float LerpExpFactor(float halfLife) {
+        return LerpExpFactor(halfLife, Time.deltaTime);
+    }
+
+    /// <summary>
+    /// Returns lerp factor needed to perform an exponential decay time step, 
+    /// using the given half life time and time step.
+    /// Use as follows: value = Lerp(value, goalValue, factor);
+    /// </summary>
+    public static float LerpExpFactor(float halfLife, float timeStep) {
+        if(halfLife <= 0f)
+            return 1f;
+        else if(float.IsNaN(halfLife) || float.IsPositiveInfinity(halfLife))
+            return 0f;
+
+        float a = timeStep * Mathf.Log(2f) / (2 * halfLife);
+        return 2 * a / (1 + a);
+    }
+
+    /// <summary>
+    /// Moves color from start to target, by at most the given amount of delta.
+    /// if delta is 1; it takes 1 second to move from say; black to red.
+    /// </summary>
+    public static Color MoveTowards(Color startColor, Color targetColor, float delta) {
+        Vector4 vecStart = new Vector4(startColor.r, startColor.g, startColor.b, startColor.a);
+        Vector4 vecTarget = new Vector4(targetColor.r, targetColor.g, targetColor.b, targetColor.a);
+        Vector4 vecReturn = Vector4.MoveTowards(vecStart, vecTarget, delta);
+        return new Color(vecReturn.x, vecReturn.y, vecReturn.z, vecReturn.w);
     }
 }

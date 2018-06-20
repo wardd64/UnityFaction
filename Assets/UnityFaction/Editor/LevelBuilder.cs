@@ -108,9 +108,11 @@ public class LevelBuilder : EditorWindow {
             Debug.LogWarning("not yet implemented");
         }
 
-        if(GUILayout.Button("Build static geometry")) {
+        if(GUILayout.Button("Build static geometry"))
             BuildStaticGeometry();
-        }
+
+        if(GUILayout.Button("Build player info"))
+            BuildPlayerInfo();
     }
 
     /* -----------------------------------------------------------------------------------------------
@@ -147,6 +149,12 @@ public class LevelBuilder : EditorWindow {
         invisG.GetComponent<MeshRenderer>().enabled = false;
         invisG.AddComponent<MeshCollider>();
         invisG.transform.SetParent(p);
+    }
+
+    private void BuildPlayerInfo() {
+        Transform p = MakeParent("PlayerInfo");
+        UFPlayerInfo info = p.gameObject.AddComponent<UFPlayerInfo>();
+        info.Set(level);
     }
 
     /* -----------------------------------------------------------------------------------------------
