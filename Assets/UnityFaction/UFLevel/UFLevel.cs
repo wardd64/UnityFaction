@@ -10,7 +10,7 @@ public class UFLevel {
         ambSounds = new AmbSound[0];
         events = new UFLevelStructure.Event[0];
         spawnPoints = new SpawnPoint[0];
-        particleEmiters = new UFLevelStructure.ParticleEmitter[0];
+        particleEmiters = new UFLevelStructure.ParticleEmiter[0];
         decals = new Decal[0];
         climbingRegions = new ClimbingRegion[0];
         boltEmiters = new BoltEmiter[0];
@@ -43,7 +43,7 @@ public class UFLevel {
     public AmbSound[] ambSounds;
     public UFLevelStructure.Event[] events;
     public SpawnPoint[] spawnPoints;
-    public UFLevelStructure.ParticleEmitter[] particleEmiters;
+    public ParticleEmiter[] particleEmiters;
     public Decal[] decals;
     public ClimbingRegion[] climbingRegions;
     public BoltEmiter[] boltEmiters;

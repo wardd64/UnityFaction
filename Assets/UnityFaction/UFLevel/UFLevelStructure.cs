@@ -251,11 +251,11 @@ namespace UFLevelStructure {
     }
 
     [Serializable]
-    public struct ParticleEmitter {
+    public struct ParticleEmiter {
         public UFTransform transform;
 
-        public EmitterType type;
-        public enum EmitterType {
+        public EmiterShape type;
+        public enum EmiterShape {
             point = 0, plane = 1, sphere = 2
         }
 
@@ -284,8 +284,8 @@ namespace UFLevelStructure {
     public struct GeoRegion {
         public UFTransform transform;
 
-        public Shape shape;
-        public enum Shape {
+        public GeoShape shape;
+        public enum GeoShape {
             undefined = 0, sphere = 2, box = 4
         }
 

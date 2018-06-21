@@ -262,4 +262,39 @@ public class UFUtils {
         Vector4 vecReturn = Vector4.MoveTowards(vecStart, vecTarget, delta);
         return new Color(vecReturn.x, vecReturn.y, vecReturn.z, vecReturn.w);
     }
+
+    public static bool Inside(Vector3 point, PosRot center, float radius, Vector3 extents, bool box) {
+        if(box)
+            return InsideBox(point, new CenteredBox(center, extents));
+        else
+            return InsideSphere(point, center.position, radius);
+    }
+
+    public static bool InsideSphere(Vector3 point, Vector3 center, float radius) {
+        return (point - center).sqrMagnitude < radius * radius;
+    }
+
+    public static bool InsideBox(Vector3 point, CenteredBox cb) {
+        Vector3 relativePoint = point - cb.transform.posRot.position;
+        Quaternion rot = Quaternion.Inverse(cb.transform.posRot.rotation);
+        relativePoint = rot * relativePoint;
+
+        bool inside = true;
+        inside &= Mathf.Abs(relativePoint.x) < cb.extents.x;
+        inside &= Mathf.Abs(relativePoint.y) < cb.extents.y;
+        inside &= Mathf.Abs(relativePoint.z) < cb.extents.z;
+
+        return inside;
+    }
+
+    public static void LocalReset(Transform transform) {
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.identity;
+        transform.localScale = Vector3.one;
+    }
+
+    public static void SetLocalTransform(Transform transform, UFTransform ufTransform) {
+        transform.localPosition = ufTransform.posRot.position;
+        transform.localRotation = ufTransform.posRot.rotation;
+    }
 }

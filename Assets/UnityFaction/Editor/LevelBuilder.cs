@@ -113,6 +113,12 @@ public class LevelBuilder : EditorWindow {
 
         if(GUILayout.Button("Build player info"))
             BuildPlayerInfo();
+
+        if(GUILayout.Button("Build geomodder"))
+            BuildGeoModer();
+
+        if(GUILayout.Button("Build movers"))
+            BuildMovers();
     }
 
     /* -----------------------------------------------------------------------------------------------
@@ -144,17 +150,64 @@ public class LevelBuilder : EditorWindow {
         Transform p = MakeParent("StaticGeometry");
         GameObject visG = MakeMeshObject(level.staticGeometry, faceSplit[0], "StaticVisible");
         visG.transform.SetParent(p);
+        UFUtils.LocalReset(visG.transform);
         visG.AddComponent<MeshCollider>();
+
         GameObject invisG = MakeMeshObject(level.staticGeometry, faceSplit[1], "StaticInvisible");
+        invisG.transform.SetParent(p);
+        UFUtils.LocalReset(invisG.transform);
         invisG.GetComponent<MeshRenderer>().enabled = false;
         invisG.AddComponent<MeshCollider>();
-        invisG.transform.SetParent(p);
     }
 
     private void BuildPlayerInfo() {
         Transform p = MakeParent("PlayerInfo");
         UFPlayerInfo info = p.gameObject.AddComponent<UFPlayerInfo>();
         info.Set(level);
+    }
+
+    private void BuildGeoModer() {
+        Transform p = MakeParent("GeoModer");
+        UFGeoModer gm = p.gameObject.AddComponent<UFGeoModer>();
+        Material geoMat = GetMaterial(level.geomodTexture);
+        gm.Set(level, geoMat);
+    }
+
+    private void BuildMovers() {
+        Transform p = MakeParent("Movers");
+        for(int i = 0; i < level.movingGroups.Length; i++) {
+            MovingGroup group = level.movingGroups[i];
+            GameObject g = new GameObject(group.name);
+            g.transform.SetParent(p);
+
+            List<Brush> brushes = new List<Brush>();
+            foreach(int id in group.contents) {
+                //TODO: improve efficiency by making id lookup table
+                foreach(Brush b in level.movingGeometry) {
+                    if(b.transform.id == id) {
+                        brushes.Add(b);
+                        break;
+                    }
+                }
+            }
+
+            Transform[] brushTransforms = new Transform[brushes.Count];
+            for(int j = 0; j < brushes.Count; j++) {
+                string name = "Brush_" + brushes[j].transform.id.ToString().PadLeft(4, '0');
+                GameObject brushMesh = MakeMeshObject(brushes[j].geometry, name);
+                brushTransforms[j] = brushMesh.transform;
+                brushTransforms[j].SetParent(g.transform);
+                UFUtils.SetLocalTransform(brushTransforms[j], brushes[j].transform);
+            }
+
+            UFMover mov = g.gameObject.AddComponent<UFMover>();
+            mov.Set(group, brushTransforms);
+        }
+
+       
+
+
+        
     }
 
     /* -----------------------------------------------------------------------------------------------
@@ -191,7 +244,13 @@ public class LevelBuilder : EditorWindow {
         }
         GameObject parent = new GameObject(name);
         parent.transform.SetParent(root);
+        UFUtils.LocalReset(parent.transform);
         return parent.transform;
+    }
+
+    private GameObject MakeMeshObject(Geometry geometry, string name) {
+        List<Face> faces = new List<Face>(geometry.faces);
+        return MakeMeshObject(geometry, faces, name);
     }
 
     private GameObject MakeMeshObject(Geometry geometry, List<Face> faces, string name) {

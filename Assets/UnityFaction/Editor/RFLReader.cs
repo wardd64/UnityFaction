@@ -294,13 +294,13 @@ public class RFLReader {
             nextRegion.shallow = UFUtils.GetFlag(bytes, pointer + 4, 5);
 
             byte shapeByte = UFUtils.GetNibble(bytes, pointer + 4, true);
-            nextRegion.shape = (GeoRegion.Shape)shapeByte;
+            nextRegion.shape = (GeoRegion.GeoShape)shapeByte;
             nextRegion.hardness = bytes[pointer + 6];
             pointer += 8;
 
             switch(nextRegion.shape) {
 
-            case GeoRegion.Shape.box:
+            case GeoRegion.GeoShape.box:
             PosRot posRot = UFUtils.GetPosRot(bytes, pointer);
             nextRegion.transform = new UFTransform(posRot, id);
 
@@ -310,7 +310,7 @@ public class RFLReader {
             pointer += 60;
             break;
 
-            case GeoRegion.Shape.sphere:
+            case GeoRegion.GeoShape.sphere:
             Vector3 pos = UFUtils.Getvector3(bytes, pointer);
             nextRegion.transform = new UFTransform(pos, id);
 
@@ -509,16 +509,16 @@ public class RFLReader {
     /// </summary>
     private void ReadParticleEmiters(byte[] bytes) {
         int nboEmitters = BitConverter.ToInt32(bytes, pointer + 8);
-        level.particleEmiters = new UFLevelStructure.ParticleEmitter[nboEmitters];
+        level.particleEmiters = new UFLevelStructure.ParticleEmiter[nboEmitters];
         pointer += 12;
 
         for(int i = 0; i < nboEmitters; i++) {
-            UFLevelStructure.ParticleEmitter nextEmitter;
+            UFLevelStructure.ParticleEmiter nextEmitter;
 
             nextEmitter.transform = ReadFullTransform(bytes);
 
             int typeInt = BitConverter.ToInt32(bytes, pointer);
-            nextEmitter.type = (UFLevelStructure.ParticleEmitter.EmitterType)typeInt;
+            nextEmitter.type = (UFLevelStructure.ParticleEmiter.EmiterShape)typeInt;
 
             nextEmitter.SphereRadius = BitConverter.ToSingle(bytes, pointer + 4);
             nextEmitter.planeExtents = UFUtils.Getvector2(bytes, pointer + 8);
