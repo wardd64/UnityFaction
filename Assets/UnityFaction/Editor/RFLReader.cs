@@ -284,6 +284,7 @@ public class RFLReader {
         pointer += 8;
 
         int nboGeoRegions = BitConverter.ToInt32(bytes, pointer);
+        level.geoRegions = new GeoRegion[nboGeoRegions];
         pointer += 4;
         for(int i = 0; i < nboGeoRegions; i++) {
             GeoRegion nextRegion;
@@ -322,6 +323,8 @@ public class RFLReader {
             throw new RFLReadException("Encountered geo region with unknown shape: " + nextRegion.shape);
             
             }
+
+            level.geoRegions[i] = nextRegion;
         }
     }
 
@@ -761,10 +764,11 @@ public class RFLReader {
             pointer += 2; // null + 1 ???
 
             int nboKeyFrames = BitConverter.ToInt32(bytes, pointer);
+            nextGroup.keys = new UFLevelStructure.Keyframe[nboKeyFrames];
             pointer += 4;
 
             for(int j = 0; j < nboKeyFrames; j++) {
-                KeyFrame nextKey;
+                UFLevelStructure.Keyframe nextKey;
 
                 int id = BitConverter.ToInt32(bytes, pointer);
                 pointer += 4;
@@ -786,6 +790,8 @@ public class RFLReader {
                 nextKey.containID2 = BitConverter.ToInt32(bytes, pointer + 28);
                 nextKey.rotationAmount = BitConverter.ToSingle(bytes, pointer + 32); //degrees
                 pointer += 36;
+
+                nextGroup.keys[j] = nextKey;
             }
 
             int unkownCount1 = BitConverter.ToInt32(bytes, pointer);
@@ -822,6 +828,8 @@ public class RFLReader {
             pointer += 4 + (unkownCount2 * 4); //seems to be ID, but with what purpose?
 
             nextGroup.contents = ReadIntList(bytes);
+
+            level.movingGroups[i] = nextGroup;
         }
     }
 
@@ -946,14 +954,16 @@ public class RFLReader {
         pointer += 12;
 
         for(int i = 0; i < nboItems; i++) {
-            Item item;
+            Item nextItem;
 
-            item.transform = ReadFullTransform(bytes, out item.name);
+            nextItem.transform = ReadFullTransform(bytes, out nextItem.name);
 
-            item.count = BitConverter.ToInt32(bytes, pointer);
-            item.respawnTime = BitConverter.ToInt32(bytes, pointer + 4);
-            item.team = BitConverter.ToInt32(bytes, pointer + 8);
+            nextItem.count = BitConverter.ToInt32(bytes, pointer);
+            nextItem.respawnTime = BitConverter.ToInt32(bytes, pointer + 4);
+            nextItem.team = BitConverter.ToInt32(bytes, pointer + 8);
             pointer += 12;
+
+            level.items[i] = nextItem;
         }
     }
 
@@ -969,13 +979,15 @@ public class RFLReader {
         pointer += 12;
 
         for(int i = 0; i < nboClutter; i++) {
-            Clutter clutter;
+            Clutter nextClutter;
 
-            clutter.transform = ReadFullTransform(bytes, out clutter.name);
+            nextClutter.transform = ReadFullTransform(bytes, out nextClutter.name);
 
             pointer += 6; // all null ???
 
-            clutter.links = ReadIntList(bytes);
+            nextClutter.links = ReadIntList(bytes);
+
+            level.clutter[i] = nextClutter;
         }
     }
 

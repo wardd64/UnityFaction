@@ -52,6 +52,7 @@ public class UFLevel {
     public Item[] items;
     public Clutter[] clutter;
     public Trigger[] triggers;
+    public GeoRegion[] geoRegions;
 
     //moving stuff
     public Brush[] movingGeometry;

@@ -180,7 +180,7 @@ namespace UFLevelStructure {
     [Serializable]
     public struct MovingGroup {
         public string name;
-        public Keyframe[] keys;
+        public UFLevelStructure.Keyframe[] keys;
 
         public bool isDoor, startsBackwards, rotateInPlace,
             useTravTimeAsSpd, forceOrient, noPlayerCollide;
@@ -198,7 +198,7 @@ namespace UFLevelStructure {
     }
 
     [Serializable]
-    public struct KeyFrame {
+    public struct Keyframe {
         public UFTransform transform;
 
         public float pauseTime;
