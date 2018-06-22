@@ -37,7 +37,7 @@ public class LevelBuilder : EditorWindow {
         RFLReader reader = new RFLReader(rflPath);
 
         builder.level = reader.level;
-        if(!Directory.Exists(builder.assetPath))
+        if(!Directory.Exists(assetPath))
             AssetDatabase.CreateFolder(Path.GetDirectoryName(lastRFLPath), "_UFAssets");
     }
 
@@ -177,7 +177,7 @@ public class LevelBuilder : EditorWindow {
         Transform p = MakeParent("Movers");
         for(int i = 0; i < level.movingGroups.Length; i++) {
             MovingGroup group = level.movingGroups[i];
-            GameObject g = new GameObject(group.name);
+            GameObject g = new GameObject("Mover_<" + group.name + ">");
             g.transform.SetParent(p);
 
             List<Brush> brushes = new List<Brush>();
@@ -191,23 +191,20 @@ public class LevelBuilder : EditorWindow {
                 }
             }
 
-            Transform[] brushTransforms = new Transform[brushes.Count];
             for(int j = 0; j < brushes.Count; j++) {
                 string name = "Brush_" + brushes[j].transform.id.ToString().PadLeft(4, '0');
-                GameObject brushMesh = MakeMeshObject(brushes[j].geometry, name);
-                brushTransforms[j] = brushMesh.transform;
-                brushTransforms[j].SetParent(g.transform);
-                UFUtils.SetLocalTransform(brushTransforms[j], brushes[j].transform);
+                Transform brush = (MakeMeshObject(brushes[j].geometry, name)).transform;
+                brush.SetParent(g.transform);
+                UFUtils.SetLocalTransform(brush, brushes[j].transform);
             }
 
             UFMover mov = g.gameObject.AddComponent<UFMover>();
-            mov.Set(group, brushTransforms);
+            mov.Set(group);
+            mov.startClip = GetClip(group.startClip);
+            mov.loopClip = GetClip(group.loopClip);
+            mov.closeClip = GetClip(group.closeClip);
+            mov.stopClip = GetClip(group.stopClip);
         }
-
-       
-
-
-        
     }
 
     /* -----------------------------------------------------------------------------------------------
@@ -215,8 +212,10 @@ public class LevelBuilder : EditorWindow {
      * -----------------------------------------------------------------------------------------------
      */
 
-    private string assetPath {  get { return Path.GetDirectoryName(lastRFLPath) + "/_UFAssets/"; } }
-    private string[] searchFolders { get { return new string[] { assetPath.TrimEnd('/') }; } }
+    private static string assetPath {  get { return Path.GetDirectoryName(lastRFLPath) + "/_UFAssets/"; } }
+    private static string[] searchFolders { get { return new string[] {
+        assetPath.TrimEnd('/'), Path.GetDirectoryName(lastRFLPath) };
+    } }
     private string rootName { get { return "UF_<" + level.name + ">"; } }
 
     private Transform root
@@ -248,12 +247,12 @@ public class LevelBuilder : EditorWindow {
         return parent.transform;
     }
 
-    private GameObject MakeMeshObject(Geometry geometry, string name) {
+    private static GameObject MakeMeshObject(Geometry geometry, string name) {
         List<Face> faces = new List<Face>(geometry.faces);
         return MakeMeshObject(geometry, faces, name);
     }
 
-    private GameObject MakeMeshObject(Geometry geometry, List<Face> faces, string name) {
+    private static GameObject MakeMeshObject(Geometry geometry, List<Face> faces, string name) {
         //make object
         GameObject g = new GameObject(name);
 
@@ -263,7 +262,7 @@ public class LevelBuilder : EditorWindow {
 
         foreach(Face face in faces) {
             int texIdx = Mathf.Max(0, face.texture);
-            string nextTex = level.staticGeometry.textures[texIdx];
+            string nextTex = geometry.textures[texIdx];
             if(!usedTextures.Contains(nextTex)) {
                 texMap[face.texture] = usedTextures.Count;
                 usedTextures.Add(nextTex);
@@ -282,14 +281,14 @@ public class LevelBuilder : EditorWindow {
         return g;
     }
 
-    private Material[] GetMaterials(List<string> textures) {
+    public static Material[] GetMaterials(List<string> textures) {
         Material[] materials = new Material[textures.Count];
         for(int i = 0; i < materials.Length; i++)
             materials[i] = GetMaterial(textures[i]);
         return materials;
     }
 
-    private Material GetMaterial(string texture) {
+    public static Material GetMaterial(string texture) {
         string textureName = Path.GetFileNameWithoutExtension(texture);
         string materialName = textureName + ".mat";
         string[] results = AssetDatabase.FindAssets(textureName, searchFolders);
@@ -317,11 +316,27 @@ public class LevelBuilder : EditorWindow {
         return GenerateDefaultMat();
     }
 
-    private Material GenerateDefaultMat() {
+    public static Material GenerateDefaultMat() {
         return new Material(Shader.Find("Standard"));
     }
 
-    private Mesh MakeMesh(Geometry geometry, List<Face> faces, int[] texMap, int texCount) {
+    public static AudioClip GetClip(string clip) {
+        string clipName = Path.GetFileNameWithoutExtension(clip);
+        string[] results = AssetDatabase.FindAssets(clipName, searchFolders);
+
+        foreach(string result in results) {
+            string resultPath = AssetDatabase.GUIDToAssetPath(result);
+            string resultName = Path.GetFileName(resultPath);
+            if(resultName == clipName)
+                return (AudioClip)AssetDatabase.LoadAssetAtPath(resultPath, typeof(AudioClip));
+        }
+
+        //audio clip does not exist
+        Debug.LogWarning("Could not audio clip: " + clip);
+        return null;
+    }
+
+    private static Mesh MakeMesh(Geometry geometry, List<Face> faces, int[] texMap, int texCount) {
         Mesh mesh = new Mesh();
 
         //mesh
