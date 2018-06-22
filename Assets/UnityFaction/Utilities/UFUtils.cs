@@ -20,6 +20,11 @@ public class UFUtils {
         return "Assets" + path.Substring(Application.dataPath.Length);
     }
 
+    /* -----------------------------------------------------------------------------------------------
+     * -------------------------------------- BINARY READING -----------------------------------------
+     * -----------------------------------------------------------------------------------------------
+     */
+
     /// <summary>
     /// Starts reading string encoded in the given bytes until we hit a null byte.
     /// Also moves the pointer passed this null terminator
@@ -100,9 +105,9 @@ public class UFUtils {
     /// the entries of this matrix are stored in an awkard order, so make sure to refer to this method.
     /// </summary>
     public static Quaternion GetRotation(byte[] bytes, int start) {
-        Vector3 row2 = Getvector3(bytes, start);
-        Vector3 row3 = Getvector3(bytes, start + 12);
-        Vector3 row1 = Getvector3(bytes, start + 24);
+        Vector3 row3 = Getvector3(bytes, start);
+        Vector3 row1 = Getvector3(bytes, start + 12);
+        Vector3 row2 = Getvector3(bytes, start + 24);
 
         Vector4 col1 = new Vector4(row1.x, row2.x, row3.x);
         Vector4 col2 = new Vector4(row1.y, row2.y, row3.y);
@@ -209,6 +214,11 @@ public class UFUtils {
         }
         return true;
     }
+
+    /* -----------------------------------------------------------------------------------------------
+     * ------------------------------------------ OTHERS ---------------------------------------------
+     * -----------------------------------------------------------------------------------------------
+     */
 
     public static int Count(bool[] values) {
         int toReturn = 0;
