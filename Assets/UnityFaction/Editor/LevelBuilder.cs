@@ -177,9 +177,16 @@ public class LevelBuilder : EditorWindow {
         Transform p = MakeParent("Movers");
         for(int i = 0; i < level.movingGroups.Length; i++) {
             MovingGroup group = level.movingGroups[i];
+
+            //make new gameobject
             GameObject g = new GameObject("Mover_<" + group.name + ">");
             g.transform.SetParent(p);
 
+            //attach mover script and initialize
+            UFMover mov = g.gameObject.AddComponent<UFMover>();
+            mov.Set(group);
+
+            //Retrieve geometry contained in this mover
             List<Brush> brushes = new List<Brush>();
             foreach(int id in group.contents) {
                 //TODO: improve efficiency by making id lookup table
@@ -191,19 +198,20 @@ public class LevelBuilder : EditorWindow {
                 }
             }
 
+            //Build the geometry and attach it to the mover
             for(int j = 0; j < brushes.Count; j++) {
                 string name = "Brush_" + brushes[j].transform.id.ToString().PadLeft(4, '0');
                 Transform brush = (MakeMeshObject(brushes[j].geometry, name)).transform;
-                brush.SetParent(g.transform);
-                UFUtils.SetLocalTransform(brush, brushes[j].transform);
+                mov.AddAt(brush, brushes[j].transform.posRot);
             }
 
-            UFMover mov = g.gameObject.AddComponent<UFMover>();
-            mov.Set(group);
+            //retrieve and assign voice clips
             mov.startClip = GetClip(group.startClip);
             mov.loopClip = GetClip(group.loopClip);
             mov.closeClip = GetClip(group.closeClip);
             mov.stopClip = GetClip(group.stopClip);
+
+            mov.AddAudio();
         }
     }
 
@@ -321,6 +329,9 @@ public class LevelBuilder : EditorWindow {
     }
 
     public static AudioClip GetClip(string clip) {
+        if(string.IsNullOrEmpty(clip))
+            return null;
+
         string clipName = Path.GetFileNameWithoutExtension(clip);
         string[] results = AssetDatabase.FindAssets(clipName, searchFolders);
 

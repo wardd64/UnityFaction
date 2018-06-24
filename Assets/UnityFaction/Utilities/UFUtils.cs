@@ -303,8 +303,12 @@ public class UFUtils {
         transform.localScale = Vector3.one;
     }
 
-    public static void SetLocalTransform(Transform transform, UFTransform ufTransform) {
-        transform.localPosition = ufTransform.posRot.position;
-        transform.localRotation = ufTransform.posRot.rotation;
+    public static void SetTransform(Transform transform, UFTransform ufTransform) {
+        SetTransform(transform, ufTransform.posRot);
+    }
+
+    public static void SetTransform(Transform transform, PosRot pr) {
+        transform.position = pr.position;
+        transform.rotation = pr.rotation;
     }
 }
