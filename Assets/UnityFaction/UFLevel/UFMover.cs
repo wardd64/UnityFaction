@@ -9,6 +9,7 @@ public class UFMover : MonoBehaviour {
     private Rigidbody rb;
 
     public UFLevelStructure.Keyframe[] keys;
+    public int startKey;
 
     public bool isDoor, startsBackwards, rotateInPlace,
         useTravTimeAsSpd, forceOrient, noPlayerCollide;
@@ -23,6 +24,7 @@ public class UFMover : MonoBehaviour {
         //assign variables
         keys = group.keys;
         type = group.type;
+        startKey = group.startIndex;
 
         //flags
         isDoor = group.isDoor;
@@ -42,7 +44,7 @@ public class UFMover : MonoBehaviour {
         rb = gameObject.AddComponent<Rigidbody>();
         rb.isKinematic = true;
 
-        Reset();
+        ResetMotion();
     }
 
     public void AddAt(Transform brush, PosRot pr) {
@@ -50,11 +52,10 @@ public class UFMover : MonoBehaviour {
         UFUtils.SetTransform(brush, pr);
 
         //pr is always relative to keys[0]
-        if(!rotateInPlace && startsBackwards) {
-            //shift position to the actual base key
+        if(lastKey != 0) {
+            //shift position to the actual starting key
             Vector3 at = keys[0].transform.posRot.position;
-            Vector3 to = baseKey.transform.posRot.position;
-            Vector3 delta = to - at;
+            Vector3 to = keys[lastKey].transform.posRot.position;
             brush.transform.localPosition += to - at;
         }
     }
@@ -67,11 +68,7 @@ public class UFMover : MonoBehaviour {
         sound.playOnAwake = false;
     }
 
-    private UFLevelStructure.Keyframe baseKey { get {
-        return startsBackwards ? keys[keys.Length - 1] : keys[0];
-    } }
-
-    //dynamic variables
+    //dynamic variables, used to control movement
     bool moving;
     int lastKey; //index of last keyframe
     float time; //time since last keyframe
@@ -82,31 +79,23 @@ public class UFMover : MonoBehaviour {
     private void Start() {
         rb = this.GetComponent<Rigidbody>();
         sound = this.GetComponent<AudioSource>();
-        Reset();
+        ResetMotion();
         moving = true; //TODO set to false
-
-
-        /*
-        //flip travel times for rotators by speed
-        if(rotateInPlace && useTravTimeAsSpd) {
-            useTravTimeAsSpd = false;
-            keys[0].departTravelTime = keys[0].rotationAmount / keys[0].departTravelTime;
-            keys[0].returnTravelTime = keys[0].rotationAmount / keys[0].returnTravelTime;
-        }
-        */
     }
 
-    public void Reset(bool preserveTime = false) {
-        if(!preserveTime)
-            time = 0f;
-        lastKey = startsBackwards ? 0 : keys.Length - 1;
+    /// <summary>
+    /// Set motion state back to its starting condition.
+    /// </summary>
+    public void ResetMotion() {
+        time = 0f;
+        lastKey = startKey;
         forward = !startsBackwards;
         completedSequence = false;
         paused = false;
         baseRot = Quaternion.identity;
 
-        rb.position = baseKey.transform.posRot.position;
-        transform.position = baseKey.transform.posRot.position;
+        rb.position = keys[startKey].transform.posRot.position;
+        transform.position = keys[startKey].transform.posRot.position;
 
         if(rotateInPlace || forceOrient) {
             rb.rotation = Quaternion.identity;
@@ -118,147 +107,18 @@ public class UFMover : MonoBehaviour {
         if(!moving)
             return;
 
-        if(!rotateInPlace && useTravTimeAsSpd) {
-            SpeedBasedUpdate(Time.fixedDeltaTime);
-        }
-        else {
-            time += Time.fixedDeltaTime;
-            TimeBasedUpdate();
-        }
-        
-    }
-
-    private void SpeedBasedUpdate(float dt) {
-        if(paused) {
-            time += dt;
-            if(PauseUpdate())
-                return;
-        }
-
-        int nextKey = GetNextKey();
-        float speed = GetNextTravTime(nextKey);
-
-        Vector3 lastPos = rb.position;
-        PosRot fro = keys[lastKey].transform.posRot;
-        PosRot to = keys[nextKey].transform.posRot;
-
-        float distFro = (lastPos - fro.position).magnitude;
-        float accelT = keys[lastKey].accelTime;
-        float accelDist = accelT * speed / 2f;
-        bool accel = distFro < accelDist;
-
-        float distTo = (to.position - lastPos).magnitude;
-        float decelT = keys[nextKey].decelTime;
-        float decelDist = decelT * speed / 2f;
-        bool decel = distTo < decelDist;
-
-        if(accel && decel) {
-            //split overlapping situation
-            float totalDist = distFro + distTo;
-            float totalT = accelT + decelT;
-            float split = totalDist * accelT / totalT;
-            if(distFro < split)
-                decel = false;
+        time += Time.fixedDeltaTime;
+        if(!PauseUpdate()) {
+            if(rotateInPlace)
+                RotateUpdate();
             else
-                accel = false;
-        }
-
-        float distance;
-        if(accel) {
-            float t = Mathf.Sqrt(2f * distFro * accelT / speed) + dt;
-            distance = (speed * t * t/ accelT / 2f) - distFro;
-        }
-        else if(decel) {
-            float t = Mathf.Sqrt(2f * distTo * decelT / speed) - dt;
-            distance = distTo - (speed * t * t / decelT / 2f);
-        }
-        else
-            distance = speed * dt;
-
-        //apply position and rotation
-        rb.position = Vector3.MoveTowards(lastPos, to.position, distance);
-        ForceOrient(to.position - lastPos);
-
-        if(distTo < SNAP_DIST) {
-            //keyframe is finished, wrap up
-            lastKey = nextKey;
-            int lastKeyInSeq = forward ? keys.Length - 1 : 0;
-            if(AtLastKeyInSequence())
-                FinishKeySequence();
-
-            paused = CheckPause();
-            //TODO do something with remaining distance to travel
+                PathUpdate();
         }
     }
 
-    private const float SNAP_DIST = 1e-3f;
-
-    private void TimeBasedUpdate() {
-        if(PauseUpdate())
-            return;
-
-        if(rotateInPlace) {
-            //rotations ignore all but the first key
-            float travTime = forward ? keys[0].departTravelTime : keys[0].returnTravelTime;
-
-            //get interpolation
-            float r = Interp(time, travTime, 0, 0);
-            float angle = r * (forward ? 1f : -1f) * keys[0].rotationAmount;
-
-            //apply rotation
-            Vector3 axis = keys[0].transform.posRot.rotation * Vector3.up;
-            rb.rotation = Quaternion.AngleAxis(angle, axis) * baseRot;
-
-            if(time > travTime) {
-                //keyframe is finished, wrap up
-                time -= travTime;
-                FinishRotation();
-
-                if(moving && keys[0].pauseTime > 0f)
-                    paused = true;
-                if(moving)
-                    TimeBasedUpdate();
-            }
-
-        }
-        else {
-            int nextKey = GetNextKey();
-            float travTime = GetNextTravTime(nextKey);
-
-            //get interpolation point
-            float r = Interp(time, travTime, lastKey, nextKey);
-            PosRot fro = keys[lastKey].transform.posRot;
-            PosRot to = keys[nextKey].transform.posRot;
-
-            //apply position and rotation
-            rb.position = Vector3.Lerp(fro.position, to.position, r);
-            ForceOrient(to.position - fro.position);
-
-            if(time > travTime) {
-                //keyframe is finished, wrap up
-                lastKey = nextKey;
-                time -= travTime;
-                if(AtLastKeyInSequence())
-                    FinishKeySequence();
-
-                paused = CheckPause();
-                if(moving)
-                    TimeBasedUpdate();
-            }
-        }
-    }
-
-    private void ForceOrient(Vector3 dir) {
-        if(!forceOrient)
-            return;
-
-        rb.rotation = Quaternion.LookRotation(dir);
-    }
-
-    private bool CheckPause() {
-        return moving && keys[lastKey].pauseTime > 0f;
-    }
-
+    /// <summary>
+    /// Advance pause time, return true if movement is still paused
+    /// </summary>
     private bool PauseUpdate() {
         if(!paused)
             return false;
@@ -271,6 +131,177 @@ public class UFMover : MonoBehaviour {
         }
         else
             return true;
+    }
+
+    /// <summary>
+    /// Update movement as rotation around the first keyframe
+    /// </summary>
+    private void RotateUpdate() {
+        //Get movement parameters (rotations ignore all but the first key)
+        float travTime = forward ? keys[0].departTravelTime : keys[0].returnTravelTime;
+        float angle = (forward ? 1f : -1f) * keys[0].rotationAmount;
+
+        //Calculate movement
+        float x = GetXByTravTime(time, travTime, angle, 0, 0);
+
+        //apply rotation
+        Vector3 axis = keys[0].transform.posRot.rotation * Vector3.up;
+        rb.rotation = Quaternion.AngleAxis(x, axis) * baseRot;
+
+        if(time > travTime) {
+            //keyframe is finished, wrap up
+            time -= travTime;
+            FinishRotation();
+
+            paused = moving && keys[lastKey].pauseTime > 0f;
+            if(moving)
+                RotateUpdate();
+        }
+    }
+
+    /// <summary>
+    /// Update movement as pathing from one keyframe to another
+    /// </summary>
+    private void PathUpdate() {
+        //get movement parameters
+        int nextKey = GetNextKey();
+        PosRot fro = keys[lastKey].transform.posRot;
+        PosRot to = keys[nextKey].transform.posRot;
+        float distance = (to.position - fro.position).magnitude;
+        float travTime = GetNextTravTime(nextKey);
+
+        //calculate movement
+        float x;
+        if(useTravTimeAsSpd) {
+            float speed = travTime;
+            x = GetXBySpeed(time, speed, distance, lastKey, nextKey, out travTime);
+        }
+        else
+            x = GetXByTravTime(time, travTime, distance, lastKey, nextKey);
+
+        //apply position and rotation
+        rb.position = Vector3.MoveTowards(fro.position, to.position, x);
+        ForceOrient(to.position - fro.position);
+
+        if(time > travTime) {
+            //keyframe is finished, wrap up
+            lastKey = nextKey;
+            time -= travTime;
+            if(AtLastKeyInSequence())
+                FinishPath();
+
+            paused = moving && keys[lastKey].pauseTime > 0f;
+            if(moving)
+                PathUpdate();
+        }
+    }
+
+    /// <summary>
+    /// Return distance that mover should have traveled from its last keyframe.
+    /// In the case of rotation this returns the angle that should be covered.
+    /// </summary>
+    /// <param name="time">Time since last keyframe</param>
+    /// <param name="travTime">Time to travel between keyframes</param>
+    /// <param name="distance">Distance between keys (or angle)</param>
+    /// <param name="accelKey">Key index that holds acceleration time</param>
+    /// <param name="decelKey">Key index that holds deceleleration time</param>
+    private float GetXByTravTime(float time, float travTime, float distance, int accelKey, int decelKey) {
+        float Ta = keys[accelKey].accelTime;
+        float Td = keys[decelKey].decelTime;
+        return GetX_TX(time, Ta, Td, travTime, distance);
+    }
+
+    /// <summary>
+    /// Return distance that mover should have traveled from its last keyframe.
+    /// This version takes in a max speed value and returns the total travel time.
+    /// </summary>
+    /// <param name="time">Time since last keyframe</param>
+    /// <param name="speed">Maximum speed that mover is allowed travel (can be degrees/second)</param>
+    /// <param name="distance">Distance between keys (or angle)</param>
+    /// <param name="accelKey">Key index that holds acceleration time</param>
+    /// <param name="decelKey">Key index that holds deceleleration time</param>
+    /// <param name="travTime">Total time needed to travel between keyframes</param>
+    private float GetXBySpeed(float time, float speed, float distance, int accelKey, int decelKey, out float travTime) {
+        float Ta = keys[accelKey].accelTime;
+        float Td = keys[decelKey].decelTime;
+        return GetX_VX(time, Ta, Td, distance, speed, out travTime);
+    }
+
+    /// <summary>
+    /// Return interpolated x position based on total travel time and distance
+    /// </summary>
+    private float GetX_TX(float t, float Ta, float Td, float T, float X) {
+        if(T <= 0f)
+            return X;
+
+        ConstrainAccelTimes(T, ref Ta, ref Td);
+        float V = X / (T - ((Ta + Td) / 2f));
+
+        return GetX_TV(t, Ta, Td, T, V);
+    }
+
+    /// <summary>
+    /// Return interpolated x position based on maximum speed and total travel distance
+    /// Also outputs the total travel time of the path that meets those conditions.
+    /// </summary>
+    private float GetX_VX(float t, float Ta, float Td, float X, float V, out float T) {
+        if(V <= 0f) {
+            T = float.PositiveInfinity;
+            return 0f;
+        }
+
+        T = 2 * X / V;
+        ConstrainAccelTimes(T, ref Ta, ref Td);
+        T = X / V + ((Ta + Td) / 2f);
+
+        return GetX_TV(t, Ta, Td, T, V);
+    }
+
+    /// <summary>
+    /// Reduces referenced acceleration and deceleration times, so that 
+    /// their sum is smaller than the given value maxSum.
+    /// Negative values are set to 0 by default.
+    /// </summary>
+    private void ConstrainAccelTimes(float maxSum, ref float Ta, ref float Td) {
+        Ta = Mathf.Max(0f, Ta);
+        Td = Mathf.Max(0f, Td);
+
+        float sum = Ta + Td;
+        if(sum > maxSum) {
+            Ta = maxSum * Ta / sum;
+            Td = maxSum * Td / sum;
+        }
+    }
+
+    /// <summary>
+    /// Return interpolated x position based on maximum speed and total travel time.
+    /// </summary>
+    private float GetX_TV(float t, float Ta, float Td, float T, float V) {
+        t = Mathf.Clamp(t, 0f, T);
+
+        //calculate helper params
+        float x1 = V * Ta / 2f;
+        float x2 = V * (T - Ta - Td);
+        float t1 = t - Ta;
+        float t2 = t - T + Td;
+
+        //calculate x
+        if(t < Ta)
+            return V * t * t / Ta / 2f;
+        else if(t <= T - Td)
+            return x1 + V * t1;
+        else
+            return x1 + x2 + (V * t2) - (V * t2 * t2 / Td / 2f);
+    }
+
+    /// <summary>
+    /// If forcOrient == true this method will reorient this mover along the given travel direction
+    /// </summary>
+    private void ForceOrient(Vector3 dir) {
+        if(!forceOrient)
+            return;
+
+        rb.rotation = Quaternion.LookRotation(dir);
     }
 
     private int GetNextKey() {
@@ -295,22 +326,10 @@ public class UFMover : MonoBehaviour {
             return keys[nextKey].returnTravelTime;
     }
 
-    private float Interp(float time, float travTime, int accelKey, int decelKey) {
-        float r = Mathf.Clamp01(time / travTime);
-        float accel = keys[accelKey].accelTime;
-        float decel = keys[decelKey].decelTime;
-
-        if(accel > 0f || decel > 0f) {
-            float easeIn = accel / travTime;
-            float easeOut = decel / travTime;
-            return Interpolator.FCBEF(r, easeIn, easeOut);
-        }
-        return r;
-    }
-
     private bool AtLastKeyInSequence() {
         bool loopType = type == MovingGroup.MovementType.LoopOnce;
         loopType |= type == MovingGroup.MovementType.LoopInfinite;
+
         bool checkLast = forward;
         if(loopType)
             checkLast = !checkLast;
@@ -321,7 +340,7 @@ public class UFMover : MonoBehaviour {
             return lastKey == 0;        
     }
 
-    private void FinishKeySequence() {
+    private void FinishPath() {
         switch(type) {
         case MovingGroup.MovementType.Lift:
         case MovingGroup.MovementType.OneWay:

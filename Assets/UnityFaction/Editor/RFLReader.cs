@@ -804,7 +804,8 @@ public class RFLReader {
             pointer += 6;
 
             nextGroup.type = (MovingGroup.MovementType)BitConverter.ToInt32(bytes, pointer);
-            pointer += 8; //null ???
+            nextGroup.startIndex = BitConverter.ToInt32(bytes, pointer + 4);
+            pointer += 8;
 
             nextGroup.startClip = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
             nextGroup.startVol = BitConverter.ToSingle(bytes, pointer);

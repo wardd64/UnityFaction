@@ -181,6 +181,7 @@ namespace UFLevelStructure {
     public struct MovingGroup {
         public string name;
         public UFLevelStructure.Keyframe[] keys;
+        public int startIndex;
 
         public bool isDoor, startsBackwards, rotateInPlace,
             useTravTimeAsSpd, forceOrient, noPlayerCollide;
@@ -204,7 +205,7 @@ namespace UFLevelStructure {
         public float pauseTime;
         public float departTravelTime, returnTravelTime;
         public float accelTime, decelTime;
-        public int triggerID;
+        public int triggerID; //IDs are -1 if not used
         public int containID1, containID2;
         public float rotationAmount; //degrees
     }
