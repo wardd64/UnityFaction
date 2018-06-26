@@ -50,7 +50,7 @@ public class UFUtils {
     /// Reads and returns string with 2 byte number denoting its length.
     /// Moves the pointer to the first byte after the string.
     /// </summary>
-    public static string ReadStringWithLengthHeader(byte[] bytes, ref int pointer) {
+    public static string ReadRFLString(byte[] bytes, ref int pointer) {
         short length = BitConverter.ToInt16(bytes, pointer);
         pointer += 2;
         string toReturn = Encoding.UTF8.GetString(bytes, pointer, length);

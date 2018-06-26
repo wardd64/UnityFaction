@@ -5,7 +5,7 @@ using UFLevelStructure;
 
 public class RFLReader {
 
-    public UFLevel level;
+    public LevelData level;
 
     /* 
      * an RFL file is a binary file that holds data of a redfaction level.
@@ -74,7 +74,7 @@ public class RFLReader {
 
     public RFLReader(string path) {
         byte[] bytes = File.ReadAllBytes(path);
-        level = new UFLevel();
+        level = new LevelData();
         ReadRFL(bytes);
     }
 
@@ -206,7 +206,7 @@ public class RFLReader {
     private void ReadLevelProperties(Byte[] bytes) {
         pointer += 8;
 
-        string defaultTexture = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+        string defaultTexture = UFUtils.ReadRFLString(bytes, ref pointer);
         defaultTexture.Remove(defaultTexture.Length - 1);
         level.geomodTexture = defaultTexture;
 
@@ -265,7 +265,7 @@ public class RFLReader {
 
         //level name, author and date
         for(int i = 0; i < 3; i++)
-            UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            UFUtils.ReadRFLString(bytes, ref pointer);
 
         pointer += 1;
         level.multiplayer = BitConverter.ToBoolean(bytes, pointer);
@@ -347,12 +347,12 @@ public class RFLReader {
             if(alternate)
                 pointer += 4;
 
-            UFUtils.ReadStringWithLengthHeader(bytes, ref pointer); //"Light"
+            UFUtils.ReadRFLString(bytes, ref pointer); //"Light"
             PosRot posRot = UFUtils.GetPosRot(bytes, pointer);
             pointer += 48;
             nextLight.transform = new UFTransform(posRot, id);
 
-            UFUtils.ReadStringWithLengthHeader(bytes, ref pointer); // script file name
+            UFUtils.ReadRFLString(bytes, ref pointer); // script file name
             pointer += 1;
 
             byte typeByte = UFUtils.GetNibble(bytes, pointer, false);
@@ -394,7 +394,7 @@ public class RFLReader {
             nextSound.transform = new UFTransform(pos, id);
             pointer += 13; //position + editor relevant flags
 
-            nextSound.clip = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            nextSound.clip = UFUtils.ReadRFLString(bytes, ref pointer);
             nextSound.minDist = BitConverter.ToSingle(bytes, pointer);
             nextSound.volume = BitConverter.ToSingle(bytes, pointer + 4);
             nextSound.roloff = BitConverter.ToSingle(bytes, pointer + 8);
@@ -424,7 +424,7 @@ public class RFLReader {
             int id = BitConverter.ToInt32(bytes, pointer);
             pointer += 4;
 
-            string name = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer); //event name
+            string name = UFUtils.ReadRFLString(bytes, ref pointer); //event name
             object typeParse = Enum.Parse(typeof(UFLevelStructure.Event.EventType), name);
             nextEvent.type = (UFLevelStructure.Event.EventType)typeParse;
 
@@ -432,7 +432,7 @@ public class RFLReader {
             pointer += 12;
             nextEvent.transform = new UFTransform(position, id);
 
-            UFUtils.ReadStringWithLengthHeader(bytes, ref pointer); //object name
+            UFUtils.ReadRFLString(bytes, ref pointer); //object name
             pointer += 1;
 
             nextEvent.delay = BitConverter.ToSingle(bytes, pointer);
@@ -447,8 +447,8 @@ public class RFLReader {
             nextEvent.float2 = BitConverter.ToSingle(bytes, pointer + 14);
             pointer += 18;
 
-            nextEvent.string1 = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
-            nextEvent.string2 = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            nextEvent.string1 = UFUtils.ReadRFLString(bytes, ref pointer);
+            nextEvent.string2 = UFUtils.ReadRFLString(bytes, ref pointer);
 
             nextEvent.links = ReadIntList(bytes);
 
@@ -485,7 +485,7 @@ public class RFLReader {
             PosRot posRot = UFUtils.GetPosRot(bytes, pointer);
             pointer += 48;
 
-            UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            UFUtils.ReadRFLString(bytes, ref pointer);
             nextPoint.transform = new UFTransform(posRot, id);
             pointer += 1;
 
@@ -522,7 +522,7 @@ public class RFLReader {
             nextEmitter.planeExtents = UFUtils.Getvector2(bytes, pointer + 8);
             pointer += 16;
 
-            nextEmitter.texture = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            nextEmitter.texture = UFUtils.ReadRFLString(bytes, ref pointer);
 
             nextEmitter.spawnDelay = BitConverter.ToSingle(bytes, pointer);
             nextEmitter.spawnRandomize = BitConverter.ToSingle(bytes, pointer + 4);
@@ -594,7 +594,7 @@ public class RFLReader {
             nextDecal.cbTransform = new CenteredBox(transform, extents);
             pointer += 12;
 
-            nextDecal.texture = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            nextDecal.texture = UFUtils.ReadRFLString(bytes, ref pointer);
 
             nextDecal.alpha = BitConverter.ToInt32(bytes, pointer);
             nextDecal.selfIlluminated = BitConverter.ToBoolean(bytes, pointer + 4);
@@ -619,9 +619,9 @@ public class RFLReader {
         pointer += 4;
         for(int i = 0; i < nboObjects; i++) {
             pointer += 15; //UID + random crap
-            UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            UFUtils.ReadRFLString(bytes, ref pointer);
             pointer += 48; //transform
-            UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            UFUtils.ReadRFLString(bytes, ref pointer);
             pointer += 1; //null
         }
     }
@@ -638,9 +638,9 @@ public class RFLReader {
         pointer += 4;
         for(int i = 0; i < nboObjects; i++) {
             pointer += 6; //UID + type enum
-            UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            UFUtils.ReadRFLString(bytes, ref pointer);
             pointer += 48; //transform
-            UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            UFUtils.ReadRFLString(bytes, ref pointer);
             pointer += 1; //null
         }
     }
@@ -700,7 +700,7 @@ public class RFLReader {
             nextEmiter.color = UFUtils.GetRGBAColor(bytes, pointer + 40); //includes alpha
             pointer += 44;
 
-            nextEmiter.texture = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            nextEmiter.texture = UFUtils.ReadRFLString(bytes, ref pointer);
 
             nextEmiter.fade = UFUtils.GetFlag(bytes, pointer, 1);
             nextEmiter.glow = UFUtils.GetFlag(bytes, pointer, 2);
@@ -758,7 +758,7 @@ public class RFLReader {
         for(int i = 0; i < nboMovingGroups; i++) {
             MovingGroup nextGroup;
 
-            nextGroup.name = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            nextGroup.name = UFUtils.ReadRFLString(bytes, ref pointer);
             pointer += 2; // null + 1 ???
 
             int nboKeyFrames = BitConverter.ToInt32(bytes, pointer);
@@ -775,7 +775,7 @@ public class RFLReader {
                 pointer += 48;
                 nextKey.transform = new UFTransform(posRot, id);
 
-                UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+                UFUtils.ReadRFLString(bytes, ref pointer);
                 pointer += 1;
 
                 nextKey.pauseTime = BitConverter.ToSingle(bytes, pointer);
@@ -807,19 +807,19 @@ public class RFLReader {
             nextGroup.startIndex = BitConverter.ToInt32(bytes, pointer + 4);
             pointer += 8;
 
-            nextGroup.startClip = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            nextGroup.startClip = UFUtils.ReadRFLString(bytes, ref pointer);
             nextGroup.startVol = BitConverter.ToSingle(bytes, pointer);
             pointer += 4;
 
-            nextGroup.loopClip = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            nextGroup.loopClip = UFUtils.ReadRFLString(bytes, ref pointer);
             nextGroup.loopVol = BitConverter.ToSingle(bytes, pointer);
             pointer += 4;
 
-            nextGroup.stopClip = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            nextGroup.stopClip = UFUtils.ReadRFLString(bytes, ref pointer);
             nextGroup.stopVol = BitConverter.ToSingle(bytes, pointer);
             pointer += 4;
 
-            nextGroup.closeClip = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            nextGroup.closeClip = UFUtils.ReadRFLString(bytes, ref pointer);
             nextGroup.closeVol = BitConverter.ToSingle(bytes, pointer);
             pointer += 4;
 
@@ -867,8 +867,8 @@ public class RFLReader {
             entity.team = BitConverter.ToInt32(bytes, pointer + 8);
             pointer += 12;
 
-            entity.wayPointList = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
-            entity.wayPointMethod = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            entity.wayPointList = UFUtils.ReadRFLString(bytes, ref pointer);
+            entity.wayPointMethod = UFUtils.ReadRFLString(bytes, ref pointer);
             pointer += 1;
 
             entity.boarded = BitConverter.ToBoolean(bytes, pointer);
@@ -891,13 +891,13 @@ public class RFLReader {
             entity.fov = BitConverter.ToInt32(bytes, pointer + 8);
             pointer += 12;
 
-            entity.primary = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
-            entity.secondary = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
-            entity.itemDrop = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
-            entity.stateAnim = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
-            entity.corpsePose = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
-            entity.skin = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
-            entity.deathAnim = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            entity.primary = UFUtils.ReadRFLString(bytes, ref pointer);
+            entity.secondary = UFUtils.ReadRFLString(bytes, ref pointer);
+            entity.itemDrop = UFUtils.ReadRFLString(bytes, ref pointer);
+            entity.stateAnim = UFUtils.ReadRFLString(bytes, ref pointer);
+            entity.corpsePose = UFUtils.ReadRFLString(bytes, ref pointer);
+            entity.skin = UFUtils.ReadRFLString(bytes, ref pointer);
+            entity.deathAnim = UFUtils.ReadRFLString(bytes, ref pointer);
 
             entity.aiMode = bytes[pointer];
             entity.aiAttackStyle = bytes[pointer + 1];
@@ -934,8 +934,8 @@ public class RFLReader {
             else
                 entity.customAttackRange = -1f;
 
-            entity.leftHandHolding = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
-            entity.rightHandHolding = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            entity.leftHandHolding = UFUtils.ReadRFLString(bytes, ref pointer);
+            entity.rightHandHolding = UFUtils.ReadRFLString(bytes, ref pointer);
 
             level.entities[i] = entity;
         }
@@ -1007,7 +1007,7 @@ public class RFLReader {
             int id = BitConverter.ToInt32(bytes, pointer);
             pointer += 4;
 
-            UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            UFUtils.ReadRFLString(bytes, ref pointer);
             pointer += 1;
 
             nextTrigger.box = BitConverter.ToBoolean(bytes, pointer);
@@ -1016,7 +1016,7 @@ public class RFLReader {
             nextTrigger.useKey = BitConverter.ToBoolean(bytes, pointer + 12);
             pointer += 13;
 
-            nextTrigger.keyName = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            nextTrigger.keyName = UFUtils.ReadRFLString(bytes, ref pointer);
 
             nextTrigger.weaponActivates = BitConverter.ToBoolean(bytes, pointer);
             nextTrigger.isNPC = BitConverter.ToBoolean(bytes, pointer + 2);
@@ -1155,7 +1155,7 @@ public class RFLReader {
             nextRoom.life = BitConverter.ToSingle(bytes, pointer);
             pointer += 4;
 
-            nextRoom.eaxEffect = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            nextRoom.eaxEffect = UFUtils.ReadRFLString(bytes, ref pointer);
 
             if(nextRoom.hasLiquid) {
                 Room.LiquidProperties liquid;
@@ -1164,7 +1164,7 @@ public class RFLReader {
                 liquid.color = UFUtils.GetRGBAColor(bytes, pointer + 4);
                 pointer += 8;
 
-                liquid.texture = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+                liquid.texture = UFUtils.ReadRFLString(bytes, ref pointer);
 
                 liquid.visibility = BitConverter.ToSingle(bytes, pointer);
                 liquid.type = (Room.LiquidProperties.LiquidType)BitConverter.ToInt32(bytes, pointer + 4);
@@ -1284,7 +1284,7 @@ public class RFLReader {
 
         string[] toReturn = new string[nb];
         for(int i = 0; i < nb; i++)
-            toReturn[i] = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+            toReturn[i] = UFUtils.ReadRFLString(bytes, ref pointer);
         
 
         return toReturn;
@@ -1315,11 +1315,11 @@ public class RFLReader {
         int id = BitConverter.ToInt32(bytes, pointer);
         pointer += 4;
 
-        name = UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+        name = UFUtils.ReadRFLString(bytes, ref pointer);
         PosRot posRot = UFUtils.GetPosRot(bytes, pointer);
         pointer += 48;
 
-        UFUtils.ReadStringWithLengthHeader(bytes, ref pointer);
+        UFUtils.ReadRFLString(bytes, ref pointer);
         pointer += 1;
 
         return new UFTransform(posRot, id);

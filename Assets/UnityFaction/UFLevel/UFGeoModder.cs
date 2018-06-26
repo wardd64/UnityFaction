@@ -4,13 +4,13 @@ using UnityEngine;
 using UFLevelStructure;
 using System;
 
-public class UFGeoModer : MonoBehaviour {
+public class UFGeoModder : MonoBehaviour {
 
     public int defaultHardness;
     public GeoRegion[] regions;
     public Material geoMaterial;
 
-    public void Set(UFLevel level, Material geoMaterial) {
+    public void Set(LevelData level, Material geoMaterial) {
         this.defaultHardness = level.hardness;
         this.regions = level.geoRegions;
         this.geoMaterial = geoMaterial;

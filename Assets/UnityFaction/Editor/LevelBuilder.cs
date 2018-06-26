@@ -9,7 +9,7 @@ using UFLevelStructure;
 public class LevelBuilder : EditorWindow {
 
     private static string lastRFLPath;
-    private UFLevel level;
+    private LevelData level;
 
     //GUI variables
     bool showGeneralContents, showGeometryContents, 
@@ -119,6 +119,9 @@ public class LevelBuilder : EditorWindow {
 
         if(GUILayout.Button("Build movers"))
             BuildMovers();
+
+        if(GUILayout.Button("Build triggers"))
+            BuildTriggers();
     }
 
     /* -----------------------------------------------------------------------------------------------
@@ -167,8 +170,8 @@ public class LevelBuilder : EditorWindow {
     }
 
     private void BuildGeoModer() {
-        Transform p = MakeParent("GeoModer");
-        UFGeoModer gm = p.gameObject.AddComponent<UFGeoModer>();
+        Transform p = MakeParent("GeoModder");
+        UFGeoModder gm = p.gameObject.AddComponent<UFGeoModder>();
         Material geoMat = GetMaterial(level.geomodTexture);
         gm.Set(level, geoMat);
     }
@@ -215,6 +218,17 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    private void BuildTriggers() {
+        Transform p = MakeParent("Triggers");
+        foreach(Trigger trigger in level.triggers) {
+            GameObject g = new GameObject("Trigger_" + trigger.transform.id);
+            g.transform.SetParent(p);
+            UFTrigger t = g.AddComponent<UFTrigger>();
+            UFUtils.SetTransform(t.transform, trigger.transform);
+            t.Set(trigger);
+        }
+    }
+
     /* -----------------------------------------------------------------------------------------------
      * -------------------------------------- HELPER METHODS -----------------------------------------
      * -----------------------------------------------------------------------------------------------
@@ -240,8 +254,9 @@ public class LevelBuilder : EditorWindow {
     }
 
     private void MakeRoot() {
-        if(root == null)
-            new GameObject(rootName);
+        GameObject r = new GameObject(rootName);
+        UFLevel l = r.AddComponent<UFLevel>();
+        l.Set(level);
     }
 
     private Transform MakeParent(string name) {

@@ -20,7 +20,7 @@ public class UFPlayerInfo : MonoBehaviour {
     private bool hasSkyRoom;
     private Room skyRoom;
 
-    public void Set(UFLevel level) {
+    public void Set(LevelData level) {
         this.levelName = level.name;
         this.author = level.author;
         this.playerStart = level.playerStart;
@@ -28,11 +28,21 @@ public class UFPlayerInfo : MonoBehaviour {
         this.spawnPoints = level.spawnPoints;
         this.fogStart = level.nearPlane;
         this.fogEnd = level.farPlane;
-        this.rooms = level.staticGeometry.rooms;
         this.defaultAmbient = level.ambientColor;
         this.fogColor = level.fogColor;
 
-        //TODO cull useless rooms that are just floating brushes, for performance
+        List<Room> roomList = new List<Room>();
+        foreach(Room room in level.staticGeometry.rooms) {
+            Vector3 roomExtents = room.aabb.max - room.aabb.min;
+            bool realRoom = roomExtents.x > 3f;
+            realRoom &= roomExtents.z > 3f;
+            realRoom &= roomExtents.y > 1.5f;
+
+            //TODO use life value of rooms
+            if(realRoom)
+                roomList.Add(room);
+        }
+        this.rooms = roomList.ToArray();
 
         foreach(Room room in rooms) {
             if(room.isSkyRoom) {

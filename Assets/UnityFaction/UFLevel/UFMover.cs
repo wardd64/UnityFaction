@@ -25,6 +25,8 @@ public class UFMover : MonoBehaviour {
         keys = group.keys;
         type = group.type;
         startKey = group.startIndex;
+        foreach(UFLevelStructure.Keyframe key in keys)
+            UFLevel.SetObject(key.transform.id, gameObject);
 
         //flags
         isDoor = group.isDoor;
@@ -80,7 +82,6 @@ public class UFMover : MonoBehaviour {
         rb = this.GetComponent<Rigidbody>();
         sound = this.GetComponent<AudioSource>();
         ResetMotion();
-        moving = true; //TODO set to false
     }
 
     /// <summary>
@@ -151,7 +152,8 @@ public class UFMover : MonoBehaviour {
         if(time > travTime) {
             //keyframe is finished, wrap up
             time -= travTime;
-            FinishRotation();
+            FinishSequence();
+            baseRot = rb.rotation;
 
             paused = moving && keys[lastKey].pauseTime > 0f;
             if(moving)
@@ -188,7 +190,7 @@ public class UFMover : MonoBehaviour {
             lastKey = nextKey;
             time -= travTime;
             if(AtLastKeyInSequence())
-                FinishPath();
+                FinishSequence();
 
             paused = moving && keys[lastKey].pauseTime > 0f;
             if(moving)
@@ -340,7 +342,7 @@ public class UFMover : MonoBehaviour {
             return lastKey == 0;        
     }
 
-    private void FinishPath() {
+    private void FinishSequence() {
         switch(type) {
         case MovingGroup.MovementType.Lift:
         case MovingGroup.MovementType.OneWay:
@@ -349,10 +351,9 @@ public class UFMover : MonoBehaviour {
         break;
 
         case MovingGroup.MovementType.PingPongOnce:
-        if(!completedSequence) {
-            forward = !forward;
+        forward = !forward;
+        if(!completedSequence)
             completedSequence = true;
-        }
         else
             moving = false;
         break;
@@ -362,10 +363,7 @@ public class UFMover : MonoBehaviour {
         break;
 
         case MovingGroup.MovementType.LoopOnce:
-        if(!completedSequence)
-            completedSequence = true;
-        else
-            moving = false;
+        moving = false;
         break;
 
         case MovingGroup.MovementType.LoopInfinite: break;
@@ -377,41 +375,8 @@ public class UFMover : MonoBehaviour {
         }
     }
 
-
-    private void FinishRotation() {
-        switch(type) {
-        case MovingGroup.MovementType.Lift:
-        case MovingGroup.MovementType.OneWay:
-        baseRot = rb.rotation;
-        forward = !forward;
-        moving = false;
-        break;
-
-        case MovingGroup.MovementType.LoopOnce:
-        case MovingGroup.MovementType.PingPongOnce:
-        if(!completedSequence) {
-            forward = !forward;
-            baseRot = rb.rotation;
-            completedSequence = true;
-        }
-        else
-            moving = false;
-        break;
-
-        case MovingGroup.MovementType.PingPongInfinite:
-        baseRot = forward ? rb.rotation : Quaternion.identity;
-        forward = !forward;
-        break;
-
-        case MovingGroup.MovementType.LoopInfinite:
-        baseRot = rb.rotation;
-        break;
-
-        default:
-        moving = false;
-        Debug.LogWarning("Encountered unkown movement type: " + type);
-        break;
-        }
+    public void Activate() {
+        moving = true;
     }
 
     private void PlayClip(AudioClip clip, float volume) {
