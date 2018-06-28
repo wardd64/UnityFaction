@@ -113,20 +113,8 @@ public class UFTrigger : MonoBehaviour {
         insideTime = 0f;
         buttonTime = 0f;
 
-        foreach(int link in links) {
-            
-            IDRef obj = UFLevel.GetByID(link);
-            switch(obj.type) {
-
-            case IDRef.Type.Keyframe:
-            obj.objectRef.GetComponentInParent<UFMover>().Activate();
-            break;
-
-            default:
-            Debug.LogWarning("Tried triggering object with unkown funcionality: " + obj);
-            break;
-            }
-        }
+        foreach(int link in links)
+            Activate(link);
 
         if(switchRef >= 0) {
             IDRef swtch = UFLevel.GetByID(switchRef);
@@ -135,6 +123,30 @@ public class UFTrigger : MonoBehaviour {
                 s.ActivatePermanent();
             else
                 s.Activate();
+        }
+    }
+
+    /// <summary>
+    /// Tries to activate an object in the scene with the given ID.
+    /// Logs warnings if the ID is invalid for any reason.
+    /// </summary>
+    public static void Activate(int id) {
+        IDRef obj = UFLevel.GetByID(id);
+        if(obj == null)
+            Debug.LogWarning("Tried activating non existant ID: " + id);
+        if(obj.objectRef == null)
+            Debug.LogWarning("Tried activating ID that is not in the scene: " + obj.id + ", of type " + obj.type);
+
+
+        switch(obj.type) {
+
+        case IDRef.Type.Keyframe:
+        obj.objectRef.GetComponentInParent<UFMover>().Activate();
+        break;
+
+        default:
+        Debug.LogWarning("Tried activating object with unkown funcionality: " + obj + ", of type " + obj.type);
+        break;
         }
     }
 }
