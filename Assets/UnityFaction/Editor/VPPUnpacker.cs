@@ -25,6 +25,8 @@ public class VPPUnpacker {
     const int BYTES_IN_STRING = 60; //Every string is allowed 60 characters
     const int BLOCK_SIZE = 0x0800; //vpp file is split in 2kB chunks
 
+    public const string assetSubFolder = "_UFAssets";
+
     [MenuItem("UnityFaction/Unpack VPP")]
     public static void UnpackVPP() {
 
@@ -46,7 +48,8 @@ public class VPPUnpacker {
 
         TryReadFile(vppPath, exportFolder);
 
-        Debug.Log("Unpacked successfully! Refresh the assets folder (Ctrl-R) to see its contents.");
+        Debug.Log("All contents have been moved succesfully!");
+        AssetDatabase.Refresh();
     }
 
     [MenuItem("UnityFaction/Import RF Source")]
@@ -68,11 +71,13 @@ public class VPPUnpacker {
         AlertProblem(vppPaths.Count > 0, "Selected folder did not contain any .vpp files. Please select proper source folder!");
 
         AssetDatabase.CreateFolder("Assets/UnityFaction", "RFSource");
+        AssetDatabase.CreateFolder("Assets/UnityFaction/RFSource", assetSubFolder);
 
         foreach(string vppPath in vppPaths)
             TryReadFile(vppPath, GetRFSourceFolder());
 
-        Debug.Log("All contents has been moved. Refresh the assets folder (Ctrl-R) but beware long loading time.");
+        Debug.Log("All contents have been moved succesfully!");
+        AssetDatabase.Refresh();
     }
 
     public static string GetRFSourceFolder() {

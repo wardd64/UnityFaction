@@ -26,7 +26,7 @@ public class LevelBuilder : EditorWindow {
         if(!string.IsNullOrEmpty(lastRFLPath))
             defaultPath = lastRFLPath;
 
-        string rflPath = EditorUtility.OpenFilePanel(fileSearchMessage, "Assets", "rfl");
+        string rflPath = EditorUtility.OpenFilePanel(fileSearchMessage, defaultPath, "rfl");
         if(string.IsNullOrEmpty(rflPath))
             return;
 
@@ -38,7 +38,7 @@ public class LevelBuilder : EditorWindow {
 
         builder.level = reader.level;
         if(!Directory.Exists(assetPath))
-            AssetDatabase.CreateFolder(Path.GetDirectoryName(lastRFLPath), "_UFAssets");
+            AssetDatabase.CreateFolder(Path.GetDirectoryName(lastRFLPath), VPPUnpacker.assetSubFolder);
     }
 
     private void OnGUI() {
@@ -172,7 +172,7 @@ public class LevelBuilder : EditorWindow {
     private void BuildGeoModer() {
         Transform p = MakeParent("GeoModder");
         UFGeoModder gm = p.gameObject.AddComponent<UFGeoModder>();
-        Material geoMat = GetMaterial(level.geomodTexture);
+        Material geoMat = GetMaterial(level.geomodTexture, assetPath);
         gm.Set(level, geoMat);
     }
 
@@ -234,10 +234,12 @@ public class LevelBuilder : EditorWindow {
      * -----------------------------------------------------------------------------------------------
      */
 
-    private static string assetPath {  get { return Path.GetDirectoryName(lastRFLPath) + "/_UFAssets/"; } }
+    private static string assetPath {  get { return Path.GetDirectoryName(lastRFLPath) + "/" + VPPUnpacker.assetSubFolder + "/"; } }
     private static string[] searchFolders { get { return new string[] {
-        assetPath.TrimEnd('/'), Path.GetDirectoryName(lastRFLPath) };
-    } }
+        assetPath.TrimEnd('/'),
+        Path.GetDirectoryName(lastRFLPath),
+        VPPUnpacker.GetRFSourceFolder().TrimEnd('/')
+    }; } }
     private string rootName { get { return "UF_<" + level.name + ">"; } }
 
     private Transform root
@@ -275,7 +277,7 @@ public class LevelBuilder : EditorWindow {
         return MakeMeshObject(geometry, faces, name);
     }
 
-    private static GameObject MakeMeshObject(Geometry geometry, List<Face> faces, string name) {
+    public static GameObject MakeMeshObject(Geometry geometry, List<Face> faces, string name) {
         //make object
         GameObject g = new GameObject(name);
 
@@ -299,22 +301,22 @@ public class LevelBuilder : EditorWindow {
         mf.sharedMesh = mesh;
 
         MeshRenderer mr = g.AddComponent<MeshRenderer>();
-        mr.materials = GetMaterials(usedTextures);
+        mr.materials = GetMaterials(usedTextures, assetPath);
 
         return g;
     }
 
-    public static Material[] GetMaterials(List<string> textures) {
+    public static Material[] GetMaterials(List<string> textures, string assetPath) {
         Material[] materials = new Material[textures.Count];
         for(int i = 0; i < materials.Length; i++)
-            materials[i] = GetMaterial(textures[i]);
+            materials[i] = GetMaterial(textures[i], assetPath);
         return materials;
     }
 
-    public static Material GetMaterial(string texture) {
+    public static Material GetMaterial(string texture, string assetPath) {
         string textureName = Path.GetFileNameWithoutExtension(texture);
         string materialName = textureName + ".mat";
-        string[] results = AssetDatabase.FindAssets(textureName, searchFolders);
+        string[] results = AssetDatabase.FindAssets(textureName);
 
         string texPath = null;
         foreach(string result in results) {
@@ -348,7 +350,7 @@ public class LevelBuilder : EditorWindow {
             return null;
 
         string clipName = Path.GetFileNameWithoutExtension(clip);
-        string[] results = AssetDatabase.FindAssets(clipName, searchFolders);
+        string[] results = AssetDatabase.FindAssets(clipName);
 
         foreach(string result in results) {
             string resultPath = AssetDatabase.GUIDToAssetPath(result);
@@ -371,7 +373,6 @@ public class LevelBuilder : EditorWindow {
         List<int>[] triangles = new List<int>[texCount];
         for(int i = 0; i < triangles.Length; i++)
             triangles[i] = new List<int>();
-        List<int> texRefs = new List<int>();
 
         foreach(Face face in faces) {
             //extract required data

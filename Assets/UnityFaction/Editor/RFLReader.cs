@@ -78,13 +78,12 @@ public class RFLReader {
         ReadRFL(bytes);
     }
 
-    private void ReadRFL(Byte[] bytes) {
+    private void ReadRFL(byte[] bytes) {
 
         //read header
         ReadHeader(bytes);
 
         //loop over all the sections
-        pointer = 32 + level.name.Length;
         for(int i = 0; i < sectionsCount; i++) {
             RFLSection nextSection = (RFLSection)BitConverter.ToInt32(bytes, pointer);
             ReadSection(nextSection, bytes);
@@ -110,7 +109,7 @@ public class RFLReader {
 
         uint signature = BitConverter.ToUInt32(bytes, 0);
         uint version = BitConverter.ToUInt32(bytes, 4);
-        uint timeStamp = BitConverter.ToUInt32(bytes, 8);
+        //uint timeStamp = BitConverter.ToUInt32(bytes, 8);
         playerStartOffset = BitConverter.ToInt32(bytes, 12);
         levelInfoOffset = BitConverter.ToInt32(bytes, 16);
         sectionsCount = BitConverter.ToInt32(bytes, 20);
@@ -123,6 +122,8 @@ public class RFLReader {
             throw new RFLReadException("File did not have correct RFL signature or a known version number.");
 
         level.name = UFUtils.ReadNullTerminatedString(bytes, 30);
+
+        pointer = 32 + level.name.Length;
 
         //immediately extract author name from level info
         int authorOffset = levelInfoOffset + level.name.Length + 16;
@@ -840,6 +841,8 @@ public class RFLReader {
     /// NOTES:
     /// </summary>
     private void ReadPlayerStart(byte[] bytes) {
+        if(pointer != playerStartOffset)
+            Debug.LogWarning("Found player start section at wrong location, continuing parsing anyway...");
         pointer += 8;
         level.playerStart = UFUtils.GetPosRot(bytes, pointer);
         pointer += 48;

@@ -101,6 +101,17 @@ public class UFUtils {
     }
 
     /// <summary>
+    /// Read 4 consecutive floats and returns them inside a Quaternion
+    /// </summary>
+    public static Quaternion GetQuaternion(byte[] bytes, int start) {
+        float x = BitConverter.ToSingle(bytes, start);
+        float y = BitConverter.ToSingle(bytes, start + 4);
+        float z = BitConverter.ToSingle(bytes, start + 8);
+        float w = BitConverter.ToSingle(bytes, start + 12);
+        return new Quaternion(x, y, z, w);
+    }
+
+    /// <summary>
     /// Rotations are stored as 3x3 matrices of floats, so they consist of 4x3x3=36 bytes.
     /// the entries of this matrix are stored in an awkard order, so make sure to refer to this method.
     /// </summary>
