@@ -47,7 +47,7 @@ public class V3DReader {
     //file structure parameters
     private string assetPath;
     private int pointer;
-    private int nboSubMeshes, nboMaterials, nboColSpheres;
+    private int nboSubMeshes, nboColSpheres;
 
     //output parameters
     private string fileName;
@@ -57,11 +57,17 @@ public class V3DReader {
     public V3DReader(string path) {
         byte[] bytes = File.ReadAllBytes(path);
         fileName = Path.GetFileNameWithoutExtension(path);
-        string inputDirectory = UFUtils.GetRelativeUnityPath(Path.GetDirectoryName(path));
-        assetPath = inputDirectory + "/" + VPPUnpacker.assetSubFolder + "/";
+
+        string inputDirectory;
+        if(UFUtils.IsAssetPath(path))
+            inputDirectory = UFUtils.GetRelativeUnityPath(Path.GetDirectoryName(path));
+        else
+            inputDirectory = Path.GetDirectoryName(path);
+
+        assetPath = inputDirectory + "/" + VPPUnpacker.assetFolder + "/";
 
         if(!Directory.Exists(assetPath))
-            AssetDatabase.CreateFolder(inputDirectory, VPPUnpacker.assetSubFolder);
+            AssetDatabase.CreateFolder(inputDirectory, VPPUnpacker.assetFolder);
 
         MakeGameObjectFromV3D(bytes);
     }
@@ -129,7 +135,7 @@ public class V3DReader {
 
         nboSubMeshes = BitConverter.ToInt32(bytes, pointer + 8);
         //total vertex count, total triangle count, unknown (null)
-        nboMaterials = BitConverter.ToInt32(bytes, pointer + 24);
+        //nboMaterials = BitConverter.ToInt32(bytes, pointer + 24);
         //two more unkowns (null)
         nboColSpheres = BitConverter.ToInt32(bytes, pointer + 36);
         pointer += 40;
@@ -164,6 +170,7 @@ public class V3DReader {
         pointer += 24;
 
         Mesh mesh = null;
+        string[] textures = null;
         int highestNboTriangles = 0;
 
         for(int i = 0; i < nboLod; i++) {
@@ -176,8 +183,10 @@ public class V3DReader {
             pointer += 8;
 
             short nboBatches = BitConverter.ToInt16(bytes, pointer);
-            int dataSize = BitConverter.ToInt32(bytes, pointer + 2);
-            pointer += 6;
+            pointer += 2;
+
+            int dataSize = BitConverter.ToInt32(bytes, pointer);
+            pointer += 4;
 
             //lod mesh data
             int meshPointer = pointer;
@@ -196,29 +205,30 @@ public class V3DReader {
             int nboTextures = BitConverter.ToInt32(bytes, pointer + 4);
             pointer += 8;
 
+            string[] nextTextures = new string[nboTextures];
             for(int j = 0; j < nboTextures; j++) {
-                byte id = bytes[pointer];
+                //byte id = bytes[pointer];
                 pointer += 1;
-                string textureFileName = UFUtils.ReadNullTerminatedString(bytes, ref pointer);
+                nextTextures[j] = UFUtils.ReadNullTerminatedString(bytes, ref pointer);
             }
 
             //update mesh if the level of detail is higher than the current record
             if(totalTriangles > highestNboTriangles) {
                 mesh = ReadMesh(bytes, meshPointer, batches, nboProps, unkownLodFlag1, unkownLodFlag2, nboUnkownLodObj);
                 highestNboTriangles = totalTriangles;
+                textures = nextTextures;
             } 
         }
 
         int nboMaterials = BitConverter.ToInt32(bytes, pointer);
         pointer += 4;
 
-        Material[] materials = new Material[nboMaterials];
+        //TODO: expand texture list with material specific information
+        //Material[] materials = new Material[nboMaterials];
         for(int i = 0; i < nboMaterials; i++) {
             
-            string diffuseTexture = UFUtils.ReadNullTerminatedString(bytes, pointer);
+            //string diffuseTexture = UFUtils.ReadNullTerminatedString(bytes, pointer);
             pointer += 32;
-
-            materials[i] = LevelBuilder.GetMaterial(diffuseTexture, assetPath);
 
             //4 coefficients, 4th one may be related to reflection value
             pointer += 16;
@@ -226,7 +236,7 @@ public class V3DReader {
             //string refTexture = UFUtils.ReadNullTerminatedString(bytes, pointer);
             pointer += 32;
 
-            bool twoSided = UFUtils.GetFlag(bytes, pointer, 1);
+            //bool twoSided = UFUtils.GetFlag(bytes, pointer, 1);
             pointer += 4; //more flags available with unkown purpose
         }
 
@@ -237,7 +247,7 @@ public class V3DReader {
             pointer += 28; //submesh name trailed by 4xnull
         }
 
-        GameObject toReturn = MakeMeshObject(mesh, name, materials);
+        GameObject toReturn = MakeMeshObject(mesh, name, textures);
 
         return toReturn;
     }
@@ -248,11 +258,11 @@ public class V3DReader {
         int nboBones = BitConverter.ToInt32(bytes, pointer);
         pointer += 4;
         for(int i = 0; i < nboBones; i++) {
-            UFUtils.ReadNullTerminatedString(bytes, pointer);
+            //UFUtils.ReadNullTerminatedString(bytes, pointer);
             pointer += 24;
-            Quaternion rotation = UFUtils.GetQuaternion(bytes, pointer);
-            Vector3 position = UFUtils.Getvector3(bytes, pointer + 16);
-            int parent = BitConverter.ToInt32(bytes, pointer + 28); //-1 means root 
+            //Quaternion rotation = UFUtils.GetQuaternion(bytes, pointer);
+            //Vector3 position = UFUtils.Getvector3(bytes, pointer + 16);
+            //int parent = BitConverter.ToInt32(bytes, pointer + 28); //-1 means root 
             pointer += 32;
         }
     }
@@ -264,12 +274,12 @@ public class V3DReader {
     private void ReadColSphere(byte[] bytes) {
         pointer += 8;
 
-        string name = UFUtils.ReadNullTerminatedString(bytes, pointer);
+        //string name = UFUtils.ReadNullTerminatedString(bytes, pointer);
         pointer += 24;
 
-        int bone = BitConverter.ToInt32(bytes, pointer); //-1 if not existant
-        Vector3 relPos = UFUtils.Getvector3(bytes, pointer + 4);
-        float radius = BitConverter.ToSingle(bytes, pointer + 16);
+        //int bone = BitConverter.ToInt32(bytes, pointer); //-1 if not existant
+        //Vector3 relPos = UFUtils.Getvector3(bytes, pointer + 4);
+        //float radius = BitConverter.ToSingle(bytes, pointer + 16);
         pointer += 20;
     }
 
@@ -294,6 +304,12 @@ public class V3DReader {
     private struct BatchInfo {
         public short nboVertices, nboTriangles, nboPositions, nboIndices, 
             unkn1, nboBoneLinks, nboTexCoords, unkn2, unkn3;
+
+        public override string ToString() {
+            return "v:" + nboVertices + ", t:" + nboTriangles + ", p:" + nboPositions
+                 + ", i:" + nboIndices + ", u1:" + unkn1 + ", bl:" + nboBoneLinks
+                  + ", tc:" + nboTexCoords + ", u2:" + unkn2 + ", u3:" + unkn3;
+        }
     }
 
     private Mesh ReadMesh(byte[] bytes, int start, BatchInfo[] batches, 
@@ -337,7 +353,9 @@ public class V3DReader {
             Pad(start, ref pointer);
 
             for(int j = 0; j < batch.nboVertices; j++) {
-                uvs.Add(UFUtils.Getvector2(bytes, pointer));
+                Vector2 nextUV = UFUtils.Getvector2(bytes, pointer);
+                nextUV = new Vector2(nextUV.x, -nextUV.y);
+                uvs.Add(nextUV);
                 pointer += 8;
             }
 
@@ -345,11 +363,16 @@ public class V3DReader {
 
             triangles[i] = new int[3 * batch.nboTriangles];
             for(int j = 0; j < batch.nboTriangles; j++) {
-                for(int k = 0; k < 3; k++)
-                    triangles[i][3 * j + k] = BitConverter.ToInt16(bytes, pointer + (2 * k)) + idxOffset;
+                for(int k = 0; k < 3; k++) {
+                    int nextVertRef = BitConverter.ToInt16(bytes, pointer + (2 * k)) + idxOffset;
+                    triangles[i][3 * j + k] = nextVertRef;
+                }
+                    
 
                 pointer += 8; //unkown; flag or padding
             }
+
+            idxOffset = vertices.Count;
 
             Pad(start, ref pointer);
 
@@ -365,12 +388,14 @@ public class V3DReader {
             //TODO use bones
             if(batch.nboBoneLinks > 0){
                 for(int j = 0; j < batch.nboVertices; j++) {
+                    /*
                     byte[] weights = new byte[4];
                     byte[] bones = new byte[4];
                     for(int k = 0; k < 4; k++) {
                         weights[k] = bytes[pointer + k];
                         weights[k] = bytes[pointer + 4 + k]; // -1 indicates unused
                     }
+                    */
                     pointer += 8;
 
 
@@ -379,11 +404,9 @@ public class V3DReader {
             }
 
             if(unkownLodFlag2) {
-                pointer += 2 * nboUnkownLodObj * 4;
+                pointer += 2 * nboUnkownLodObj;
                 Pad(start, ref pointer);
             }
-
-            idxOffset = vertices.Count;
         }
         Pad(start, ref pointer);
         for(int i = 0; i < nboProps; i++) {
@@ -404,32 +427,27 @@ public class V3DReader {
     private GameObject MakeMeshObject(GameObject[] subMeshes, string name) {
         GameObject g = new GameObject(name);
 
-        foreach(GameObject sg in subMeshes) {
-            for(int i = 0; i < sg.transform.childCount; i++)
-                sg.transform.GetChild(i).SetParent(g.transform);
-            GameObject.DestroyImmediate(sg);
-        }
+        foreach(GameObject sg in subMeshes)
+            sg.transform.SetParent(g.transform);
+
         return g;
     }
 
-    private GameObject MakeMeshObject(Mesh mesh, string name, Material[] materials) {
+    private GameObject MakeMeshObject(Mesh mesh, string name, string[] textures) {
         GameObject g = new GameObject(name);
 
         MeshFilter mf = g.AddComponent<MeshFilter>();
         mf.sharedMesh = mesh;
+
+        Material[] materials = LevelBuilder.GetMaterials(textures, assetPath);
         MeshRenderer mr = g.AddComponent<MeshRenderer>();
         mr.materials = materials;
         mesh.name = name;
 
         //export mesh so we can continue to refer to it in prefabs
-        string meshPath = assetPath + name + ".obj";
-        ObjExporter.DoExport(g, true, meshPath);
-        GameObject.DestroyImmediate(g);
-
-        AssetDatabase.Refresh();
-        g = AssetDatabase.LoadAssetAtPath<GameObject>(meshPath);
-        g = GameObject.Instantiate(g);
-        g.name = name;
+        string meshPath = assetPath + fileName + "_subMesh_" + name + ".asset";
+        AssetDatabase.CreateAsset(mesh, meshPath);
+        mf.mesh = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
 
         return g;
     }

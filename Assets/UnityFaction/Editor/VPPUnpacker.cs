@@ -25,8 +25,6 @@ public class VPPUnpacker {
     const int BYTES_IN_STRING = 60; //Every string is allowed 60 characters
     const int BLOCK_SIZE = 0x0800; //vpp file is split in 2kB chunks
 
-    public const string assetSubFolder = "_UFAssets";
-
     [MenuItem("UnityFaction/Unpack VPP")]
     public static void UnpackVPP() {
 
@@ -46,7 +44,7 @@ public class VPPUnpacker {
 
         AlertProblem(UFUtils.IsAssetPath(exportFolder), "Can only export files into an Asset folder!");
 
-        TryReadFile(vppPath, exportFolder);
+        ReadFile(vppPath, exportFolder);
 
         Debug.Log("All contents have been moved succesfully!");
         AssetDatabase.Refresh();
@@ -70,21 +68,29 @@ public class VPPUnpacker {
 
         AlertProblem(vppPaths.Count > 0, "Selected folder did not contain any .vpp files. Please select proper source folder!");
 
-        AssetDatabase.CreateFolder("Assets/UnityFaction", "RFSource");
-        AssetDatabase.CreateFolder("Assets/UnityFaction/RFSource", assetSubFolder);
+        string sourcePath = ufPath + "/" + sourceFolder;
+        string assetPath = sourcePath + "/" + assetFolder;
+        if(!Directory.Exists(sourcePath))
+            AssetDatabase.CreateFolder(ufPath, sourceFolder);
+        if(!Directory.Exists(assetPath))
+            AssetDatabase.CreateFolder(sourcePath, assetFolder);
 
         foreach(string vppPath in vppPaths)
-            TryReadFile(vppPath, GetRFSourceFolder());
+            ReadFile(vppPath, GetRFSourcePath());
 
         Debug.Log("All contents have been moved succesfully!");
         AssetDatabase.Refresh();
     }
 
-    public static string GetRFSourceFolder() {
-        return "Assets/UnityFaction/RFSource/";
+    private const string ufPath = "Assets/UnityFaction";
+    private const string sourceFolder = "RFSource";
+    public const string assetFolder = "_UFAssets";
+
+    public static string GetRFSourcePath() {
+        return ufPath + "/" + sourceFolder;
     }
 
-    private static void TryReadFile(string vppPath, string exportFolder){
+    private static void ReadFile(string vppPath, string exportFolder){
         byte[] bytes = File.ReadAllBytes(vppPath);
         SplitIntoSubFiles(bytes, exportFolder);
     }
@@ -130,7 +136,17 @@ public class VPPUnpacker {
         Byte[] fileBytes = new Byte[length];
         for(int i = 0; i < length; i++)
             fileBytes[i] = bytes[start + i];
-        File.WriteAllBytes(exportFolder + '/' + name, fileBytes);
+        string exportPath = exportFolder + '/' + name;
+        File.WriteAllBytes(exportPath, fileBytes);
+
+        //handle extentions that require further processing 
+        string ext = Path.GetExtension(name).TrimStart('.').ToLower();
+        switch(ext) {
+        case "v3d": case "v3m": case "v3c":
+        V3DReader modelReader = new V3DReader(exportPath);
+        modelReader.MakePrefabAtAssetPath();
+        break;
+        }
     }
 
     /// <summary>

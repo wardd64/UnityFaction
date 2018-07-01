@@ -38,7 +38,7 @@ public class LevelBuilder : EditorWindow {
 
         builder.level = reader.level;
         if(!Directory.Exists(assetPath))
-            AssetDatabase.CreateFolder(Path.GetDirectoryName(lastRFLPath), VPPUnpacker.assetSubFolder);
+            AssetDatabase.CreateFolder(Path.GetDirectoryName(lastRFLPath), VPPUnpacker.assetFolder);
     }
 
     private void OnGUI() {
@@ -119,6 +119,9 @@ public class LevelBuilder : EditorWindow {
 
         if(GUILayout.Button("Build movers"))
             BuildMovers();
+
+        if(GUILayout.Button("Build clutter"))
+            BuildClutter();
 
         if(GUILayout.Button("Build triggers"))
             BuildTriggers();
@@ -218,6 +221,19 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    private void BuildClutter() {
+        Transform p = MakeParent("Clutter");
+        foreach(Clutter clutter in level.clutter) {
+            GameObject prefab = GetPrefab(clutter.name);
+            if(prefab == null)
+                continue;
+            GameObject g = GameObject.Instantiate(prefab, p);
+            g.AddComponent<UFClutter>();
+            UFLevel.SetObject(clutter.transform.id, g);
+            UFUtils.SetTransform(g.transform, clutter.transform);
+        }
+    }
+
     private void BuildTriggers() {
         Transform p = MakeParent("Triggers");
         foreach(Trigger trigger in level.triggers) {
@@ -225,6 +241,7 @@ public class LevelBuilder : EditorWindow {
             g.transform.SetParent(p);
             UFTrigger t = g.AddComponent<UFTrigger>();
             UFUtils.SetTransform(t.transform, trigger.transform);
+            UFLevel.SetObject(trigger.transform.id, g);
             t.Set(trigger);
         }
     }
@@ -234,11 +251,11 @@ public class LevelBuilder : EditorWindow {
      * -----------------------------------------------------------------------------------------------
      */
 
-    private static string assetPath {  get { return Path.GetDirectoryName(lastRFLPath) + "/" + VPPUnpacker.assetSubFolder + "/"; } }
+    private static string assetPath {  get { return Path.GetDirectoryName(lastRFLPath) + "/" + VPPUnpacker.assetFolder + "/"; } }
     private static string[] searchFolders { get { return new string[] {
         assetPath.TrimEnd('/'),
         Path.GetDirectoryName(lastRFLPath),
-        VPPUnpacker.GetRFSourceFolder().TrimEnd('/')
+        VPPUnpacker.GetRFSourcePath().TrimEnd('/')
     }; } }
     private string rootName { get { return "UF_<" + level.name + ">"; } }
 
@@ -306,11 +323,15 @@ public class LevelBuilder : EditorWindow {
         return g;
     }
 
-    public static Material[] GetMaterials(List<string> textures, string assetPath) {
-        Material[] materials = new Material[textures.Count];
+    public static Material[] GetMaterials(string[] textures, string assetPath) {
+        Material[] materials = new Material[textures.Length];
         for(int i = 0; i < materials.Length; i++)
             materials[i] = GetMaterial(textures[i], assetPath);
         return materials;
+    }
+
+    public static Material[] GetMaterials(List<string> textures, string assetPath) {
+        return GetMaterials(textures.ToArray(), assetPath);
     }
 
     public static Material GetMaterial(string texture, string assetPath) {
@@ -339,6 +360,20 @@ public class LevelBuilder : EditorWindow {
         //neither material nor texture exists
         Debug.LogWarning("Could not find texture: " + texture);
         return GenerateDefaultMat();
+    }
+
+    public static GameObject GetPrefab(string name) {
+        string prefabName = name + ".prefab";
+        string[] results = AssetDatabase.FindAssets(name);
+        foreach(string result in results) {
+            string resultPath = AssetDatabase.GUIDToAssetPath(result);
+            string resultName = Path.GetFileName(resultPath);
+            if(resultName == prefabName)
+                return (GameObject)AssetDatabase.LoadAssetAtPath(resultPath, typeof(GameObject));
+        }
+
+        Debug.LogWarning("Could not find prefab for " + name);
+        return null;
     }
 
     public static Material GenerateDefaultMat() {

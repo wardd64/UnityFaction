@@ -1,14 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UFLevelStructure;
 using UnityEngine;
 
-public class UFSwitch : MonoBehaviour {
+public class UFClutter : MonoBehaviour {
 
-	public void ActivatePermanent() {
+    public void ActivatePermanent() {
         //TODO
     }
 
     public void Activate() {
-        //TODO
+        //TODO 
     }
 }
