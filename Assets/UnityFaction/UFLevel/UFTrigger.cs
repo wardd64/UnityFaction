@@ -119,10 +119,7 @@ public class UFTrigger : MonoBehaviour {
         if(switchRef >= 0) {
             IDRef swtch = UFLevel.GetByID(switchRef);
             UFClutter s = swtch.objectRef.GetComponent<UFClutter>();
-            if(permanent)
-                s.ActivatePermanent();
-            else
-                s.Activate();
+            s.Activate();
         }
     }
 

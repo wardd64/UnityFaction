@@ -18,7 +18,13 @@ public class UFPlayerMovement : MonoBehaviour {
 
     Vector3 velocity;
     bool hitGround;
-    bool jumping;
+    float jumpTime;
+
+    float rotationX, rotationY;
+    private const int rotSmoothing = 3;
+    const float minY = -90f;
+    const float maxY = 90f;
+    float[] prevRotX, prevRotY;
 
     //movement constants
     private const float walkSpeed = 10f; //movement speed in m/s
@@ -30,9 +36,9 @@ public class UFPlayerMovement : MonoBehaviour {
     private const float stepOver = 0.2f; //Highest distance player can safely step over
     private const float footing = 0.01f; //extra distance to make sure player holds on to the ground
     private const float slideSlope = 50f; //Angle that seperates floors and ceilings from walls
-    private const float crouchSpeed = 2f; //movement speed while crouching
+    private const float crouchSpeed = 4f; //movement speed while crouching
     private const float standingHeight = 1.80f, crouchingHeight = 1.32f; //cc height
-    private const float jumpStopGravMultiplier = 2f;
+    private const float antJmpGMulplr = 4f; //maximum gravity multiplier used to cut jump short
 
     /// <summary>
     /// Unit vector pointing horizontally in the direction the player is turned towards
@@ -55,6 +61,10 @@ public class UFPlayerMovement : MonoBehaviour {
         set { velocity = new Vector3(value.x, velocity.y, value.z); }
     }
     public float horSpeed { get { return horVel.magnitude; } }
+    public float vertVel {
+        get { return velocity.y; }
+        set { velocity = new Vector3(velocity.x, value, velocity.z); }
+    }
     public float jumpSpeed { get { return Mathf.Sqrt(2 * jumpHeight * Physics.gravity.magnitude); } }
     public float horizontalDrag { get { return airSteering / walkSpeed; } }
 
@@ -65,6 +75,7 @@ public class UFPlayerMovement : MonoBehaviour {
         cc = this.GetComponent<CharacterController>();
         playerCamera = FindObjectOfType<Camera>();
         moveSound = this.GetComponentInChildren<UFPlayerMoveSounds>();
+        SetRotSmoothing(rotSmoothing);
     }
 
     private void OnEnable() {
@@ -100,7 +111,37 @@ public class UFPlayerMovement : MonoBehaviour {
         bool click = Input.GetMouseButtonDown(0);
 
         //TODO: FPS movement
+        float sensitivity = 10f;
 
+        for(int i = 0; i < rotSmoothing - 1; i++) {
+            prevRotX[i] = prevRotX[i + 1];
+            prevRotY[i] = prevRotY[i + 1];
+        }
+
+        float newRotX = prevRotX[rotSmoothing - 1] + Input.GetAxis("Mouse X") * sensitivity;
+        prevRotX[rotSmoothing - 1] = newRotX;
+        float newRotY = prevRotY[rotSmoothing - 1] + Input.GetAxis("Mouse Y") * sensitivity;
+        prevRotY[rotSmoothing - 1] = Mathf.Clamp(newRotY, minY, maxY);
+
+        rotationX = 0f;
+        rotationY = 0f;
+        for(int i = 0; i < rotSmoothing; i++) {
+            rotationX += prevRotX[i];
+            rotationY += prevRotY[i];
+        }
+        rotationX /= rotSmoothing;
+        rotationY /= rotSmoothing;
+
+        transform.localEulerAngles = new Vector3(0, rotationX, 0);
+        playerCamera.transform.localRotation = Quaternion.Euler(-rotationY, 0, 0);
+    }
+
+    private void SetRotSmoothing(int rotSmoothing) {
+        prevRotX = new float[rotSmoothing];
+        prevRotY = new float[rotSmoothing];
+        rotationX = transform.eulerAngles.y;
+        for(int i = 0; i < rotSmoothing; i++)
+            prevRotX[i] = rotationX;
     }
 
 
@@ -128,6 +169,7 @@ public class UFPlayerMovement : MonoBehaviour {
         if(left)
             horizontal -= 1f;
         Vector3 movement = (new Vector3(horizontal , 0f, vertical)).normalized;
+        movement = transform.rotation * movement;
 
         //seperate motion updates
         switch(motionState) {
@@ -164,18 +206,18 @@ public class UFPlayerMovement : MonoBehaviour {
 
         if(jumpDown && !characterAnim.GetBool("Push")) {
             //starting a jump
-            jumping = true;
+            jumpTime = Time.deltaTime;
             characterAnim.SetTrigger("Jump");
             moveSound.Jump();
 
             float oldSpd = this.velocity.y;
             if(jumpSpeed < oldSpd + minJumpSpeed)
-                this.velocity.y += minJumpSpeed;
+                vertVel += minJumpSpeed;
             else
-                this.velocity.y = jumpSpeed;
+                vertVel = jumpSpeed;
 
-            Move();
             motionState = MotionState.air;
+            AirMove(movement / walkSpeed, true);
         }
         else if(crouch) {
             motionState = MotionState.crouch;
@@ -188,7 +230,7 @@ public class UFPlayerMovement : MonoBehaviour {
 
             if(!hitGround) {
                 //walked off of an object
-                velocity.y = 0f;
+                vertVel = 0f;
                 motionState = MotionState.air;
             }
         }
@@ -204,7 +246,7 @@ public class UFPlayerMovement : MonoBehaviour {
 
         if(!hitGround) {
             //walked off of an object
-            velocity.y = 0f;
+            vertVel = 0f;
             motionState = MotionState.air;
         }
         else if(!crouch) {
@@ -215,20 +257,29 @@ public class UFPlayerMovement : MonoBehaviour {
         }
     }
 
+    private float GetGravMultiplier(float max, float time, float v0, float g) {
+        float b = Mathf.Sqrt(g * (max * max - 1) / v0);
+        return Mathf.Max(max - b * time, 1f);
+    }
+
     private void AirMove(Vector3 movement, bool jump) {
         Vector3 acceleration = movement * airSteering;
         Vector3 grav = Physics.gravity;
 
         //unphysically push player down when hes not holding the jump button
-        if(this.velocity.y > 0f && jumping && !jump)
-            grav *= jumpStopGravMultiplier;
+        if(jumpTime > 0f) {
+            jumpTime += Time.deltaTime;
+            if(!jump)
+                grav *= GetGravMultiplier(antJmpGMulplr, jumpTime, jumpSpeed, grav.magnitude);
+        }
 
         acceleration += grav;
 
-        Vector3 drag = this.velocity * horizontalDrag;
-        drag.y = velocity.y * (velocity.y > 0f ? 0f : verticalDrag);
+        Vector3 horDrag = horVel * horizontalDrag;
+        float vertDrag = vertVel < 0 ? verticalDrag * vertVel : 0f;
+        Vector3 drag = horDrag + Vector3.up * vertDrag;
         acceleration -= drag;
-        this.velocity += acceleration * Time.deltaTime;
+
         Move(acceleration);
     }
 
@@ -283,24 +334,15 @@ public class UFPlayerMovement : MonoBehaviour {
             //we hit the ground
             hitGround = true;
             moveSound.SetLastGroundObject(hit.collider);
-            if(motionState == MotionState.air) {
-                //landing!
-                motionState = MotionState.ground;
-                moveSound.Jump();
-                jumping = false;
-            }
+            if(motionState == MotionState.air)
+                Land();
+        }
+    }
 
-        }
-        else if(y < -wallLimit) {
-            //we hit the ceiling
-            if(velocity.y > 0)
-                velocity.y = 0;
-        }
-        else {
-            //we hit a wall
-            if(Vector3.Dot(velocity, hit.normal) < 0f)
-                velocity -= Vector3.Project(velocity, hit.normal);
-        }
+    private void Land() {
+        motionState = MotionState.ground;
+        moveSound.Jump();
+        jumpTime = 0f;
     }
 
     /// <summary>
@@ -308,7 +350,9 @@ public class UFPlayerMovement : MonoBehaviour {
     /// Any vertical component of the velocity is ignored.
     /// </summary>
     void Walk() {
-        if(!cc.gameObject.activeInHierarchy || !cc.enabled)
+        float dt = Time.deltaTime;
+
+        if(!cc.gameObject.activeInHierarchy || !cc.enabled || dt <= 0f)
             return;
 
         Vector3 fro = this.transform.position;
@@ -340,35 +384,30 @@ public class UFPlayerMovement : MonoBehaviour {
 
         //set velocity to correspond to the actual distance travel.
         Vector3 realDist = this.transform.position - fro;
-        velocity = realDist / Time.deltaTime;
-        float speed = realDist.magnitude / Time.deltaTime;
+        float speed = velocity.magnitude;
+        velocity = realDist / dt;
+        speed = realDist.magnitude / dt;
+
         //Restrain velocity if it exceeds target speed
         if(speed > walkSpeed)
             velocity *= walkSpeed / speed;
     }
 
     /**
-	 * Move one update tick at velocity (with no acceleration)
-	 */
-    private void Move() {
-        if(!cc.gameObject.activeInHierarchy || !cc.enabled)
-            return;
-
-        Vector3 toMove = velocity * Time.deltaTime;
-        cc.Move(toMove);
-    }
-
-    /**
 	 * Move one update tick at velocity and the given acceleration.
 	 */
     private void Move(Vector3 acceleration) {
-        if(!cc.gameObject.activeInHierarchy || !cc.enabled)
+        float dt = Time.deltaTime;
+
+        if(!cc.gameObject.activeInHierarchy || !cc.enabled || dt <= 0f)
             return;
 
-        float dt = Time.deltaTime;
-        Vector3 toMove = velocity * dt;
-        toMove = toMove + acceleration * dt * dt / 2f;
-        cc.Move(toMove);
+        Vector3 fro = transform.position;
+        cc.Move(velocity * dt);
+        velocity = (transform.position - fro) / dt;
+
+        cc.Move(acceleration * dt * dt / 2f);
+        velocity += acceleration * dt;
     }
 
     /// <summary>
