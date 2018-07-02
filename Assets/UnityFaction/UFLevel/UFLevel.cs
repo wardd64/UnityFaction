@@ -46,6 +46,8 @@ public class UFLevel : MonoBehaviour {
             SetID(d.transform.id, d, IDRef.Type.Event);
         foreach(Entity d in level.entities)
             SetID(d.transform.id, d, IDRef.Type.Entity);
+        foreach(PushRegion d in level.pushRegions)
+            SetID(d.transform.id, d, IDRef.Type.PushRegion);
         foreach(Trigger d in level.triggers)
             SetID(d.transform.id, d, IDRef.Type.Trigger);
     }

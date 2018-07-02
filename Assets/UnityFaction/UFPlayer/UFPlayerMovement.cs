@@ -13,7 +13,7 @@ public class UFPlayerMovement : MonoBehaviour {
 
     MotionState motionState;
     public enum MotionState {
-        ground, air, crouch
+        ground, air, crouch, climb
     }
 
     Vector3 velocity;
@@ -26,17 +26,19 @@ public class UFPlayerMovement : MonoBehaviour {
     const float maxY = 90f;
     float[] prevRotX, prevRotY;
 
+    Vector3 shiftVelocity;
+
     //movement constants
-    private const float walkSpeed = 10f; //movement speed in m/s
+    private const float walkSpeed = 8f; //movement speed in m/s
     private const float accelTime = 0.2f; //time needed to achieve walkspeed
     private const float verticalDrag = 0.5f; //aerial vertical drag force
-    private const float airSteering = 10f; //push force the player can use to steer while airborne
+    private const float airSteering = 5f; //push force the player can use to steer while airborne
     private const float jumpHeight = 2.5f; //height in m the player can jump
     private const float minJumpSpeed = 1f; //additive jump speed when player is walking up a ramp
     private const float stepOver = 0.2f; //Highest distance player can safely step over
     private const float footing = 0.01f; //extra distance to make sure player holds on to the ground
     private const float slideSlope = 50f; //Angle that seperates floors and ceilings from walls
-    private const float crouchSpeed = 4f; //movement speed while crouching
+    private const float crouchSpeed = 6f; //movement speed while crouching
     private const float standingHeight = 1.80f, crouchingHeight = 1.32f; //cc height
     private const float antJmpGMulplr = 4f; //maximum gravity multiplier used to cut jump short
 
@@ -55,18 +57,23 @@ public class UFPlayerMovement : MonoBehaviour {
 
     public float speed { get { return velocity.magnitude; } }
     public Transform ragHip { get { return this.GetComponent<Ragdoll>().ragHip; } }
+    public bool grounded { get {
+            return hitGround 
+                || motionState == MotionState.ground 
+                || motionState == MotionState.crouch;
+    } }
 
-    public Vector3 horVel {
+    private Vector3 horVel {
         get { return Vector3.ProjectOnPlane(velocity, Vector3.up); }
         set { velocity = new Vector3(value.x, velocity.y, value.z); }
     }
-    public float horSpeed { get { return horVel.magnitude; } }
-    public float vertVel {
+    private float horSpeed { get { return horVel.magnitude; } }
+    private float vertVel {
         get { return velocity.y; }
         set { velocity = new Vector3(velocity.x, value, velocity.z); }
     }
-    public float jumpSpeed { get { return Mathf.Sqrt(2 * jumpHeight * Physics.gravity.magnitude); } }
-    public float horizontalDrag { get { return airSteering / walkSpeed; } }
+    private float jumpSpeed { get { return Mathf.Sqrt(2 * jumpHeight * Physics.gravity.magnitude); } }
+    private float horizontalDrag { get { return airSteering / walkSpeed; } }
 
     float wallLimit { get { return Mathf.Sin((90 - slideSlope) * Mathf.Deg2Rad); } }
 
@@ -182,6 +189,9 @@ public class UFPlayerMovement : MonoBehaviour {
         case MotionState.crouch:
         CrouchMove(movement, crouch);
         break;
+        case MotionState.climb:
+        ClimbMove(movement);
+        break;
         default:
         Debug.LogError("Unexpected motion state: " + motionState);
         break;
@@ -222,11 +232,11 @@ public class UFPlayerMovement : MonoBehaviour {
         else if(crouch) {
             motionState = MotionState.crouch;
             horVel /= 2;
-            Walk();
+            MoveCCWalking();
         }
         else {
             //simply walking
-            Walk();
+            MoveCCWalking();
 
             if(!hitGround) {
                 //walked off of an object
@@ -242,7 +252,7 @@ public class UFPlayerMovement : MonoBehaviour {
 
         horVel = Vector3.MoveTowards(horVel, movement, dv);
 
-        Walk();
+        MoveCCWalking();
 
         if(!hitGround) {
             //walked off of an object
@@ -280,7 +290,14 @@ public class UFPlayerMovement : MonoBehaviour {
         Vector3 drag = horDrag + Vector3.up * vertDrag;
         acceleration -= drag;
 
-        Move(acceleration);
+        MoveCCFlying(acceleration);
+    }
+
+    private void ClimbMove(Vector3 movement) {
+        Vector3 acceleration = movement * airSteering;
+        Vector3 drag = horizontalDrag * velocity;
+        MoveCCFlying(-drag);
+        motionState = MotionState.air;
     }
 
     /// <summary>
@@ -349,7 +366,7 @@ public class UFPlayerMovement : MonoBehaviour {
     /// Moves player over the ground at his velocity.
     /// Any vertical component of the velocity is ignored.
     /// </summary>
-    void Walk() {
+    void MoveCCWalking() {
         float dt = Time.deltaTime;
 
         if(!cc.gameObject.activeInHierarchy || !cc.enabled || dt <= 0f)
@@ -396,7 +413,7 @@ public class UFPlayerMovement : MonoBehaviour {
     /**
 	 * Move one update tick at velocity and the given acceleration.
 	 */
-    private void Move(Vector3 acceleration) {
+    private void MoveCCFlying(Vector3 acceleration) {
         float dt = Time.deltaTime;
 
         if(!cc.gameObject.activeInHierarchy || !cc.enabled || dt <= 0f)
@@ -449,5 +466,17 @@ public class UFPlayerMovement : MonoBehaviour {
     public static bool collidesWithTerrain(RaycastHit[] hits) {
         RaycastHit hit;
         return collidesWithTerrain(hits, out hit);
+    }
+
+    public void SetVelocity(Vector3 velocity) {
+        this.velocity = velocity;
+    }
+
+    public void ShiftVelocity(Vector3 velocity) {
+        this.shiftVelocity = velocity;
+    }
+
+    public void ClimbState() {
+        motionState = MotionState.climb;
     }
 }

@@ -11,6 +11,7 @@ public class LevelData {
         events = new UFLevelStructure.Event[0];
         spawnPoints = new SpawnPoint[0];
         particleEmiters = new UFLevelStructure.ParticleEmiter[0];
+        pushRegions = new PushRegion[0];
         decals = new Decal[0];
         climbingRegions = new ClimbingRegion[0];
         boltEmiters = new BoltEmiter[0];
@@ -46,6 +47,7 @@ public class LevelData {
     public SpawnPoint[] spawnPoints;
     public ParticleEmiter[] particleEmiters;
     public Decal[] decals;
+    public PushRegion[] pushRegions;
     public ClimbingRegion[] climbingRegions;
     public BoltEmiter[] boltEmiters;
     public UFTransform[] targets;

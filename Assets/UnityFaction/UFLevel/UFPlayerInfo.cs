@@ -27,7 +27,7 @@ public class UFPlayerInfo : MonoBehaviour {
         this.multiplayer = level.multiplayer;
         this.spawnPoints = level.spawnPoints;
         this.fogStart = level.nearPlane;
-        this.fogEnd = level.farPlane;
+        this.fogEnd = Mathf.Max(fogStart + 10f, level.farPlane);
         this.defaultAmbient = level.ambientColor;
         this.fogColor = level.fogColor;
 

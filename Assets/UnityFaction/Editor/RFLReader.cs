@@ -170,7 +170,7 @@ public class RFLReader {
         case RFLSection.Particlemiters: ReadParticleEmiters(bytes); break;
         case RFLSection.GasRegions: SkipSection(bytes); break;
         case RFLSection.Decals: ReadDecalls(bytes); break;
-        case RFLSection.PushRegions: SkipSection(bytes); break;
+        case RFLSection.PushRegions: ReadPushRegions(bytes); break;
         case RFLSection.ClimbingRegions: ReadClimbingRegions(bytes); break;
         case RFLSection.BoltEmiters: ReadBoltEmiters(bytes); break;
         case RFLSection.Targets: ReadTargets(bytes); break;
@@ -650,6 +650,66 @@ public class RFLReader {
     /// SECTION: Climbing regions
     /// INCLUDED: Optionally
     /// CONTAINS:
+    /// NOTES: Length depends on box/sphere shape
+    /// </summary>
+    private void ReadPushRegions(byte[] bytes) {
+        int nboPushRegions = BitConverter.ToInt32(bytes, pointer + 8);
+        level.pushRegions = new PushRegion[nboPushRegions];
+        pointer += 12;
+
+        for(int i = 0; i < nboPushRegions; i++) {
+            PushRegion nextRegion;
+
+            nextRegion.transform = ReadFullTransform(bytes);
+
+            nextRegion.shape = (PushRegion.PushShape)BitConverter.ToInt32(bytes, pointer);
+            pointer += 4;
+
+            switch(nextRegion.shape) {
+
+            case PushRegion.PushShape.alignedBox: case PushRegion.PushShape.orientedBox:
+            nextRegion.extents = UFUtils.Getvector3(bytes, pointer);
+            nextRegion.sphereRadius = 0f;
+            pointer += 12;
+            break;
+
+            case PushRegion.PushShape.sphere:
+            nextRegion.extents = Vector3.zero;
+            nextRegion.sphereRadius = BitConverter.ToSingle(bytes, pointer);
+            pointer += 4;
+            break;
+
+            default:
+            nextRegion.extents = Vector3.zero;
+            nextRegion.sphereRadius = 0f;
+            break;
+            }
+            
+            nextRegion.strength = BitConverter.ToSingle(bytes, pointer);
+
+            bool profile1 = UFUtils.GetFlag(bytes, pointer + 4, 2);
+            bool profile2 = UFUtils.GetFlag(bytes, pointer + 4, 3);
+            int profileInt = (profile1 ? 1 : 0) + (profile2 ? 2 : 0);
+            nextRegion.profile = (PushRegion.Profile)profileInt;
+
+            nextRegion.jumpPad = UFUtils.GetFlag(bytes, pointer + 4, 6);
+            nextRegion.massIndependent = UFUtils.GetFlag(bytes, pointer + 4, 0);
+            nextRegion.noPlayer = UFUtils.GetFlag(bytes, pointer + 4, 5);
+            nextRegion.radial = UFUtils.GetFlag(bytes, pointer + 4, 4);
+            nextRegion.grounded = UFUtils.GetFlag(bytes, pointer + 4, 1);
+
+            nextRegion.turbulence = BitConverter.ToInt16(bytes, pointer + 6);
+
+            pointer += 8;
+
+            level.pushRegions[i] = nextRegion;
+        }
+    }
+
+    /// <summary>
+    /// SECTION: Climbing regions
+    /// INCLUDED: Optionally
+    /// CONTAINS:
     /// NOTES:
     /// </summary>
     private void ReadClimbingRegions(byte[] bytes) {
@@ -997,7 +1057,7 @@ public class RFLReader {
     /// SECTION: Triggers
     /// INCLUDED: Optionally
     /// CONTAINS: Automatic and player activated trigger regions
-    /// NOTES: 
+    /// NOTES: Length depends on sphere/box shape
     /// </summary>
     private void ReadTriggers(byte[] bytes) {
         int nboTriggers = BitConverter.ToInt32(bytes, pointer + 8);

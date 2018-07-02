@@ -79,6 +79,7 @@ public class LevelBuilder : EditorWindow {
             GUILayout.Label("   Events: " + level.events.Length);
             GUILayout.Label("   Multi spawn points: " + level.spawnPoints.Length);
             GUILayout.Label("   Particle emiters: " + level.particleEmiters.Length);
+            GUILayout.Label("   Push regions: " + level.pushRegions.Length);
             GUILayout.Label("   Decals: " + level.decals.Length);
             GUILayout.Label("   Climbing regions : " + level.climbingRegions.Length);
             GUILayout.Label("   Bolt emiters: " + level.boltEmiters.Length);
@@ -125,6 +126,9 @@ public class LevelBuilder : EditorWindow {
 
         if(GUILayout.Button("Build triggers"))
             BuildTriggers();
+
+        if(GUILayout.Button("Build force regions"))
+            BuildForceRegions();
     }
 
     /* -----------------------------------------------------------------------------------------------
@@ -243,6 +247,22 @@ public class LevelBuilder : EditorWindow {
             UFUtils.SetTransform(t.transform, trigger.transform);
             UFLevel.SetObject(trigger.transform.id, g);
             t.Set(trigger);
+        }
+    }
+
+    private void BuildForceRegions() {
+        Transform p = MakeParent("ForceRegions");
+        foreach(PushRegion region in level.pushRegions) {
+            GameObject g = new GameObject("PushRegion_" + region.transform.id);
+            g.transform.SetParent(p);
+            UFForceRegion r = g.AddComponent<UFForceRegion>();
+            r.Set(region);
+        }
+        foreach(ClimbingRegion region in level.climbingRegions) {
+            GameObject g = new GameObject("PushRegion_" + region.cbTransform.transform.id);
+            g.transform.SetParent(p);
+            UFForceRegion r = g.AddComponent<UFForceRegion>();
+            r.Set(region);
         }
     }
 
@@ -388,9 +408,10 @@ public class LevelBuilder : EditorWindow {
         string[] results = AssetDatabase.FindAssets(clipName);
 
         foreach(string result in results) {
+            
             string resultPath = AssetDatabase.GUIDToAssetPath(result);
             string resultName = Path.GetFileName(resultPath);
-            if(resultName == clipName)
+            if(resultName == clip)
                 return (AudioClip)AssetDatabase.LoadAssetAtPath(resultPath, typeof(AudioClip));
         }
 

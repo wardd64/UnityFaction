@@ -313,6 +313,31 @@ namespace UFLevelStructure {
     }
 
     [Serializable]
+    public struct PushRegion {
+        public UFTransform transform;
+
+        public PushShape shape;
+
+        public enum PushShape {
+            undefined, sphere, alignedBox, orientedBox
+        }
+
+        public Vector3 extents;
+        public float sphereRadius;
+        public float strength;
+
+        public int turbulence; // 0 - 15
+
+        public bool massIndependent, radial, noPlayer, grounded, jumpPad;
+
+        public Profile profile;
+
+        public enum Profile {
+            Constant, GrowsToBoundary, GrowsToCenter
+        }
+    }
+
+    [Serializable]
     public struct ClimbingRegion {
         public CenteredBox cbTransform;
 
