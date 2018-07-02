@@ -116,13 +116,20 @@ public class UFUtils {
     /// the entries of this matrix are stored in an awkard order, so make sure to refer to this method.
     /// </summary>
     public static Quaternion GetRotation(byte[] bytes, int start) {
-        Vector3 row3 = Getvector3(bytes, start);
-        Vector3 row1 = Getvector3(bytes, start + 12);
-        Vector3 row2 = Getvector3(bytes, start + 24);
+        /* RFL matrix  ->  Unity matrix
+         *     x y z       A B C
+         *  1: a b c       d e a :1
+         *  2: d e f   ->  g h b :2
+         *  3: g h i       f i c :3
+         */
 
-        Vector4 col1 = new Vector4(row1.x, row2.x, row3.x);
-        Vector4 col2 = new Vector4(row1.y, row2.y, row3.y);
-        Vector4 col3 = new Vector4(row1.z, row2.z, row3.z);
+        Vector3 row1 = Getvector3(bytes, start);
+        Vector3 row2 = Getvector3(bytes, start + 12);
+        Vector3 row3 = Getvector3(bytes, start + 24);
+
+        Vector4 col1 = new Vector4(row2.x, row3.x, row2.z);
+        Vector4 col2 = new Vector4(row2.y, row3.y, row3.z);
+        Vector4 col3 = new Vector4(row1.x, row1.y, row1.z);
         Vector4 col4 = new Vector4(0f, 0f, 0f, 1f);
 
         Matrix4x4 mat = new Matrix4x4(col1, col2, col3, col4);
