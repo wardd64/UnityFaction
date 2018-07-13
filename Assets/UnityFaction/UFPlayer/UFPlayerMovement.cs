@@ -27,19 +27,24 @@ public class UFPlayerMovement : MonoBehaviour {
     float[] prevRotX, prevRotY;
 
     Vector3 shiftVelocity;
+    Vector3 climbDir;
 
     //movement constants
     private const float walkSpeed = 8f; //movement speed in m/s
+    private const float flySpeed = 6f; //target horizontal movement speed while airborne
+    private const float climbSpeed = 8f; //target speed while climbing ladders or fences
     private const float accelTime = 0.2f; //time needed to achieve walkspeed
     private const float verticalDrag = 0.5f; //aerial vertical drag force
-    private const float airSteering = 5f; //push force the player can use to steer while airborne
-    private const float jumpHeight = 2.5f; //height in m the player can jump
+    private const float airSteering = 12f; //push force the player can use to steer while airborne
+    private const float climbSteering = 40f; //Same as airsteering but for climbing
+    private const float jumpHeight = 1.3f; //height in m the player can jump
     private const float minJumpSpeed = 1f; //additive jump speed when player is walking up a ramp
     private const float stepOver = 0.2f; //Highest distance player can safely step over
     private const float footing = 0.01f; //extra distance to make sure player holds on to the ground
     private const float slideSlope = 50f; //Angle that seperates floors and ceilings from walls
     private const float crouchSpeed = 6f; //movement speed while crouching
-    private const float standingHeight = 1.80f, crouchingHeight = 1.32f; //cc height
+    private const float standingHeight = 1.9f, crouchingHeight = 1.15f; //cc height
+    private const float standingRadius = 0.6f, crouchingRadius = 0.55f; //cc radius
     private const float antJmpGMulplr = 4f; //maximum gravity multiplier used to cut jump short
 
     /// <summary>
@@ -73,7 +78,8 @@ public class UFPlayerMovement : MonoBehaviour {
         set { velocity = new Vector3(velocity.x, value, velocity.z); }
     }
     private float jumpSpeed { get { return Mathf.Sqrt(2 * jumpHeight * Physics.gravity.magnitude); } }
-    private float horizontalDrag { get { return airSteering / walkSpeed; } }
+    private float horizontalDrag { get { return airSteering / jumpSpeed; } }
+    private float climbDrag { get { return climbSteering / climbSpeed; } }
 
     float wallLimit { get { return Mathf.Sin((90 - slideSlope) * Mathf.Deg2Rad); } }
 
@@ -107,8 +113,8 @@ public class UFPlayerMovement : MonoBehaviour {
         MoveUpdate();
 
         //animation states:
-        characterAnim.SetBool("Airborne", motionState == MotionState.air);
-        characterAnim.SetBool("Crouch", motionState == MotionState.crouch);
+        //characterAnim.SetBool("Airborne", motionState == MotionState.air);
+        //characterAnim.SetBool("Crouch", motionState == MotionState.crouch);
 
         MouseUpdate();
     }
@@ -165,16 +171,8 @@ public class UFPlayerMovement : MonoBehaviour {
         hitGround = false;
 
         //horizontal motion
-        float vertical = 0f;
-        float horizontal = 0f;
-        horizontal += right ? 1f : 0f;
-        horizontal -= left ? 1f : 0f;
-        vertical += forward ? 1f : 0f;
-        vertical -= backward ? 1f : 0f;
-        if(right)
-            horizontal += 1f;
-        if(left)
-            horizontal -= 1f;
+        float horizontal = (right ? 1f : 0f) - (left ? 1f : 0f);
+        float vertical = (forward ? 1f : 0f) - (backward ? 1f : 0f);
         Vector3 movement = (new Vector3(horizontal , 0f, vertical)).normalized;
         movement = transform.rotation * movement;
 
@@ -190,7 +188,7 @@ public class UFPlayerMovement : MonoBehaviour {
         CrouchMove(movement, crouch);
         break;
         case MotionState.climb:
-        ClimbMove(movement);
+        ClimbMove(movement, jump, crouch);
         break;
         default:
         Debug.LogError("Unexpected motion state: " + motionState);
@@ -199,12 +197,14 @@ public class UFPlayerMovement : MonoBehaviour {
 
         //animation motion state
         float angle = Vector3.SignedAngle(this.forward, horVel, Vector3.up);
-        characterAnim.SetBool("Moving", horSpeed > 0.01f);
-        characterAnim.SetFloat("MoveAngle", angle);
+        //characterAnim.SetBool("Moving", horSpeed > 0.01f);
+        //characterAnim.SetFloat("MoveAngle", angle);
 
         //character height
-        SetCharacterHeight(motionState == MotionState.crouch);
+        SetCharacterHeight(crouch);
 
+        //shift velocity
+        shiftVelocity = Vector3.zero;
 
     }
 
@@ -214,10 +214,10 @@ public class UFPlayerMovement : MonoBehaviour {
 
         horVel = Vector3.MoveTowards(horVel, movement, dv);
 
-        if(jumpDown && !characterAnim.GetBool("Push")) {
+        if(jumpDown) {
             //starting a jump
             jumpTime = Time.deltaTime;
-            characterAnim.SetTrigger("Jump");
+            //characterAnim.SetTrigger("Jump");
             moveSound.Jump();
 
             float oldSpd = this.velocity.y;
@@ -293,10 +293,18 @@ public class UFPlayerMovement : MonoBehaviour {
         MoveCCFlying(acceleration);
     }
 
-    private void ClimbMove(Vector3 movement) {
-        Vector3 acceleration = movement * airSteering;
-        Vector3 drag = horizontalDrag * velocity;
-        MoveCCFlying(-drag);
+    private void ClimbMove(Vector3 horMovement, bool up, bool down) {
+        float vert = (up ? 1f : 0f) - (down ? 1f : 0f);
+        Quaternion revRot = Quaternion.Euler(0f, -rotationX, 0f);
+        Quaternion upRot = Quaternion.Euler(-rotationY, rotationX, 0f) * revRot;
+        Vector3 movement = upRot * horMovement + vert * climbDir;
+
+        if(movement != Vector3.zero)
+            movement = movement.normalized;
+
+        Vector3 acceleration = movement * climbSteering;
+        Vector3 drag = climbDrag * velocity;
+        MoveCCFlying(acceleration - drag);
         motionState = MotionState.air;
     }
 
@@ -312,19 +320,20 @@ public class UFPlayerMovement : MonoBehaviour {
         Vector3 p2 = transform.position + (cc.height - cc.radius) * Vector3.up;
         hits = Physics.CapsuleCastAll(p1, p2, cc.radius, -Vector3.down, distance + kickHeight);
 
-        return collidesWithTerrain(hits);
+        return CollidesWithTerrain(hits);
     }
 
     private void SetCharacterHeight(bool crouching) {
         float targetHeight = crouching ? crouchingHeight : standingHeight;
+        float targetRadius = crouching ? crouchingRadius : standingRadius;
         float heightDelta = standingHeight - crouchingHeight;
-        targetHeight -= 2 * cc.skinWidth;
+        float radiusDelta = standingRadius - crouchingRadius;
 
-        Vector3 targetCenter = Vector3.up * (cc.skinWidth + (targetHeight / 2f));
-        float centerDelta = heightDelta / 2f;
+        float dt = 5f * Time.deltaTime;
 
-        cc.height = Mathf.MoveTowards(cc.height, targetHeight, 5f * heightDelta * Time.deltaTime);
-        cc.center = Vector3.MoveTowards(cc.center, targetCenter, 5f * centerDelta * Time.deltaTime);
+        cc.height = Mathf.MoveTowards(cc.height, targetHeight, heightDelta * dt);
+        cc.radius = Mathf.MoveTowards(cc.radius, targetRadius, radiusDelta * dt);
+        cc.center = Vector3.up * (cc.height / 2f);
     }
 
     private bool CheckIfClearForStandingUp() {
@@ -337,7 +346,7 @@ public class UFPlayerMovement : MonoBehaviour {
         headPos += this.transform.up * headHeight;
 
         hits = Physics.SphereCastAll(headPos, cc.radius, transform.up, dist);
-        return !collidesWithTerrain(hits, out hit);
+        return !CollidesWithTerrain(hits, out hit);
     }
 
     /// <summary>
@@ -353,6 +362,10 @@ public class UFPlayerMovement : MonoBehaviour {
             moveSound.SetLastGroundObject(hit.collider);
             if(motionState == MotionState.air)
                 Land();
+        }
+        else if(y > 0f) {
+            //hit slope we should slide off of
+            velocity -= Vector3.Project(velocity, hit.normal);
         }
     }
 
@@ -372,9 +385,10 @@ public class UFPlayerMovement : MonoBehaviour {
         if(!cc.gameObject.activeInHierarchy || !cc.enabled || dt <= 0f)
             return;
 
-        Vector3 fro = this.transform.position;
+        //Vector3 fro = this.transform.position;
 
-        Vector3 horizMove = this.horVel * Time.deltaTime;
+        Vector3 move = (velocity + shiftVelocity) * Time.deltaTime;
+        move = Vector3.ProjectOnPlane(move, Vector3.up);
         Vector3 vertShift = Vector3.up * stepOver;
 
         //walk sequence:
@@ -386,13 +400,13 @@ public class UFPlayerMovement : MonoBehaviour {
         cc.Move(vertShift);
 
         //move horizontally
-        cc.Move(horizMove);
+        cc.Move(move);
 
         //move back down to the ground
         cc.Move(-vertShift);
 
         //move further to catch downward slope
-        float slopeCatch = horizMove.magnitude * Mathf.Tan(Mathf.Deg2Rad * slideSlope) + footing;
+        float slopeCatch = move.magnitude * Mathf.Tan(Mathf.Deg2Rad * slideSlope) + footing;
         cc.Move(Vector3.down * slopeCatch);
 
         //extend collider
@@ -400,14 +414,8 @@ public class UFPlayerMovement : MonoBehaviour {
         cc.height += stepOver;
 
         //set velocity to correspond to the actual distance travel.
-        Vector3 realDist = this.transform.position - fro;
-        float speed = velocity.magnitude;
-        velocity = realDist / dt;
-        speed = realDist.magnitude / dt;
-
-        //Restrain velocity if it exceeds target speed
-        if(speed > walkSpeed)
-            velocity *= walkSpeed / speed;
+        //Vector3 realDist = this.transform.position - fro;
+        //velocity = (realDist / dt) - shiftVelocity;
     }
 
     /**
@@ -419,10 +427,10 @@ public class UFPlayerMovement : MonoBehaviour {
         if(!cc.gameObject.activeInHierarchy || !cc.enabled || dt <= 0f)
             return;
 
-        Vector3 fro = transform.position;
-        cc.Move(velocity * dt);
-        velocity = (transform.position - fro) / dt;
-
+        //Vector3 fro = transform.position;
+        cc.Move((velocity + shiftVelocity) * dt);
+        //velocity = ((transform.position - fro) / dt) - shiftVelocity;
+        
         cc.Move(acceleration * dt * dt / 2f);
         velocity += acceleration * dt;
     }
@@ -430,7 +438,7 @@ public class UFPlayerMovement : MonoBehaviour {
     /// <summary>
     /// returns true if the given array contains any hits with solid terrain
     /// </summary>
-    public static bool collidesWithTerrain(RaycastHit[] hits, out RaycastHit actualHit) {
+    public static bool CollidesWithTerrain(RaycastHit[] hits, out RaycastHit actualHit) {
         foreach(RaycastHit hit in hits) {
             actualHit = hit;
 
@@ -463,20 +471,25 @@ public class UFPlayerMovement : MonoBehaviour {
     /// <summary>
     /// returns true if the given array contains any hits with solid terrain
     /// </summary>
-    public static bool collidesWithTerrain(RaycastHit[] hits) {
+    public static bool CollidesWithTerrain(RaycastHit[] hits) {
         RaycastHit hit;
-        return collidesWithTerrain(hits, out hit);
+        return CollidesWithTerrain(hits, out hit);
     }
 
     public void SetVelocity(Vector3 velocity) {
         this.velocity = velocity;
+        bool onGround = motionState == MotionState.ground || motionState == MotionState.crouch;
+        if(vertVel > 0f && onGround)
+            motionState = MotionState.air;
+
     }
 
     public void ShiftVelocity(Vector3 velocity) {
-        this.shiftVelocity = velocity;
+        this.shiftVelocity += velocity;
     }
 
-    public void ClimbState() {
+    public void ClimbState(Vector3 climbDirection) {
         motionState = MotionState.climb;
+        this.climbDir = climbDirection;
     }
 }
