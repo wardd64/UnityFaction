@@ -329,4 +329,10 @@ public class UFUtils {
         transform.position = pr.position;
         transform.rotation = pr.rotation;
     }
+
+    public static Vector3 RotateAroundPivot(Vector3 point, Vector3 pivot, Quaternion rotation) {
+        Vector3 dir = point - pivot;
+        Vector3 rotatedDir = rotation * dir;
+        return pivot + rotatedDir;
+    }
 }

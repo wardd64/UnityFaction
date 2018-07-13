@@ -433,7 +433,7 @@ public class RFLReader {
             pointer += 12;
             nextEvent.transform = new UFTransform(position, id);
 
-            UFUtils.ReadRFLString(bytes, ref pointer); //object name
+            nextEvent.name = UFUtils.ReadRFLString(bytes, ref pointer); //object name
             pointer += 1;
 
             nextEvent.delay = BitConverter.ToSingle(bytes, pointer);
@@ -1128,7 +1128,7 @@ public class RFLReader {
     /// CONTAINS: List of ALL brushes and the geometry they contain.
     /// NOTES: All geometric info was already included in static geometry
     ///        and moving geometry. Even so, the brushes themselves provide 
-    ///        extra info about destructibility and some flags, making them
+    ///        extra info about destructibility , portals and more, making them
     ///        usefull to UnityFaction anyway.
     /// </summary>
     private void ReadBrushes(byte[] bytes) {
@@ -1165,6 +1165,7 @@ public class RFLReader {
         brush.geometry = ReadGeometry(bytes);
 
         brush.isPortal = UFUtils.GetFlag(bytes, pointer, 0);
+        brush.isAir = UFUtils.GetFlag(bytes, pointer, 1);
         brush.isDetail = UFUtils.GetFlag(bytes, pointer, 2);
         brush.emitsSteam = UFUtils.GetFlag(bytes, pointer, 4);
         pointer += 4;

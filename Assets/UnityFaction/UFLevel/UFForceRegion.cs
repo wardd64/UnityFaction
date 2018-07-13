@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class UFForceRegion : MonoBehaviour {
 
+    private const float PLAYER_MASS = 100f;
+
     public ForceType type;
 
     public enum ForceType {
@@ -54,6 +56,8 @@ public class UFForceRegion : MonoBehaviour {
             this.type = ForceType.SetVel;
         else
             this.type = ForceType.AddVel;
+
+        UFLevel.SetObject(push.transform.id, gameObject);
     }
 
     private void AddTrigger(bool box, float radius, Vector3 extents) {
@@ -80,7 +84,7 @@ public class UFForceRegion : MonoBehaviour {
         switch(type) {
 
         case ForceType.Climb:
-        player.ClimbState();
+        player.ClimbState(transform.up);
         break;
 
         case ForceType.AddVel:
@@ -110,6 +114,9 @@ public class UFForceRegion : MonoBehaviour {
         power = this.power;
         break;
         }
+
+        //if(!massIndependant)
+        //    power /= PLAYER_MASS;
 
         Vector3 dir;
         if(radial)

@@ -13,7 +13,7 @@ public class Triangulator {
             return new int[0];
 
         int[] toReturn = new int[nboFaces * 3];
-        
+
         for(int i = 0; i < nboFaces; i++) {
             toReturn[3 * i] = 0;
             toReturn[(3 * i) + 1] = i + 1;
@@ -142,5 +142,40 @@ public class Triangulator {
         bCROSScp = bx * cpy - by * cpx;
 
         return ((aCROSSbp >= 0.0f) && (bCROSScp >= 0.0f) && (cCROSSap >= 0.0f));
+    }
+
+    public static bool VertexInTriangle(Vector3 vertex, Vector3 v1, Vector3 v2, Vector3 v3, float maxDelta) {
+        Vector3[] triangle = new Vector3[] { v1, v2, v3 };
+        float deltaSqr = maxDelta * maxDelta;
+
+        //check if near points themselves
+        foreach(Vector3 v in triangle) {
+            if((vertex - v).sqrMagnitude <= deltaSqr)
+                return true;
+        }
+
+        //check if near edges
+        for(int i = 0; i < 3; i++) {
+            Vector3 start = triangle[i];
+            Vector3 end = triangle[(i + 1) % 3];
+            Vector3 dir = (end - start).normalized;
+            bool afterStart = Vector3.Dot(vertex - start, dir) > 0f;
+            bool beforeEnd = Vector3.Dot(vertex - end, dir) < 0f;
+            float lineD = Vector3.Cross(dir, vertex - start).magnitude;
+            if(afterStart && beforeEnd && lineD <= maxDelta)
+                return true;
+        }
+
+        //check if near plane
+        bool inTriangle = SameSide(vertex, v1, v2, v3) && SameSide(vertex, v2, v1, v3) && SameSide(vertex, v3, v1, v2);
+        Plane plane = new Plane(v1, v2, v3);
+        float d = Mathf.Abs(plane.GetDistanceToPoint(vertex));
+        return inTriangle && d <= maxDelta;
+    }
+
+    private static bool SameSide(Vector3 p1, Vector3 p2, Vector3 a, Vector3 b) {
+        Vector3 cp1 = Vector3.Cross(b - a, p1 - a);
+        Vector3 cp2 = Vector3.Cross(b - a, p2 - a);
+        return Vector3.Dot(cp1, cp2) >= 0;
     }
 }

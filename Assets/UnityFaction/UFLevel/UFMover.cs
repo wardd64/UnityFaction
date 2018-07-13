@@ -7,9 +7,12 @@ public class UFMover : MonoBehaviour {
 
     private AudioSource sound;
     private Rigidbody rb;
+    private Rigidbody[] content;
 
     public UFLevelStructure.Keyframe[] keys;
     public int startKey;
+
+    public int[] links;
 
     public bool isDoor, startsBackwards, rotateInPlace,
         useTravTimeAsSpd, forceOrient, noPlayerCollide;
@@ -27,6 +30,7 @@ public class UFMover : MonoBehaviour {
         startKey = group.startIndex;
         foreach(UFLevelStructure.Keyframe key in keys)
             UFLevel.SetObject(key.transform.id, gameObject);
+        links = group.contents;
 
         //flags
         isDoor = group.isDoor;
@@ -78,9 +82,44 @@ public class UFMover : MonoBehaviour {
     bool completedSequence;
     Quaternion baseRot;
 
-    private void Start() {
+    private void Awake() {
         rb = this.GetComponent<Rigidbody>();
         sound = this.GetComponent<AudioSource>();
+
+        //extract transforms to be moved by this mover
+        List<Transform> contents = new List<Transform>();
+        foreach(int link in links) {
+            GameObject g = UFLevel.GetByID(link).objectRef;
+            if(g != null)
+                contents.Add(g.transform);
+        }
+
+        //make sure all contents have (kinematic) rigidbodies
+        this.content = new Rigidbody[contents.Count];
+        for(int i = 0; i < contents.Count; i++) {
+            Rigidbody rb = contents[i].GetComponent<Rigidbody>();
+            if(rb == null)
+                rb = contents[i].gameObject.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
+            this.content[i] = rb;
+        }
+
+        //turn off all contained colliders if needed
+        if(noPlayerCollide) {
+            foreach(Transform t in contents) {
+                Collider[] cols = t.GetComponentsInChildren<Collider>();
+                foreach(Collider c in cols) {
+                    if(!c.isTrigger)
+                        c.enabled = false;
+                }
+                    
+            }
+        }
+
+        
+    }
+
+    private void Start() {
         ResetMotion();
     }
 
@@ -110,11 +149,25 @@ public class UFMover : MonoBehaviour {
 
         time += Time.fixedDeltaTime;
         if(!PauseUpdate()) {
-            if(rotateInPlace)
+            if(rotateInPlace) {
+                Quaternion deltaRot = rb.rotation;
                 RotateUpdate();
-            else
+                deltaRot = rb.rotation * Quaternion.Inverse(deltaRot);
+                foreach(Rigidbody rb in content) {
+                    rb.position = UFUtils.RotateAroundPivot(rb.position, this.rb.position, deltaRot);
+                    rb.rotation = deltaRot * rb.rotation;
+                } 
+            }
+            else {
+                Vector3 deltaPos = rb.position;
                 PathUpdate();
+                deltaPos = rb.position - deltaPos;
+                foreach(Rigidbody rb in content) {
+                    rb.position = rb.position + deltaPos;
+                }
+            }
         }
+
     }
 
     /// <summary>
@@ -215,7 +268,7 @@ public class UFMover : MonoBehaviour {
 
     /// <summary>
     /// Return distance that mover should have traveled from its last keyframe.
-    /// This version takes in a max speed value and returns the total travel time.
+    /// This version takes in a max speed value and yields the total travel time.
     /// </summary>
     /// <param name="time">Time since last keyframe</param>
     /// <param name="speed">Maximum speed that mover is allowed travel (can be degrees/second)</param>
@@ -375,8 +428,8 @@ public class UFMover : MonoBehaviour {
         }
     }
 
-    public void Activate() {
-        moving = true;
+    public void Activate(bool positive) {
+        moving = positive;
     }
 
     private void PlayClip(AudioClip clip, float volume) {

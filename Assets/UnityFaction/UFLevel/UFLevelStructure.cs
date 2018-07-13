@@ -108,7 +108,7 @@ namespace UFLevelStructure {
         public UFTransform transform;
 
         public Geometry geometry;
-        public bool isPortal, isDetail, emitsSteam;
+        public bool isPortal, isAir, isDetail, emitsSteam;
         public int life;
     }
 
@@ -402,6 +402,7 @@ namespace UFLevelStructure {
 
         public EventType type;
         public enum EventType {
+            Nothing, StartTrigger, 
             Attack, Bolt_state, Continuous_Damage, Cyclic_Timer, Drop_Point_Marker, Explode, Follow_Player,
             Follow_Waypoints, Give_item_To_Player, Goal_Create, Goal_Check, Goal_Set, Goto, Goto_Player, Heal,
             Invert, Load_Level, Look_At, Make_Invulnerable, Make_Fly, Make_Walk, Message, Music_Start, Music_Stop,
@@ -417,6 +418,8 @@ namespace UFLevelStructure {
             When_Countdown_Reach, Display_Fullscreen_Image, Defuse_Nuke, When_Life_Reaches, When_Armor_Reaches,
             Reverse_Mover
         }
+
+        public string name;
 
         public static bool HasRotation(EventType e) {
             return e == EventType.Alarm ||

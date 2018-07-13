@@ -13,7 +13,9 @@ public class LevelEditor : Editor {
 
         DrawDefaultInspector();
 
-        if(level.idDictionary == null)
+        if(UFLevel.singleton != level)
+            GUILayout.Label("This level is inactive.");
+        else if(level.idDictionary == null)
             GUILayout.Label("ID Dictionary not initialized. ");
         else {
             GUILayout.Label("Number of available IDs: " + level.idDictionary.Count);

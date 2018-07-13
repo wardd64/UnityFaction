@@ -5,14 +5,26 @@ using UFLevelStructure;
 
 public class UFLevel : MonoBehaviour {
 
-    [SerializeField]
-    public static UFLevel singleton;
+    public static UFLevel singleton { get {
+            if(instance == null)
+                instance = FindObjectOfType<UFLevel>();
+            else if(!instance.gameObject.activeInHierarchy) {
+                instance = null;
+                instance = FindObjectOfType<UFLevel>();
+            }
+
+            return instance;
+        } }
+    private static UFLevel instance;
 
     [SerializeField]
     public List<IDRef> idDictionary;
 
-    public UFLevel() {
-        Singleton();
+    public void Awake(){
+        if(singleton != this) {
+            Debug.LogWarning("Scene contained multiple UFLevel scripts, only 1 (active) UFLevel is allowed per scene.");
+            Destroy(this.gameObject);
+        }
     }
 
 	public void Set(LevelData level) {
@@ -52,11 +64,9 @@ public class UFLevel : MonoBehaviour {
             SetID(d.transform.id, d, IDRef.Type.Trigger);
     }
 
-    private void Singleton() {
-        if(singleton == null)
-            singleton = this;
-        else
-            Destroy(this);
+    public static T GetPlayer<T>() where T : Component{
+        //TODO make more efficient and robust
+        return FindObjectOfType<T>();
     }
 
     private void SetID(int id, object dataRef, IDRef.Type type) {
@@ -67,13 +77,10 @@ public class UFLevel : MonoBehaviour {
                 idDictionary.Add(null);
         }
         idDictionary[id] = new IDRef(id, type);
-        Debug.Log("setting " + id + " to " + type);
     }
 
     public static IDRef GetByID(int id) {
-        if(singleton == null)
-            return null;
-        if(id >= 0 && id < singleton.idDictionary.Count)
+        if(singleton != null && id >= 0 && id < singleton.idDictionary.Count)
             return singleton.idDictionary[id];
         return null;
     }
@@ -85,5 +92,4 @@ public class UFLevel : MonoBehaviour {
         else
             Debug.LogWarning("Tried to set object to id reference that does not exist: " + id);
     }
-
 }

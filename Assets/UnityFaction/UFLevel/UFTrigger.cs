@@ -51,6 +51,8 @@ public class UFTrigger : MonoBehaviour {
 
             GetComponent<Collider>().isTrigger = true;
         }
+
+        UFLevel.SetObject(trigger.transform.id, gameObject);
     }
 
     private void Start() {
@@ -126,19 +128,28 @@ public class UFTrigger : MonoBehaviour {
     /// <summary>
     /// Tries to activate an object in the scene with the given ID.
     /// Logs warnings if the ID is invalid for any reason.
+    /// Set positive to false to deactivate.
     /// </summary>
-    public static void Activate(int id) {
+    public static void Activate(int id, bool positive = true) {
         IDRef obj = UFLevel.GetByID(id);
-        if(obj == null)
+        if(obj == null) {
             Debug.LogWarning("Tried activating non existant ID: " + id);
-        if(obj.objectRef == null)
+            return;
+        }
+        if(obj.objectRef == null) {
             Debug.LogWarning("Tried activating ID that is not in the scene: " + obj.id + ", of type " + obj.type);
+            return;
+        }
 
 
         switch(obj.type) {
 
         case IDRef.Type.Keyframe:
-        obj.objectRef.GetComponentInParent<UFMover>().Activate();
+        obj.objectRef.GetComponentInParent<UFMover>().Activate(positive);
+        break;
+
+        case IDRef.Type.Event:
+        obj.objectRef.GetComponentInParent<UFEvent>().Activate(positive);
         break;
 
         default:

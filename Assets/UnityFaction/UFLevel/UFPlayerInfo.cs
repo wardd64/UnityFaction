@@ -26,7 +26,7 @@ public class UFPlayerInfo : MonoBehaviour {
         this.playerStart = level.playerStart;
         this.multiplayer = level.multiplayer;
         this.spawnPoints = level.spawnPoints;
-        this.fogStart = level.nearPlane;
+        this.fogStart = Mathf.Max(0f, level.nearPlane);
         this.fogEnd = Mathf.Max(fogStart + 10f, level.farPlane);
         this.defaultAmbient = level.ambientColor;
         this.fogColor = level.fogColor;
@@ -55,22 +55,26 @@ public class UFPlayerInfo : MonoBehaviour {
 
     private void Start() {
         //apply fog settings
-        RenderSettings.fog = true;
+        RenderSettings.fog = fogStart > 0f;
         RenderSettings.fogColor = fogColor;
         RenderSettings.fogMode = FogMode.Linear;
         RenderSettings.fogStartDistance = fogStart;
         RenderSettings.fogEndDistance = fogEnd;
     }
 
-    private void ApplyCameraSettings(Camera playerCamera) {
+    public void ApplyCameraSettings(Camera playerCamera) {
         if(hasSkyRoom) {
             //TODO: make sky room
             playerCamera.clearFlags = CameraClearFlags.Nothing;
         }
-        else {
+        else if(RenderSettings.fog){
+            //aply solid color to represent thick fog
             playerCamera.clearFlags = CameraClearFlags.SolidColor;
             playerCamera.backgroundColor = fogColor;
         }
+        else
+            //no clearing; time for trippy background effects
+            playerCamera.clearFlags = CameraClearFlags.Nothing;
     }
 
     private void UpdateCamera(Camera playerCamera) {
