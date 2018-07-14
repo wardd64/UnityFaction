@@ -1093,7 +1093,8 @@ public class RFLReader {
 
             if(nextTrigger.box) {
                 Quaternion rotation = UFUtils.GetRotation(bytes, pointer);
-                nextTrigger.extents = UFUtils.Getvector3(bytes, pointer + 36);
+                Vector3 wdh = UFUtils.Getvector3(bytes, pointer + 36);
+                nextTrigger.extents = new Vector3(wdh.y, wdh.z, wdh.x);
                 nextTrigger.oneWay = BitConverter.ToBoolean(bytes, pointer + 48);
                 nextTrigger.transform = new UFTransform(position, rotation, id);
                 pointer += 49;
