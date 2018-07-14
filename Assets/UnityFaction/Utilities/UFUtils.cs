@@ -118,8 +118,8 @@ public class UFUtils {
     public static Quaternion GetRotation(byte[] bytes, int start) {
         /* RFL matrix  ->  Unity matrix
          *     x y z       A B C
-         *  1: a b c       d e a :1
-         *  2: d e f   ->  g h b :2
+         *  1: a b c       d g a :1
+         *  2: d e f   ->  e h b :2
          *  3: g h i       f i c :3
          */
 
@@ -127,8 +127,8 @@ public class UFUtils {
         Vector3 row2 = Getvector3(bytes, start + 12);
         Vector3 row3 = Getvector3(bytes, start + 24);
 
-        Vector4 col1 = new Vector4(row2.x, row3.x, row2.z);
-        Vector4 col2 = new Vector4(row2.y, row3.y, row3.z);
+        Vector4 col1 = new Vector4(row2.x, row2.y, row2.z);
+        Vector4 col2 = new Vector4(row3.x, row3.y, row3.z);
         Vector4 col3 = new Vector4(row1.x, row1.y, row1.z);
         Vector4 col4 = new Vector4(0f, 0f, 0f, 1f);
 
@@ -334,5 +334,39 @@ public class UFUtils {
         Vector3 dir = point - pivot;
         Vector3 rotatedDir = rotation * dir;
         return pivot + rotatedDir;
+    }
+
+    /// <summary>
+    /// returns true if the given array contains any hits with solid terrain
+    /// </summary>
+    public static bool collidesWithTerrain(RaycastHit[] hits, out RaycastHit actualHit) {
+        foreach(RaycastHit hit in hits) {
+            actualHit = hit;
+
+            //triggers
+            if(hit.collider.isTrigger)
+                continue;
+
+            //characters (including player)
+            if(hit.collider.GetComponent<CharacterController>())
+                continue;
+
+            //non kinematic rigid bodies
+            Rigidbody rb = hit.collider.transform.GetComponentInParent<Rigidbody>();
+            if(rb != null && !rb.isKinematic)
+                continue;
+
+            return true;
+        }
+        actualHit = new RaycastHit();
+        return false;
+    }
+
+    /// <summary>
+	/// returns true if the given array contains any hits with solid terrain
+	/// </summary>
+	public static bool collidesWithTerrain(RaycastHit[] hits) {
+        RaycastHit hit;
+        return collidesWithTerrain(hits, out hit);
     }
 }
