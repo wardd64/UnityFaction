@@ -47,10 +47,6 @@ public class LevelEditor : Editor {
     }
 
     private void DrawLinks() {
-        UFEvent[] events = level.GetComponentsInChildren<UFEvent>();
-        UFTrigger[] triggers = level.GetComponentsInChildren<UFTrigger>();
-        UFMover[] movers = level.GetComponentsInChildren<UFMover>();
-
         for(int i = 0; i < level.idDictionary.Count; i++) {
             IDRef idRef = level.idDictionary[i];
             if(idRef == null)

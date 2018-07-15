@@ -10,11 +10,11 @@ public class LevelData {
         ambSounds = new AmbSound[0];
         events = new UFLevelStructure.Event[0];
         spawnPoints = new SpawnPoint[0];
-        particleEmiters = new UFLevelStructure.ParticleEmiter[0];
+        particleEmitters = new UFLevelStructure.ParticleEmitter[0];
         pushRegions = new PushRegion[0];
         decals = new Decal[0];
         climbingRegions = new ClimbingRegion[0];
-        boltEmiters = new BoltEmiter[0];
+        boltEmitters = new BoltEmitter[0];
         targets = new UFTransform[0];
         entities = new Entity[0];
         items = new Item[0];
@@ -45,11 +45,11 @@ public class LevelData {
     public AmbSound[] ambSounds;
     public UFLevelStructure.Event[] events;
     public SpawnPoint[] spawnPoints;
-    public ParticleEmiter[] particleEmiters;
+    public UFLevelStructure.ParticleEmitter[] particleEmitters;
     public Decal[] decals;
     public PushRegion[] pushRegions;
     public ClimbingRegion[] climbingRegions;
-    public BoltEmiter[] boltEmiters;
+    public BoltEmitter[] boltEmitters;
     public UFTransform[] targets;
     public Entity[] entities;
     public Item[] items;

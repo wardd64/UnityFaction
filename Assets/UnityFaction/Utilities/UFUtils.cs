@@ -369,4 +369,15 @@ public class UFUtils {
         RaycastHit hit;
         return collidesWithTerrain(hits, out hit);
     }
+
+    public static Gradient GetLinearGradient(Color startColor, Color endColor) {
+        Gradient toReturn = new Gradient();
+        GradientAlphaKey startAlpha = new GradientAlphaKey(startColor.a, 0f);
+        GradientAlphaKey endAlpha = new GradientAlphaKey(startColor.a, 1f);
+        GradientColorKey startKey = new GradientColorKey(startColor, 0f);
+        GradientColorKey endKey = new GradientColorKey(endColor, 1f);
+        toReturn.alphaKeys = new GradientAlphaKey[] { startAlpha, endAlpha };
+        toReturn.colorKeys = new GradientColorKey[] { startKey, endKey };
+        return toReturn;
+    }
 }

@@ -79,11 +79,11 @@ public class LevelBuilder : EditorWindow {
             GUILayout.Label("   Ambient sounds: " + level.ambSounds.Length);
             GUILayout.Label("   Events: " + level.events.Length);
             GUILayout.Label("   Multi spawn points: " + level.spawnPoints.Length);
-            GUILayout.Label("   Particle emiters: " + level.particleEmiters.Length);
+            GUILayout.Label("   Particle emitters: " + level.particleEmitters.Length);
             GUILayout.Label("   Push regions: " + level.pushRegions.Length);
             GUILayout.Label("   Decals: " + level.decals.Length);
             GUILayout.Label("   Climbing regions : " + level.climbingRegions.Length);
-            GUILayout.Label("   Bolt emiters: " + level.boltEmiters.Length);
+            GUILayout.Label("   Bolt emitters: " + level.boltEmitters.Length);
             GUILayout.Label("   Targets: " + level.targets.Length);
             GUILayout.Label("   Entities: " + level.entities.Length);
             GUILayout.Label("   Items: " + level.items.Length);
@@ -133,6 +133,9 @@ public class LevelBuilder : EditorWindow {
 
         if(GUILayout.Button("Build events"))
             BuildEvents();
+
+        if(GUILayout.Button("Build emitters"))
+            BuildEmitters();
     }
 
     /* -----------------------------------------------------------------------------------------------
@@ -261,10 +264,8 @@ public class LevelBuilder : EditorWindow {
     private void BuildTriggers() {
         Transform p = MakeParent("Triggers");
         foreach(Trigger trigger in level.triggers) {
-            GameObject g = new GameObject("Trigger_" + trigger.transform.id);
-            g.transform.SetParent(p);
-            UFTrigger t = g.AddComponent<UFTrigger>();
-            UFUtils.SetTransform(t.transform, trigger.transform);
+            string name = "Trigger_" + trigger.transform.id;
+            UFTrigger t = MakeUFObject<UFTrigger>(name, p, trigger.transform);
             t.Set(trigger);
         }
     }
@@ -272,15 +273,13 @@ public class LevelBuilder : EditorWindow {
     private void BuildForceRegions() {
         Transform p = MakeParent("ForceRegions");
         foreach(PushRegion region in level.pushRegions) {
-            GameObject g = new GameObject("PushRegion_" + region.transform.id);
-            g.transform.SetParent(p);
-            UFForceRegion r = g.AddComponent<UFForceRegion>();
+            string name = "PushRegion_" + region.transform.id;
+            UFForceRegion r = MakeUFObject<UFForceRegion>(name, p, region.transform);
             r.Set(region);
         }
         foreach(ClimbingRegion region in level.climbingRegions) {
-            GameObject g = new GameObject("ClimbRegion_" + region.cbTransform.transform.id);
-            g.transform.SetParent(p);
-            UFForceRegion r = g.AddComponent<UFForceRegion>();
+            string name = "ClimbRegion_" + region.cbTransform.transform.id;
+            UFForceRegion r = MakeUFObject<UFForceRegion>(name, p, region.cbTransform.transform);
             r.Set(region);
         }
     }
@@ -288,13 +287,31 @@ public class LevelBuilder : EditorWindow {
     private void BuildEvents() {
         Transform p = MakeParent("Events");
         foreach(UFLevelStructure.Event e in level.events) {
-            GameObject g = new GameObject("Event_" + GetIdString(e.transform) + "_" + e.name);
-            UFEvent ufe = g.AddComponent<UFEvent>();
-            g.transform.SetParent(p);
-            UFUtils.SetTransform(g.transform, e.transform);
+            string name = "Event_" + GetIdString(e.transform) + "_" + e.name;
+            UFEvent ufe = MakeUFObject<UFEvent>(name, p, e.transform);
             ufe.Set(e);
             if(IsValidAudioClipName(e.string1))
                 ufe.SetAudio(GetClip(e.string1));
+        }
+    }
+
+    private void BuildEmitters() {
+        Transform p = MakeParent("Emitters");
+
+        Transform ptclParent = (new GameObject("ParticleEmitters")).transform;
+        ptclParent.SetParent(p);
+        foreach(UFLevelStructure.ParticleEmitter e in level.particleEmitters) {
+            string name = "ParticleEmitter_" + GetIdString(e.transform);
+            UFEmitter emit = MakeUFObject<UFEmitter>(name, ptclParent, e.transform);
+            emit.Set(e);
+        }
+
+        Transform boltParent = (new GameObject("BoltEmitters")).transform;
+        boltParent.SetParent(p);
+        foreach(UFLevelStructure.BoltEmitter e in level.boltEmitters) {
+            string name = "BoltEmitter_" + GetIdString(e.transform);
+            UFEmitter emit = MakeUFObject<UFEmitter>(name, boltParent, e.transform);
+            emit.Set(e);
         }
     }
 
@@ -302,6 +319,14 @@ public class LevelBuilder : EditorWindow {
      * -------------------------------------- HELPER METHODS -----------------------------------------
      * -----------------------------------------------------------------------------------------------
      */
+
+    private T MakeUFObject<T>(string name, Transform parent, UFTransform transform) where T : Component {
+        GameObject g = new GameObject(name);
+        g.transform.SetParent(parent);
+        UFUtils.SetTransform(g.transform, transform);
+        UFLevel.SetObject(transform.id, g);
+        return g.AddComponent<T>();
+    }
 
     private static string assetPath {  get { return Path.GetDirectoryName(lastRFLPath) + "/" + VPPUnpacker.assetFolder + "/"; } }
     private static string[] searchFolders { get { return new string[] {

@@ -156,7 +156,7 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.Particle_State:
         Debug.LogError("Implement me");
         //TODO
-        return IDRef.Type.ParticleEmiter;
+        return IDRef.Type.ParticleEmitter;
 
         case UFLevelStructure.Event.EventType.Mover_Pause:
         Debug.LogError("Implement me");

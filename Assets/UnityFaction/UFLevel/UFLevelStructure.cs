@@ -254,11 +254,11 @@ namespace UFLevelStructure {
     }
 
     [Serializable]
-    public struct ParticleEmiter {
+    public struct ParticleEmitter {
         public UFTransform transform;
 
-        public EmiterShape type;
-        public enum EmiterShape {
+        public EmitterShape type;
+        public enum EmitterShape {
             point = 0, plane = 1, sphere = 2
         }
 
@@ -350,7 +350,7 @@ namespace UFLevelStructure {
     }
 
     [Serializable]
-    public struct BoltEmiter {
+    public struct BoltEmitter {
         public UFTransform transform;
 
         public int targetID;

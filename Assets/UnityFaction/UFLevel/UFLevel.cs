@@ -44,12 +44,12 @@ public class UFLevel : MonoBehaviour {
             SetID(d.transform.id, d, IDRef.Type.AmbSound);
         foreach(SpawnPoint d in level.spawnPoints)
             SetID(d.transform.id, d, IDRef.Type.SpawnPoint);
-        foreach(ParticleEmiter d in level.particleEmiters)
-            SetID(d.transform.id, d, IDRef.Type.ParticleEmiter);
+        foreach(UFLevelStructure.ParticleEmitter d in level.particleEmitters)
+            SetID(d.transform.id, d, IDRef.Type.ParticleEmitter);
         foreach(GeoRegion d in level.geoRegions)
             SetID(d.transform.id, d, IDRef.Type.GeoRegion);
-        foreach(BoltEmiter d in level.boltEmiters)
-            SetID(d.transform.id, d, IDRef.Type.BoltEmiter);
+        foreach(BoltEmitter d in level.boltEmitters)
+            SetID(d.transform.id, d, IDRef.Type.BoltEmitter);
         foreach(Item d in level.items)
             SetID(d.transform.id, d, IDRef.Type.Item);
         foreach(Clutter d in level.clutter)

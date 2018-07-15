@@ -40,14 +40,14 @@ public class RFLReader {
         Events = 0x00000600,
         Unkown1 = 0x00006000,
         MPSpawnPoints = 0x00000700,
-        Particlemiters = 0x00000A00,
+        Particlemitters = 0x00000A00,
         GasRegions = 0x00000B00,
         Decals = 0x00001000,
         PushRegions = 0x00001100,
         RoomEffects = 0x00000C00,
         EAXEffects = 0x00008000,
         ClimbingRegions = 0x00000D00,
-        BoltEmiters = 0x00000E00,
+        BoltEmitters = 0x00000E00,
         Targets = 0x00000F00,
         MovingGeometry = 0x00002000,
         MovingGroups = 0x00003000,
@@ -167,12 +167,12 @@ public class RFLReader {
         case RFLSection.AmbientSounds: ReadAmbientSounds(bytes); break;
         case RFLSection.Events: ReadEvents(bytes); break;
         case RFLSection.MPSpawnPoints: ReadMPspawnPoints(bytes); break;
-        case RFLSection.Particlemiters: ReadParticleEmiters(bytes); break;
+        case RFLSection.Particlemitters: ReadParticleEmitters(bytes); break;
         case RFLSection.GasRegions: SkipSection(bytes); break;
         case RFLSection.Decals: ReadDecalls(bytes); break;
         case RFLSection.PushRegions: ReadPushRegions(bytes); break;
         case RFLSection.ClimbingRegions: ReadClimbingRegions(bytes); break;
-        case RFLSection.BoltEmiters: ReadBoltEmiters(bytes); break;
+        case RFLSection.BoltEmitters: ReadBoltEmitters(bytes); break;
         case RFLSection.Targets: ReadTargets(bytes); break;
         case RFLSection.MovingGeometry: ReadMovingGeometry(bytes); break;
         case RFLSection.MovingGroups: ReadMovingGroups(bytes); break;
@@ -501,23 +501,23 @@ public class RFLReader {
     }
 
     /// <summary>
-    /// SECTION: Particle emiters
+    /// SECTION: Particle emitters
     /// INCLUDED: Optionally
     /// CONTAINS:
     /// NOTES:
     /// </summary>
-    private void ReadParticleEmiters(byte[] bytes) {
+    private void ReadParticleEmitters(byte[] bytes) {
         int nboEmitters = BitConverter.ToInt32(bytes, pointer + 8);
-        level.particleEmiters = new UFLevelStructure.ParticleEmiter[nboEmitters];
+        level.particleEmitters = new UFLevelStructure.ParticleEmitter[nboEmitters];
         pointer += 12;
 
         for(int i = 0; i < nboEmitters; i++) {
-            UFLevelStructure.ParticleEmiter nextEmitter;
+            UFLevelStructure.ParticleEmitter nextEmitter;
 
             nextEmitter.transform = ReadFullTransform(bytes);
 
             int typeInt = BitConverter.ToInt32(bytes, pointer);
-            nextEmitter.type = (UFLevelStructure.ParticleEmiter.EmiterShape)typeInt;
+            nextEmitter.type = (UFLevelStructure.ParticleEmitter.EmitterShape)typeInt;
 
             nextEmitter.SphereRadius = BitConverter.ToSingle(bytes, pointer + 4);
             nextEmitter.planeExtents = UFUtils.Getvector2(bytes, pointer + 8);
@@ -571,7 +571,7 @@ public class RFLReader {
             nextEmitter.activeDistance = BitConverter.ToSingle(bytes, pointer);
             pointer += 20;
 
-            level.particleEmiters[i] = nextEmitter;
+            level.particleEmitters[i] = nextEmitter;
         }
     }
 
@@ -733,44 +733,44 @@ public class RFLReader {
     }
 
     /// <summary>
-    /// SECTION: Bolt emiters
+    /// SECTION: Bolt emitters
     /// INCLUDED: Optionally
     /// CONTAINS:
     /// NOTES:
     /// </summary>
-    private void ReadBoltEmiters(byte[] bytes) {
+    private void ReadBoltEmitters(byte[] bytes) {
 
-        int nboBoltEmiters = BitConverter.ToInt32(bytes, pointer + 8);
-        level.boltEmiters = new BoltEmiter[nboBoltEmiters];
+        int nboBoltEmitters = BitConverter.ToInt32(bytes, pointer + 8);
+        level.boltEmitters = new BoltEmitter[nboBoltEmitters];
         pointer += 12;
 
-        for(int i = 0; i < nboBoltEmiters; i++) {
-            BoltEmiter nextEmiter;
-            nextEmiter.transform = ReadFullTransform(bytes);
+        for(int i = 0; i < nboBoltEmitters; i++) {
+            BoltEmitter nextEmitter;
+            nextEmitter.transform = ReadFullTransform(bytes);
 
-            nextEmiter.targetID = BitConverter.ToInt32(bytes, pointer);
-            nextEmiter.srcCtrlDist = BitConverter.ToSingle(bytes, pointer + 4);
-            nextEmiter.trgCtrlDist = BitConverter.ToSingle(bytes, pointer + 8);
-            nextEmiter.thickness = BitConverter.ToSingle(bytes, pointer + 12);
-            nextEmiter.jitter = BitConverter.ToSingle(bytes, pointer + 16);
-            nextEmiter.nboSegments = BitConverter.ToInt32(bytes, pointer + 20);
-            nextEmiter.spawnDelay = BitConverter.ToSingle(bytes, pointer + 24);
-            nextEmiter.spawnDelayRandomize = BitConverter.ToSingle(bytes, pointer + 28);
-            nextEmiter.decay = BitConverter.ToSingle(bytes, pointer + 32);
-            nextEmiter.decayRandomize = BitConverter.ToSingle(bytes, pointer + 36);
-            nextEmiter.color = UFUtils.GetRGBAColor(bytes, pointer + 40); //includes alpha
+            nextEmitter.targetID = BitConverter.ToInt32(bytes, pointer);
+            nextEmitter.srcCtrlDist = BitConverter.ToSingle(bytes, pointer + 4);
+            nextEmitter.trgCtrlDist = BitConverter.ToSingle(bytes, pointer + 8);
+            nextEmitter.thickness = BitConverter.ToSingle(bytes, pointer + 12);
+            nextEmitter.jitter = BitConverter.ToSingle(bytes, pointer + 16);
+            nextEmitter.nboSegments = BitConverter.ToInt32(bytes, pointer + 20);
+            nextEmitter.spawnDelay = BitConverter.ToSingle(bytes, pointer + 24);
+            nextEmitter.spawnDelayRandomize = BitConverter.ToSingle(bytes, pointer + 28);
+            nextEmitter.decay = BitConverter.ToSingle(bytes, pointer + 32);
+            nextEmitter.decayRandomize = BitConverter.ToSingle(bytes, pointer + 36);
+            nextEmitter.color = UFUtils.GetRGBAColor(bytes, pointer + 40); //includes alpha
             pointer += 44;
 
-            nextEmiter.texture = UFUtils.ReadRFLString(bytes, ref pointer);
+            nextEmitter.texture = UFUtils.ReadRFLString(bytes, ref pointer);
 
-            nextEmiter.fade = UFUtils.GetFlag(bytes, pointer, 1);
-            nextEmiter.glow = UFUtils.GetFlag(bytes, pointer, 2);
-            nextEmiter.srcDirLock = UFUtils.GetFlag(bytes, pointer, 3);
-            nextEmiter.trgDirLock = UFUtils.GetFlag(bytes, pointer, 4);
-            nextEmiter.initOn = BitConverter.ToBoolean(bytes, pointer + 4);
+            nextEmitter.fade = UFUtils.GetFlag(bytes, pointer, 1);
+            nextEmitter.glow = UFUtils.GetFlag(bytes, pointer, 2);
+            nextEmitter.srcDirLock = UFUtils.GetFlag(bytes, pointer, 3);
+            nextEmitter.trgDirLock = UFUtils.GetFlag(bytes, pointer, 4);
+            nextEmitter.initOn = BitConverter.ToBoolean(bytes, pointer + 4);
             pointer += 5;
 
-            level.boltEmiters[i] = nextEmiter;
+            level.boltEmitters[i] = nextEmitter;
         }
 
     }
@@ -778,7 +778,7 @@ public class RFLReader {
     /// <summary>
     /// SECTION: Targets
     /// INCLUDED: Optionally
-    /// CONTAINS: Target objects which are used mostly to aim bolt emiters
+    /// CONTAINS: Target objects which are used mostly to aim bolt emitters
     /// NOTES: These objects are just blank transforms, with no extra information.
     /// </summary>
     public void ReadTargets(byte[] bytes) {
