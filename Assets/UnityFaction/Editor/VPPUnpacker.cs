@@ -146,6 +146,11 @@ public class VPPUnpacker {
         V3DReader modelReader = new V3DReader(exportPath);
         modelReader.MakePrefabAtAssetPath();
         break;
+
+        case "vbm":
+        VBMReader texReader = new VBMReader(exportPath);
+        texReader.MakeMaterialAtAssetPath();
+        break;
         }
     }
 
