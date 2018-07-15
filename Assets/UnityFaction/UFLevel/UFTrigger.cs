@@ -93,6 +93,8 @@ public class UFTrigger : MonoBehaviour {
         if(!IsValid(other))
             return;
         inside = false;
+        insideTime = 0f;
+        buttonTime = 0f;
     }
 
     private bool IsValid(Collider c) {
@@ -114,7 +116,12 @@ public class UFTrigger : MonoBehaviour {
     }
 
     private void Trigger() {
-        insideTime = 0f;
+        if(resetsRemaining > 0)
+            resetsRemaining--;
+        else if(resetsRemaining == 0)
+            return;
+
+        insideTime = -resetDelay;
         buttonTime = 0f;
 
         foreach(int link in links)
