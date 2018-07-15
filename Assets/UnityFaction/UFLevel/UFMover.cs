@@ -143,7 +143,7 @@ public class UFMover : MonoBehaviour {
         }
     }
 
-    private void FixedUpdate() {
+    private void Update() {
         if(!moving)
             return;
 
