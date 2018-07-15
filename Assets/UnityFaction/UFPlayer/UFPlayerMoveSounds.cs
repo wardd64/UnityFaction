@@ -4,10 +4,8 @@ using UnityEngine;
 
 public class UFPlayerMoveSounds : MonoBehaviour {
 
-    private Animator pcAnim;
     private UFPlayerMovement move;
 
-    AudioSource sound;
     public AudioSource leftFootSound, rightFootSound;
     public AudioClip[] footstepClips_stone, footstepClips_metal,
         footstepClips_concrete, footstepClips_wood, footstepClips_gravel, footstepClips_pane;
@@ -15,8 +13,6 @@ public class UFPlayerMoveSounds : MonoBehaviour {
     private FootstepContext.Type footstepContext;
 
     private void Awake() {
-        pcAnim = this.GetComponent<Animator>();
-        sound = this.GetComponent<AudioSource>();
         move = transform.GetComponentInParent<UFPlayerMovement>();
         footstepContext = FootstepContext.Type.stone;
     }
