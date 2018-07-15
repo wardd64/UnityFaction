@@ -21,10 +21,10 @@ public class IDRef{
     public Type type;
 
     public enum Type {
-        Decal, ClimbingRegion, Brush, Keyframe, Light,
-        AmbSound, SpawnPoint, ParticleEmiter, GeoRegion,
-        BoltEmiter, Item, Clutter, Event, Entity,
-        Trigger, PushRegion
+        None, Decal, ClimbingRegion, Brush, Keyframe,
+        Light, AmbSound, SpawnPoint, ParticleEmiter,
+        GeoRegion, BoltEmiter, Item, Clutter, Event,
+        Entity, Trigger, PushRegion
     }
 
     public override string ToString() {

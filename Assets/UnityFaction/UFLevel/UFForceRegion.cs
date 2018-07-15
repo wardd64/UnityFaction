@@ -157,6 +157,9 @@ public class UFForceRegion : MonoBehaviour {
     private UFPlayerMovement GetPlayer(Collider c) {
         if(noPlayer)
             return null;
+        UFTriggerSensor uts = c.GetComponent<UFTriggerSensor>();
+        if(uts == null || !uts.IsPlayer())
+            return null;
         return c.transform.GetComponentInParent<UFPlayerMovement>();
     }
 }

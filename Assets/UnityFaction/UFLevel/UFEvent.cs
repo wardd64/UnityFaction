@@ -35,6 +35,9 @@ public class UFEvent : MonoBehaviour {
         links = e.links;
         color = e.color;
 
+        if(GetEventTypeClass(type) == EventTypeClass.None)
+            Debug.LogWarning("Event " + name + " will have no effects since it is of type " + type);
+
         UFLevel.SetObject(e.transform.id, gameObject);
     }
 
@@ -42,12 +45,13 @@ public class UFEvent : MonoBehaviour {
         AudioSource sound = gameObject.AddComponent<AudioSource>();
         sound.volume = 1f;
         sound.clip = clip;
+        sound.playOnAwake = false;
 
         switch(type) {
 
         case UFLevelStructure.Event.EventType.Music_Start:
         sound.loop = bool1;
-        bool useEffectsVolume = bool2;
+        //bool useEffectsVolume = bool2;
         //TODO set appropriate mixer channel
         break;
 
@@ -59,7 +63,8 @@ public class UFEvent : MonoBehaviour {
     }
 
     private void Start() {
-
+        if(GetEventTypeClass(type) == EventTypeClass.StartTrigger)
+            Trigger(true);
     }
 
     private void Update() {
@@ -87,9 +92,10 @@ public class UFEvent : MonoBehaviour {
                 break;
                 }
             }
-            else if(GetEventTypeClass(type) == EventTypeClass.Effect) {
-                if(positiveSignal)
-                    DoEffect(positiveSignal);
+            else if(etc == EventTypeClass.Effect) {
+                
+                IDRef.Type ignoredType = DoEffect(positiveSignal);
+                Trigger(positiveSignal, ignoredType);
                 timer = 0f;
             }
         }
@@ -105,17 +111,21 @@ public class UFEvent : MonoBehaviour {
 
     }
 
-    private void Trigger(bool positive) {
-        foreach(int link in links)
-            UFTrigger.Activate(link);
+    private void Trigger(bool positive, IDRef.Type ignoredType = IDRef.Type.None) {
+        foreach(int link in links) {
+            if(UFLevel.GetByID(link).type != ignoredType)
+                UFTrigger.Activate(link, positive);
+        }
+            
     }
 
-    private void DoEffect(bool positive) {
+    /// <summary>
+    /// Perform effects of this event. 
+    /// Returns the type of IDRef that is used up when performing the event,
+    /// other refs can simply be activated.
+    /// </summary>
+    private IDRef.Type DoEffect(bool positive) {
         switch(type) {
-
-        case UFLevelStructure.Event.EventType.Delay:
-
-        break;
 
         case UFLevelStructure.Event.EventType.Teleport:
         foreach(int link in links) {
@@ -123,55 +133,61 @@ public class UFEvent : MonoBehaviour {
             t.position = transform.position;
             t.rotation = transform.rotation;
         }
-        break;
+        return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Teleport_Player:
         Transform player = UFLevel.GetPlayer<Transform>();
         player.position = transform.position;
         float rot = transform.rotation.eulerAngles.y;
         player.rotation = Quaternion.Euler(0f, rot, 0f);
-        break;
+        return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Music_Start:
-        this.GetComponent<AudioSource>().Play();
-        break;
+        AudioSource sound = this.GetComponent<AudioSource>();
+        sound.volume = 1f; sound.Play();
+        return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Music_Stop:
         float fadeTime = float1;
-        StartCoroutine(FadeAudioSource(fadeTime, 0f));
-        break;
+        foreach(UFEvent e in GetEventsOfType(UFLevelStructure.Event.EventType.Music_Start))
+            StartCoroutine(e.FadeAudioSource(fadeTime, 0f));
+        return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Particle_State:
+        Debug.LogError("Implement me");
         //TODO
-        break;
+        return IDRef.Type.ParticleEmiter;
 
         case UFLevelStructure.Event.EventType.Mover_Pause:
-        break;
+        Debug.LogError("Implement me");
+        //TODO
+        return IDRef.Type.Keyframe;
 
         case UFLevelStructure.Event.EventType.Reverse_Mover:
-        bool setForwardIfMoving = int1 != 0; //reverse otherwise
-        //TODO
-        break;
+        bool setForwardIfMoving = int1 != 0;
+        foreach(UFMover mov in GetLinksOfType<UFMover>(IDRef.Type.Keyframe))
+            mov.Reverse(setForwardIfMoving);
+        return IDRef.Type.Keyframe;
 
         case UFLevelStructure.Event.EventType.Modify_Rotating_Mover:
-        //TODO
-        break;
-
-        case UFLevelStructure.Event.EventType.Invert:
-        //TODO
-        break;
+        bool increase = int1 != 0;
+        float factor = increase ? 1f + (float1 / 100f) : 1f - (float1 / 100f);
+        foreach(UFMover mov in GetLinksOfType<UFMover>(IDRef.Type.Keyframe))
+            mov.ChangeRotationSpeed(factor);
+        return IDRef.Type.Keyframe;
 
         case UFLevelStructure.Event.EventType.Explode:
+        Debug.LogError("Implement me");
         //TODO
-        break;
+        return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Continuous_Damage:
         UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(float1);
-        break;
+        return IDRef.Type.None;
 
         default:
         Debug.LogError("Event type " + type + " not implemented");
-        break;
+        return IDRef.Type.None;
         }
     }
 
@@ -181,11 +197,29 @@ public class UFEvent : MonoBehaviour {
             s.volume = Mathf.MoveTowards(s.volume, targetVolume, Time.deltaTime / time);
             yield return null;
         }
-        
     }
 
     private enum EventTypeClass {
-        None, StartTrigger, Signal, Detector, Effect, 
+        None, StartTrigger, Signal, Detector, Effect
+    }
+
+    private List<T> GetLinksOfType<T>(IDRef.Type type) where T : Component{
+        List<T> toReturn = new List<T>();
+        foreach(int link in links) {
+            if(UFLevel.GetByID(link).type == type)
+                toReturn.Add(UFLevel.GetByID(link).objectRef.GetComponent<T>());
+        }
+        return toReturn;
+    }
+
+    private List<UFEvent> GetEventsOfType(UFLevelStructure.Event.EventType type) {
+        UFEvent[] allEvents = this.transform.parent.GetComponentsInChildren<UFEvent>();
+        List<UFEvent> toReturn = new List<UFEvent>();
+        foreach(UFEvent e in allEvents) {
+            if(e.type == type)
+                toReturn.Add(e);
+        }
+        return toReturn;
     }
 
     private static EventTypeClass GetEventTypeClass(UFLevelStructure.Event.EventType type) {
@@ -213,6 +247,9 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.Set_Gravity:
         case UFLevelStructure.Event.EventType.Push_Region_State: 
         case UFLevelStructure.Event.EventType.Display_Fullscreen_Image:
+        case UFLevelStructure.Event.EventType.Modify_Rotating_Mover:
+        case UFLevelStructure.Event.EventType.Reverse_Mover:
+        case UFLevelStructure.Event.EventType.Mover_Pause:
         return EventTypeClass.Effect;
 
         case UFLevelStructure.Event.EventType.When_Countdown_Over:
@@ -222,7 +259,6 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.When_Countdown_Reach:
         case UFLevelStructure.Event.EventType.When_Life_Reaches:
         case UFLevelStructure.Event.EventType.When_Armor_Reaches:
-        case UFLevelStructure.Event.EventType.Reverse_Mover:
         case UFLevelStructure.Event.EventType.When_Hit:
         return EventTypeClass.Detector;
 
@@ -282,13 +318,11 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.Teleport_Player:
         case UFLevelStructure.Event.EventType.Holster_Weapon:
         case UFLevelStructure.Event.EventType.Holster_Player_Weapon:
-        case UFLevelStructure.Event.EventType.Modify_Rotating_Mover:
         case UFLevelStructure.Event.EventType.Clear_Endgame_If_Killed:
         case UFLevelStructure.Event.EventType.Win_PS2_Demo:
         case UFLevelStructure.Event.EventType.Enable_Navpoint:
         case UFLevelStructure.Event.EventType.Play_Vclip:
         case UFLevelStructure.Event.EventType.Endgame:
-        case UFLevelStructure.Event.EventType.Mover_Pause:
         case UFLevelStructure.Event.EventType.Countdown_begin:
         case UFLevelStructure.Event.EventType.Countdown_End:
         */

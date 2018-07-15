@@ -104,11 +104,13 @@ public class UFTrigger : MonoBehaviour {
     }
 
     private bool IsPlayer(Collider c) {
-        return true; //TODO
+        UFTriggerSensor uts = c.GetComponent<UFTriggerSensor>();
+        return uts != null && uts.IsPlayer();
     }
 
     private bool IsVehicle(Collider c) {
-        return false; //TODO
+        UFTriggerSensor uts = c.GetComponent<UFTriggerSensor>();
+        return uts != null && uts.type == UFTriggerSensor.Type.Vehicle;
     }
 
     private void Trigger() {

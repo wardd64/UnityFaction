@@ -192,7 +192,7 @@ public class UFMover : MonoBehaviour {
     /// </summary>
     private void RotateUpdate() {
         //Get movement parameters (rotations ignore all but the first key)
-        float travTime = forward ? keys[0].departTravelTime : keys[0].returnTravelTime;
+        float travTime = GetNextTravTime();
         float angle = (forward ? 1f : -1f) * keys[0].rotationAmount;
 
         //Calculate movement
@@ -204,6 +204,7 @@ public class UFMover : MonoBehaviour {
 
         if(time > travTime) {
             //keyframe is finished, wrap up
+            TriggerKeyLink(keys[0]);
             time -= travTime;
             FinishSequence();
             baseRot = rb.rotation;
@@ -223,7 +224,7 @@ public class UFMover : MonoBehaviour {
         PosRot fro = keys[lastKey].transform.posRot;
         PosRot to = keys[nextKey].transform.posRot;
         float distance = (to.position - fro.position).magnitude;
-        float travTime = GetNextTravTime(nextKey);
+        float travTime = GetNextTravTime();
 
         //calculate movement
         float x;
@@ -240,6 +241,7 @@ public class UFMover : MonoBehaviour {
 
         if(time > travTime) {
             //keyframe is finished, wrap up
+            TriggerKeyLink(keys[nextKey]);
             lastKey = nextKey;
             time -= travTime;
             if(AtLastKeyInSequence())
@@ -374,11 +376,41 @@ public class UFMover : MonoBehaviour {
         }
     }
 
-    private float GetNextTravTime(int nextKey) {
+    /// <summary>
+    /// Returns travel time to be used on next section of the path.
+    /// Note that this value encodes a speed if the corresponding flag is active.
+    /// </summary>
+    private float GetNextTravTime() {
+        if(rotateInPlace)
+            return forward ? keys[0].departTravelTime : keys[0].returnTravelTime;
+
         if(forward)
             return keys[lastKey].departTravelTime;
         else
-            return keys[nextKey].returnTravelTime;
+            return keys[GetNextKey()].returnTravelTime;
+    }
+
+    /// <summary>
+    /// Returns travel time to be used on next section of the path.
+    /// Also returns travel time of the next section when using "useTravTimeAsSpd".
+    /// the time parameter should always be constrained between 0 and this value.
+    /// </summary>
+    private float GetRealTravTime() {
+        float travTime = GetNextTravTime();
+        if(!rotateInPlace && useTravTimeAsSpd){
+            float speed = travTime;
+            int nextKey = GetNextKey();
+            PosRot fro = keys[lastKey].transform.posRot;
+            PosRot to = keys[nextKey].transform.posRot;
+            float distance = (to.position - fro.position).magnitude;
+            GetXBySpeed(time, speed, distance, lastKey, nextKey, out travTime);
+        }
+        return travTime;
+    }
+
+    private void TriggerKeyLink(UFLevelStructure.Keyframe key) {
+        if(key.triggerID > 0)
+            UFTrigger.Activate(key.triggerID);
     }
 
     private bool AtLastKeyInSequence() {
@@ -430,6 +462,25 @@ public class UFMover : MonoBehaviour {
 
     public void Activate(bool positive) {
         moving = positive;
+    }
+
+    public void Reverse(bool goForward) {
+        if(!moving || forward == goForward)
+            return;
+
+        float doneFrac = time / GetRealTravTime();
+
+        if(!rotateInPlace)
+            lastKey = GetNextKey();
+        forward = goForward;
+
+        time = (1f - doneFrac) * GetRealTravTime();
+    }
+
+    public void ChangeRotationSpeed(float factor) {
+        keys[0].departTravelTime /= factor;
+        keys[0].returnTravelTime /= factor;
+        time /= factor;
     }
 
     private void PlayClip(AudioClip clip, float volume) {

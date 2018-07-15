@@ -11,6 +11,8 @@ namespace UFLevelStructure {
     [Serializable]
     public struct PosRot {
         public Vector3 position;
+
+        [SerializeField, EulerAngles]
         public Quaternion rotation;
 
         public PosRot(Vector3 position, Quaternion rotation) {
