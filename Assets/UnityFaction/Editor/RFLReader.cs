@@ -162,7 +162,7 @@ public class RFLReader {
         case RFLSection.StaticGeometry: ReadStaticGeometry(bytes); break;
         case RFLSection.LevelInfo: ReadLevelInfo(bytes); break;
         case RFLSection.GeoRegions: ReadGeoRegions(bytes); break;
-        case RFLSection.AlternateLights: ReadLights(bytes, true); break;
+        case RFLSection.AlternateLights: ReadLights(bytes); break;
         case RFLSection.Lights: ReadLights(bytes); break;
         case RFLSection.AmbientSounds: ReadAmbientSounds(bytes); break;
         case RFLSection.Events: ReadEvents(bytes); break;
@@ -331,22 +331,21 @@ public class RFLReader {
     /// SECTION: Lights
     /// INCLUDED: Optionally
     /// CONTAINS: "Take a guess."
-    /// NOTES: There appears to be an alternate version of this section which is used in newer RFL files.
-    ///        This newer version differs only in an extra 4 bytes included in each light object.
+    /// NOTES: There appears to be an alternate header for this section use in some
+    ///        RFL files, though the details of this remain a mystery.
     /// </summary>
-    private void ReadLights(byte[] bytes, bool alternate = false) {
+    private void ReadLights(byte[] bytes) {
         pointer += 8;
 
         int nboLights = BitConverter.ToInt32(bytes, pointer);
+        pointer += 4;
+
         level.lights = new UFLevelStructure.Light[nboLights];
         for(int i = 0; i < nboLights; i++) {
             UFLevelStructure.Light nextLight;
 
             int id = BitConverter.ToInt32(bytes, pointer);
             pointer += 4;
-
-            if(alternate)
-                pointer += 4;
 
             UFUtils.ReadRFLString(bytes, ref pointer); //"Light"
             PosRot posRot = UFUtils.GetPosRot(bytes, pointer);
@@ -1234,10 +1233,12 @@ public class RFLReader {
                 liquid.visibility = BitConverter.ToSingle(bytes, pointer);
                 liquid.type = (Room.LiquidProperties.LiquidType)BitConverter.ToInt32(bytes, pointer + 4);
                 liquid.alpha = BitConverter.ToInt32(bytes, pointer + 8);
-                liquid.waveForm = (Room.LiquidProperties.WaveForm)BitConverter.ToInt32(bytes, pointer + 12);
-                liquid.scrollU = BitConverter.ToSingle(bytes, pointer + 16);
-                liquid.scrollV = BitConverter.ToSingle(bytes, pointer + 20);
-                pointer += 24;
+                pointer += 12 + 13; //more unkown stuff
+
+                liquid.waveForm = (Room.LiquidProperties.WaveForm)BitConverter.ToInt32(bytes, pointer);
+                liquid.scrollU = BitConverter.ToSingle(bytes, pointer + 4);
+                liquid.scrollV = BitConverter.ToSingle(bytes, pointer + 8);
+                pointer += 12;
 
                 nextRoom.liquidProperties = liquid;
             }
@@ -1363,9 +1364,9 @@ public class RFLReader {
     private bool ProbablyHasExtraCoords(byte[] bytes, int nboVertices) {
         int evidence = 0;
 
-        if(!UFUtils.IsPlausibleIndex(bytes, pointer + 12, nboVertices))
+        if(!UFUtils.IsPlausibleIndex(bytes, pointer, nboVertices))
             evidence++;
-        if(!UFUtils.IsPlausibleIndex(bytes, pointer + 24, nboVertices))
+        if(!UFUtils.IsPlausibleIndex(bytes, pointer + 12, nboVertices))
             evidence++;
 
         return evidence > 0;

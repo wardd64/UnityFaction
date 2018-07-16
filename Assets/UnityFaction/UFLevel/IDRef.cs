@@ -24,7 +24,7 @@ public class IDRef{
         None, Decal, ClimbingRegion, Brush, Keyframe,
         Light, AmbSound, SpawnPoint, ParticleEmitter,
         GeoRegion, BoltEmitter, Item, Clutter, Event,
-        Entity, Trigger, PushRegion
+        Entity, Trigger, Target, PushRegion
     }
 
     public override string ToString() {
