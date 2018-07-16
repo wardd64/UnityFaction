@@ -19,6 +19,7 @@ public class UFPlayerInfo : MonoBehaviour {
     public Room[] rooms;
     private bool hasSkyRoom;
     private Room skyRoom;
+    private Camera skyCamera;
 
     public void Set(LevelData level) {
         this.levelName = level.name;

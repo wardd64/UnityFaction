@@ -60,8 +60,9 @@ public class UFParticleEmitter : MonoBehaviour {
 
         ParticleSystem.EmissionModule psEmission = ps.emission;
         float spwMin = 1f / (emit.spawnDelay + emit.spawnRandomize);
-        float spwMax = 1f / (emit.spawnDelay - emit.spawnRandomize);
+        float spwMax = Mathf.Min(50f, 1f / (emit.spawnDelay - emit.spawnRandomize));
         psEmission.rateOverTime = new ParticleSystem.MinMaxCurve(spwMin, spwMax);
+        psMain.maxParticles = 200;
 
         psMain.startColor = emit.particleColor;
 
@@ -102,12 +103,27 @@ public class UFParticleEmitter : MonoBehaviour {
         if(emit.collidWithWorld) {
             psCollision.enabled = true;
             psCollision.type = ParticleSystemCollisionType.World;
-            psCollision.quality = ParticleSystemCollisionQuality.Medium;
-            //TODO: explodeOnImpact, dieOnImpact, collidWithLiquids, playCollisionSounds
-            //bounciness, stickieness
+            psCollision.quality = ParticleSystemCollisionQuality.High;
+            float lifeTimeLoss = emit.dieOnImpact ? 1f : 0f;
+            psCollision.lifetimeLoss = new ParticleSystem.MinMaxCurve(lifeTimeLoss);
+            float bounce = emit.bounciness / 15f;
+            psCollision.bounce = new ParticleSystem.MinMaxCurve(bounce);
+            float stick = emit.stickieness / 15f;
+            psCollision.dampen = new ParticleSystem.MinMaxCurve(stick);
+            psCollision.enableDynamicColliders = false;
+            //TODO: explodeOnImpact, collidWithLiquids, playCollisionSounds
         }
-        //TODO: swirliness, pushEffect, loopAnim, fade, glow
-        // forceSpawnEveryFrame, directionDependentVelocity;
+
+        
+        ParticleSystem.NoiseModule psNoise = ps.noise;
+        if(emit.swirliness > 0) {
+            psNoise.enabled = true;
+            float swirly = emit.swirliness / 15f;
+            psNoise.strength = swirly;
+            psNoise.scrollSpeed = 2f;
+            psNoise.octaveCount = 2;
+        }
+        //TODO: pushEffect, loopAnim, forceSpawnEveryFrame, directionDependentVelocity
     }
 
     public void SetMaterial(Material material) {

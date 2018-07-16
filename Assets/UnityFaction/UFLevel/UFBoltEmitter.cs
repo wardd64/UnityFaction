@@ -2,24 +2,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UFLevelStructure;
+using System;
 
 public class UFBoltEmitter : MonoBehaviour {
 
     //general
-    float timer, nextSpawnDelay;
-    bool emitting;
-    Bolt[] bolts;
+    private float timer, nextSpawnDelay;
+    private bool emitting;
+    public Bolt[] bolts;
 
     //bolt timekeeping
     public float decay, decayRandomize, delay, delayRandomize;
 
     //bolt animation variables
-    public Transform boltTarget;
+    public int targetID;
     public float jitter;
     public AnimationCurve boltShape;
 
     public void Set(BoltEmitter emit) {
-        //TODO
         LineRenderer lr = gameObject.AddComponent<LineRenderer>();
 
         this.emitting = emit.initOn;
@@ -32,8 +32,10 @@ public class UFBoltEmitter : MonoBehaviour {
 
         lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         lr.receiveShadows = false;
+        lr.useWorldSpace = false;
+        lr.enabled = false;
 
-        boltTarget = UFLevel.GetByID(emit.targetID).objectRef.transform;
+        targetID = emit.targetID;
 
         decay = emit.decay;
         decayRandomize = emit.decayRandomize;
@@ -74,14 +76,18 @@ public class UFBoltEmitter : MonoBehaviour {
         timer = 0f;
         nextSpawnDelay = GetRandomTime(delay, delayRandomize);
 
+        LineRenderer boltTemplate = this.GetComponent<LineRenderer>();
+
         //initialize bolts
         for(int i = 0; i < bolts.Length; i++) {
             GameObject g = new GameObject("Bolt_" + i.ToString().PadLeft('0'));
             g.transform.SetParent(transform);
             g.transform.localPosition = Vector3.zero;
             g.transform.localRotation = Quaternion.identity;
-            bolts[i] = new Bolt(g, GetComponent<LineRenderer>());
+            bolts[i] = new Bolt(g, boltTemplate);
         }
+
+        Destroy(boltTemplate);
     }
 
     private void LateUpdate() {
@@ -89,8 +95,10 @@ public class UFBoltEmitter : MonoBehaviour {
             EmitUpdate();
 
         foreach(Bolt bolt in bolts) {
-            if(!bolt.DecayTick())
+            if(!bolt.DecayTick()) {
+                Transform boltTarget = UFLevel.GetByID(targetID).objectRef.transform;
                 bolt.Animate(boltTarget, jitter, boltShape);
+            }
         }
     }
 
@@ -116,28 +124,29 @@ public class UFBoltEmitter : MonoBehaviour {
 
     public void Activate(bool positive) {
         this.emitting = positive;
-
     }
 
     private float GetRandomTime(float baseTime, float randomizeTime) {
         float min = Mathf.Max(0f, baseTime - randomizeTime);
         float max = baseTime + randomizeTime;
-        return Random.Range(min, max);
+        return UnityEngine.Random.Range(min, max);
     }
 
-    private class Bolt {
+    [Serializable]
+    public class Bolt {
 
         //decay
-        float time;
-        float lifeTime;
+        public float time;
+        public float lifeTime;
 
         //reference
-        LineRenderer lr;
+        public LineRenderer lr;
 
         public bool decayed { get { return time >= lifeTime; } }
 
         public Bolt(GameObject g, LineRenderer boltTemplate) {
             lr = UFUtils.AddComponent(g, boltTemplate);
+            lr.material = boltTemplate.material;
             lr.enabled = false;
         }
 
@@ -158,17 +167,17 @@ public class UFBoltEmitter : MonoBehaviour {
         }
 
         public void Animate(Transform target, float jitter, AnimationCurve boltShape) {
-
-            Vector2 randGlobal = Random.insideUnitCircle;
+            Vector3 basePos = lr.transform.position;
+            Vector2 randGlobal = UnityEngine.Random.insideUnitCircle;
             lr.transform.LookAt(target);
-            float distance = (target.position - lr.transform.position).magnitude;
+            float distance = (target.position - basePos).magnitude;
             int nboPts = lr.positionCount;
-            
+
             for(int i = 0; i < nboPts; i++) {
-                float t = i / (nboPts - 1);
+                float t = (float)i / (nboPts - 1);
                 float r = boltShape.Evaluate(t);
                 float z = distance * t;
-                Vector2 randLocal = Random.insideUnitCircle;
+                Vector2 randLocal = UnityEngine.Random.insideUnitCircle;
 
                 Vector2 pos = randGlobal * r + randLocal * jitter;
                 lr.SetPosition(i, new Vector3(pos.x, pos.y, z));

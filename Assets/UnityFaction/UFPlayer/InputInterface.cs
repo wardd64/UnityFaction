@@ -9,7 +9,13 @@ using UnityEngine;
 /// </summary>
 public class InputInterface : MonoBehaviour {
 
-    private static InputInterface singleton;
+    private static InputInterface singleton { get
+        {
+            if(instance == null)
+                instance = FindObjectOfType<InputInterface>();
+            return instance;
+        } }
+    private static InputInterface instance;
 
     //values set in Unity editor are the default values
     public KeyBinding[] bindings;
@@ -17,17 +23,12 @@ public class InputInterface : MonoBehaviour {
     public AudioSource changeBindingSound;
 
     private void Awake() {
-        if(singleton != null)
+        if(this != singleton) {
+            Destroy(this.gameObject);
             return;
-        singleton = this;
+        }
 
         LoadBindings();
-    }
-
-    private void Update() {
-        //repair singleton connection if recompiled
-        if(singleton == null)
-            singleton = this;
     }
 
     private void LoadBindings() {

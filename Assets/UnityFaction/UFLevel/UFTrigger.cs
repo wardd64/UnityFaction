@@ -159,6 +159,14 @@ public class UFTrigger : MonoBehaviour {
         obj.objectRef.GetComponentInParent<UFEvent>().Activate(positive);
         break;
 
+        case IDRef.Type.ParticleEmitter:
+        obj.objectRef.GetComponentInParent<UFParticleEmitter>().Activate(positive);
+        break;
+
+        case IDRef.Type.BoltEmitter:
+        obj.objectRef.GetComponentInParent<UFBoltEmitter>().Activate(positive);
+        break;
+
         default:
         Debug.LogWarning("Tried activating object with unkown funcionality: " + obj + ", of type " + obj.type);
         break;

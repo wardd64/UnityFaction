@@ -311,6 +311,8 @@ public class LevelBuilder : EditorWindow {
             string name = "ParticleEmitter_" + GetIdString(e.transform);
             UFParticleEmitter emit = MakeUFObject<UFParticleEmitter>(name, ptclParent, e.transform);
             emit.Set(e);
+            Material particleMat = GetMaterial(e.texture, assetPath, GetParticleShader(e.fade, e.glow));
+            emit.SetMaterial(particleMat);
         }
 
         Transform trgtParent = (new GameObject("BoltTargets")).transform;
@@ -324,6 +326,8 @@ public class LevelBuilder : EditorWindow {
             string name = "BoltEmitter_" + GetIdString(e.transform);
             UFBoltEmitter emit = MakeUFObject<UFBoltEmitter>(name, boltParent, e.transform);
             emit.Set(e);
+            Material particleMat = GetMaterial(e.texture, assetPath, GetParticleShader(e.fade, e.glow));
+            emit.SetMaterial(particleMat);
         }
     }
 
@@ -431,6 +435,10 @@ public class LevelBuilder : EditorWindow {
     }
 
     public static Material GetMaterial(string texture, string assetPath) {
+        return GetMaterial(texture, assetPath, "Standard");
+    }
+
+    private static Material GetMaterial(string texture, string assetPath, string shader) {
         string textureName = Path.GetFileNameWithoutExtension(texture);
         string materialName = textureName + ".mat";
         string[] results = AssetDatabase.FindAssets(textureName);
@@ -444,10 +452,10 @@ public class LevelBuilder : EditorWindow {
             if(resultName == texture)
                 texPath = resultPath;
         }
-           
+
         if(texPath != null) {
             //material doesn't exist, but the texture does, so we can make a new material
-            Material mat = GenerateDefaultMat();
+            Material mat = new Material(Shader.Find(shader));
             mat.mainTexture = (Texture)AssetDatabase.LoadAssetAtPath(texPath, typeof(Texture));
             AssetDatabase.CreateAsset(mat, assetPath + materialName);
             return mat;
@@ -455,7 +463,16 @@ public class LevelBuilder : EditorWindow {
 
         //neither material nor texture exists
         Debug.LogWarning("Could not find texture: " + texture);
-        return GenerateDefaultMat();
+        return new Material(Shader.Find(shader));
+    }
+
+    private string GetParticleShader(bool fade, bool glow) {
+        if(glow)
+            return "Particles/Additive";
+        else if(fade)
+            return "Particles/Alpha Blended";
+        else
+            return "Particles/Standard Unlit";
     }
 
     /// <summary>
@@ -599,10 +616,6 @@ public class LevelBuilder : EditorWindow {
 
         Debug.LogWarning("Could not find prefab for " + name);
         return null;
-    }
-
-    public static Material GenerateDefaultMat() {
-        return new Material(Shader.Find("Standard"));
     }
 
     public static bool IsValidAudioClipName(string clip) {
