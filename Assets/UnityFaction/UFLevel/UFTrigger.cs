@@ -51,8 +51,6 @@ public class UFTrigger : MonoBehaviour {
 
             GetComponent<Collider>().isTrigger = true;
         }
-
-        UFLevel.SetObject(trigger.transform.id, gameObject);
     }
 
     private void Start() {

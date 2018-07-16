@@ -36,9 +36,7 @@ public class UFEvent : MonoBehaviour {
         color = e.color;
 
         if(GetEventTypeClass(type) == EventTypeClass.None)
-            Debug.LogWarning("Event " + name + " will have no effects since it is of type " + type);
-
-        UFLevel.SetObject(e.transform.id, gameObject);
+            Debug.LogWarning("Event " + name + " will have no effects since it is of unknown type: " + type);
     }
 
     public void SetAudio(AudioClip clip) {

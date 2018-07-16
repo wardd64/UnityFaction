@@ -56,8 +56,6 @@ public class UFForceRegion : MonoBehaviour {
             this.type = ForceType.SetVel;
         else
             this.type = ForceType.AddVel;
-
-        UFLevel.SetObject(push.transform.id, gameObject);
     }
 
     private void AddTrigger(bool box, float radius, Vector3 extents) {

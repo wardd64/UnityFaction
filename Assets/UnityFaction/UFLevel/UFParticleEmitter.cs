@@ -3,15 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UFLevelStructure;
 
-public class UFEmitter : MonoBehaviour {
+public class UFParticleEmitter : MonoBehaviour {
 
+    //timing
     float timer;
     float randOnTime, randOffTime;
     public float timeOn, timeOnRandomize, timeOff, timeOffRandomize;
-
-    public void Set(BoltEmitter emit) {
-        //TODO
-    }
 
     public void Set(UFLevelStructure.ParticleEmitter emit) {
         ParticleSystem ps = gameObject.AddComponent<ParticleSystem>();
@@ -45,6 +42,9 @@ public class UFEmitter : MonoBehaviour {
         break;
 
         }
+
+        //RedFaction emits in y-direction, Unity in z.
+        psShape.rotation = new Vector3(-90f, 0f, 0f);
 
         float rMin = emit.radius - emit.radiusRandomize;
         float rMax = emit.radius + emit.radiusRandomize;
@@ -108,8 +108,6 @@ public class UFEmitter : MonoBehaviour {
         }
         //TODO: swirliness, pushEffect, loopAnim, fade, glow
         // forceSpawnEveryFrame, directionDependentVelocity;
-
-       
     }
 
     public void SetMaterial(Material material) {
@@ -118,10 +116,6 @@ public class UFEmitter : MonoBehaviour {
             Renderer psRenderer = ps.GetComponent<Renderer>();
             psRenderer.material = material;
         }
-
-        LineRenderer lr = GetComponent<LineRenderer>();
-        if(lr != null)
-            lr.material = material;
     }
 
     private void Start() {
@@ -138,17 +132,28 @@ public class UFEmitter : MonoBehaviour {
     private bool usesCycles { get { return timeOn > 0f && timeOff > 0f; } }
 
     private void CycleUpdate() {
-        ParticleSystem ps = GetComponent<ParticleSystem>();
         timer += Time.deltaTime;
         if(timer < randOnTime)
-            ps.Play();
+            SetEmitState(true);
         else if(timer < randOnTime + randOffTime)
-            ps.Stop();
+            SetEmitState(false);
         else {
             timer -= randOnTime + randOffTime;
             GenerateOnOffTime();
             CycleUpdate();
         }
+    }
+
+    public void Activate(bool positive) {
+        this.enabled = positive;
+    }
+
+    private void SetEmitState(bool active) {
+        ParticleSystem ps = GetComponent<ParticleSystem>();
+        if(!ps.isPlaying && active)
+            ps.Play();
+        else if(ps.isPlaying && !active)
+            ps.Stop();
     }
 
     private void GenerateOnOffTime() {

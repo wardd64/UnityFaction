@@ -18,7 +18,7 @@ public class LevelBuilder : EditorWindow {
     //Build options
     //...
 
-    [MenuItem("UnityFaction/Build Level")]
+    [MenuItem("UnityFaction/Build Level (RFL)")]
     public static void BuildLevel() {
         //let user select rfl file that needs to be built into the scene
         string fileSearchMessage = "Select rfl file you would like to build";
@@ -108,6 +108,13 @@ public class LevelBuilder : EditorWindow {
         if(GUILayout.Button("Build all", bigButton)) {
             //TODO
             Debug.LogWarning("not yet implemented");
+        }
+
+        if(GUILayout.Button("Refresh level")) {
+            GameObject.DestroyImmediate(root.GetComponent<UFLevel>());
+            UFLevel l = root.gameObject.AddComponent<UFLevel>();
+            l.Set(level);
+            l.Awake();
         }
 
         if(GUILayout.Button("Build static geometry"))
@@ -302,15 +309,20 @@ public class LevelBuilder : EditorWindow {
         ptclParent.SetParent(p);
         foreach(UFLevelStructure.ParticleEmitter e in level.particleEmitters) {
             string name = "ParticleEmitter_" + GetIdString(e.transform);
-            UFEmitter emit = MakeUFObject<UFEmitter>(name, ptclParent, e.transform);
+            UFParticleEmitter emit = MakeUFObject<UFParticleEmitter>(name, ptclParent, e.transform);
             emit.Set(e);
         }
+
+        Transform trgtParent = (new GameObject("BoltTargets")).transform;
+        trgtParent.SetParent(p);
+        foreach(UFTransform t in level.targets)
+            MakeUFObject<Transform>("target_" + GetIdString(t), trgtParent, t);
 
         Transform boltParent = (new GameObject("BoltEmitters")).transform;
         boltParent.SetParent(p);
         foreach(UFLevelStructure.BoltEmitter e in level.boltEmitters) {
             string name = "BoltEmitter_" + GetIdString(e.transform);
-            UFEmitter emit = MakeUFObject<UFEmitter>(name, boltParent, e.transform);
+            UFBoltEmitter emit = MakeUFObject<UFBoltEmitter>(name, boltParent, e.transform);
             emit.Set(e);
         }
     }
@@ -325,6 +337,8 @@ public class LevelBuilder : EditorWindow {
         g.transform.SetParent(parent);
         UFUtils.SetTransform(g.transform, transform);
         UFLevel.SetObject(transform.id, g);
+        if(typeof(T) == typeof(Transform))
+            return g.GetComponent<T>();
         return g.AddComponent<T>();
     }
 
