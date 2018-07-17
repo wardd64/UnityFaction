@@ -191,7 +191,7 @@ public class LevelBuilder : EditorWindow {
         destrG.transform.SetParent(p);
         List<Brush> brushes = GetDestructibleBrushes();
         foreach(Brush b in brushes) {
-            string name = "Brush_" + b.transform.id.ToString().PadLeft(4, '0');
+            string name = "Brush_" + GetIdString(b.transform);
             Transform brush = (MakeMeshObject(b.geometry, name)).transform;
             brush.SetParent(destrG.transform);
             UFUtils.SetTransform(brush, b.transform);
@@ -220,7 +220,7 @@ public class LevelBuilder : EditorWindow {
 
         movingMeshColliders = 0;
         foreach(Brush b in level.movingGeometry) {
-            string name = "Brush_" + b.transform.id.ToString().PadLeft(4, '0');
+            string name = "Brush_" + GetIdString(b.transform);
             Transform brush = (MakeMeshObject(b.geometry, name)).transform;
             GiveBrushCollider(brush);
             brush.SetParent(geomHolder);
@@ -238,7 +238,7 @@ public class LevelBuilder : EditorWindow {
             MovingGroup group = level.movingGroups[i];
 
             //make new gameobject
-            GameObject g = new GameObject("Mover_<" + group.name + ">");
+            GameObject g = new GameObject(group.name);
             g.transform.SetParent(groupHolder);
 
             //attach mover script and initialize
@@ -262,6 +262,7 @@ public class LevelBuilder : EditorWindow {
             if(prefab == null)
                 continue;
             GameObject g = GameObject.Instantiate(prefab, p);
+            g.name = "Clutter_" + GetIdString(clutter.transform) + "_" + clutter.name;
             g.AddComponent<UFClutter>();
             UFLevel.SetObject(clutter.transform.id, g);
             UFUtils.SetTransform(g.transform, clutter.transform);
@@ -271,7 +272,7 @@ public class LevelBuilder : EditorWindow {
     private void BuildTriggers() {
         Transform p = MakeParent("Triggers");
         foreach(Trigger trigger in level.triggers) {
-            string name = "Trigger_" + trigger.transform.id;
+            string name = "Trigger_" + GetIdString(trigger.transform);
             UFTrigger t = MakeUFObject<UFTrigger>(name, p, trigger.transform);
             t.Set(trigger);
         }
@@ -280,12 +281,12 @@ public class LevelBuilder : EditorWindow {
     private void BuildForceRegions() {
         Transform p = MakeParent("ForceRegions");
         foreach(PushRegion region in level.pushRegions) {
-            string name = "PushRegion_" + region.transform.id;
+            string name = "PushRegion_" + GetIdString(region.transform);
             UFForceRegion r = MakeUFObject<UFForceRegion>(name, p, region.transform);
             r.Set(region);
         }
         foreach(ClimbingRegion region in level.climbingRegions) {
-            string name = "ClimbRegion_" + region.cbTransform.transform.id;
+            string name = "ClimbRegion_" + GetIdString(region.cbTransform.transform);
             UFForceRegion r = MakeUFObject<UFForceRegion>(name, p, region.cbTransform.transform);
             r.Set(region);
         }
@@ -386,7 +387,9 @@ public class LevelBuilder : EditorWindow {
     }
 
     private static string GetIdString(UFTransform t) {
-        return t.id.ToString().PadLeft(4, '0');
+        int nboIDs = UFLevel.singleton.idDictionary.Count;
+        int idLength = Mathf.CeilToInt(Mathf.Log10(nboIDs + 1));
+        return t.id.ToString().PadLeft(idLength, '0');
     }
 
     private static GameObject MakeMeshObject(Geometry geometry, string name) {
@@ -419,6 +422,12 @@ public class LevelBuilder : EditorWindow {
 
         MeshRenderer mr = g.AddComponent<MeshRenderer>();
         mr.materials = GetMaterials(usedTextures, assetPath);
+
+        bool fullyInvis = true;
+        foreach(String tex in usedTextures)
+            fullyInvis &= tex.ToLower().Contains("invis");
+
+        mr.enabled = !fullyInvis;
 
         return g;
     }
@@ -455,9 +464,13 @@ public class LevelBuilder : EditorWindow {
 
         if(texPath != null) {
             //material doesn't exist, but the texture does, so we can make a new material
+            Texture2D tex = (Texture2D)AssetDatabase.LoadAssetAtPath(texPath, typeof(Texture2D));
+
             Material mat = new Material(Shader.Find(shader));
-            mat.mainTexture = (Texture)AssetDatabase.LoadAssetAtPath(texPath, typeof(Texture));
+            
+            mat.mainTexture = tex;
             AssetDatabase.CreateAsset(mat, assetPath + materialName);
+            
             return mat;
         }
 
@@ -466,13 +479,37 @@ public class LevelBuilder : EditorWindow {
         return new Material(Shader.Find(shader));
     }
 
-    private string GetParticleShader(bool fade, bool glow) {
+    private static string GetParticleShader(bool fade, bool glow) {
         if(glow)
             return "Particles/Additive";
         else if(fade)
             return "Particles/Alpha Blended";
         else
             return "Particles/Standard Unlit";
+    }
+
+    private static Material GetStandardMaterialFor(Texture2D tex) {
+        Material mat = new Material(Shader.Find("Standard"));
+        float minAlpha = 1f, avgAlpha = 0f;
+        for(int x = 0; x < tex.width; x++) {
+            for(int y = 0; y < tex.height; y++) {
+                float value = tex.GetPixel(x, y).a;
+                if(value < minAlpha)
+                    minAlpha = value;
+                avgAlpha += value;
+            }
+        }
+        avgAlpha /= (tex.width * tex.height);
+        if(avgAlpha == 0f)
+            mat.SetFloat("_Mode", 1f); //completely transparant
+        else if(minAlpha == 0f)
+            mat.SetFloat("_Mode", 2f); //fade to transparant
+        else if(avgAlpha < 1f)
+            mat.SetFloat("_Mode", 3f); //semi transparant
+        else
+            mat.SetFloat("_Mode", 0f); //opaque
+
+        return mat;
     }
 
     /// <summary>
