@@ -1190,9 +1190,14 @@ public class RFLReader {
         geometry.textures = ReadStringList(bytes);
 
         int nboScrolls = BitConverter.ToInt32(bytes, pointer);
+        geometry.scrolls = new FaceScroll[nboScrolls];
         pointer += 4;
-        if(nboScrolls > 0)
-            throw new RFLReadException("Cannot yet read scrolling textures");
+        for(int i = 0; i < nboScrolls; i++) {
+            FaceScroll nextScroll;
+            nextScroll.faceRef = BitConverter.ToInt32(bytes, pointer);
+            nextScroll.scrollVelocity = UFUtils.Getvector2(bytes, pointer + 4);
+            pointer += 12;
+        }
 
         int nboRooms = BitConverter.ToInt32(bytes, pointer);
         geometry.rooms = new Room[nboRooms];

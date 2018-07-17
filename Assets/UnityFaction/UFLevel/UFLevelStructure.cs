@@ -117,9 +117,16 @@ namespace UFLevelStructure {
     [Serializable]
     public struct Geometry {
         public string[] textures;
+        public FaceScroll[] scrolls;
         public Vector3[] vertices;
         public Face[] faces;
         public Room[] rooms;
+    }
+
+    [Serializable]
+    public struct FaceScroll {
+        public int faceRef;
+        public Vector2 scrollVelocity;
     }
 
     [Serializable]

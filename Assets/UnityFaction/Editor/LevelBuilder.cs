@@ -637,6 +637,7 @@ public class LevelBuilder : EditorWindow {
 
         //if not, use a mesh collider in stead (and warn the user)
         MeshCollider mc = brush.gameObject.AddComponent<MeshCollider>();
+        mc.inflateMesh = true;
         mc.convex = true;
         movingMeshColliders++;
     }
