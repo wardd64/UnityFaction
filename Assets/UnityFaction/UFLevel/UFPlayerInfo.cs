@@ -17,9 +17,8 @@ public class UFPlayerInfo : MonoBehaviour {
     public SpawnPoint[] spawnPoints;
 
     public Room[] rooms;
-    private bool hasSkyRoom;
-    private Room skyRoom;
-    private Camera skyCamera;
+    public Camera skyCamera;
+
 
     public void Set(LevelData level) {
         this.levelName = level.name;
@@ -47,8 +46,13 @@ public class UFPlayerInfo : MonoBehaviour {
 
         foreach(Room room in rooms) {
             if(room.isSkyRoom) {
-                hasSkyRoom = true;
-                skyRoom = room;
+                GameObject camG = new GameObject("SkyCamera");
+                Vector3 skyPos = (room.aabb.min + room.aabb.max) / 2f;
+                camG.transform.position = skyPos;
+                skyCamera = camG.AddComponent<Camera>();
+                skyCamera.depth = -10;
+                skyCamera.clearFlags = CameraClearFlags.SolidColor;
+                skyCamera.backgroundColor = fogColor;
                 break;
             }
         }
@@ -64,10 +68,9 @@ public class UFPlayerInfo : MonoBehaviour {
     }
 
     public void ApplyCameraSettings(Camera playerCamera) {
-        if(hasSkyRoom) {
-            //TODO: make sky room
-            playerCamera.clearFlags = CameraClearFlags.Nothing;
-        }
+        if(skyCamera != null)
+            //rely on sky camera to render sky room
+            playerCamera.clearFlags = CameraClearFlags.Depth;
         else if(RenderSettings.fog){
             //aply solid color to represent thick fog
             playerCamera.clearFlags = CameraClearFlags.SolidColor;
@@ -78,7 +81,7 @@ public class UFPlayerInfo : MonoBehaviour {
             playerCamera.clearFlags = CameraClearFlags.Nothing;
     }
 
-    private void UpdateCamera(Camera playerCamera) {
+    public void UpdateCamera(Camera playerCamera) {
         Color targetAmb = defaultAmbient;
         
         Room room;
@@ -92,6 +95,9 @@ public class UFPlayerInfo : MonoBehaviour {
         Color currentAmb = RenderSettings.ambientLight;
         float r = Time.deltaTime / ambChangeTime;
         RenderSettings.ambientLight = UFUtils.MoveTowards(currentAmb, targetAmb, r);
+
+        if(skyCamera != null)
+            skyCamera.transform.rotation = playerCamera.transform.rotation;
     }
 
     /// <summary>

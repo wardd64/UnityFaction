@@ -11,6 +11,8 @@ public class UFPlayerMovement : MonoBehaviour {
     Camera playerCamera;
     UFPlayerMoveSounds moveSound;
 
+    UFPlayerInfo playerInfo;
+
     MotionState motionState;
     public enum MotionState {
         ground, air, crouch, climb
@@ -90,8 +92,11 @@ public class UFPlayerMovement : MonoBehaviour {
     private void Awake() {
         //set up nearby connections
         cc = this.GetComponent<CharacterController>();
-        playerCamera = FindObjectOfType<Camera>();
+        playerCamera = this.GetComponentInChildren<Camera>();
         moveSound = this.GetComponentInChildren<UFPlayerMoveSounds>();
+        playerInfo = FindObjectOfType<UFPlayerInfo>();
+        if(playerInfo != null)
+            playerInfo.ApplyCameraSettings(playerCamera);
         SetRotSmoothing(rotSmoothing);
     }
 
@@ -121,6 +126,8 @@ public class UFPlayerMovement : MonoBehaviour {
         //characterAnim.SetBool("Crouch", motionState == MotionState.crouch);
 
         MouseUpdate();
+        if(playerInfo != null)
+            playerInfo.UpdateCamera(playerCamera);
     }
 
     private void MouseUpdate() {
