@@ -26,7 +26,7 @@ public class UFPlayerInfo : MonoBehaviour {
         this.playerStart = level.playerStart;
         this.multiplayer = level.multiplayer;
         this.spawnPoints = level.spawnPoints;
-        this.fogStart = Mathf.Max(0f, level.nearPlane);
+        this.fogStart = Mathf.Max(10f, level.nearPlane);
         this.fogEnd = Mathf.Max(fogStart + 10f, level.farPlane);
         this.defaultAmbient = level.ambientColor;
         this.fogColor = level.fogColor;
@@ -48,23 +48,34 @@ public class UFPlayerInfo : MonoBehaviour {
             if(room.isSkyRoom) {
                 GameObject camG = new GameObject("SkyCamera");
                 Vector3 skyPos = (room.aabb.min + room.aabb.max) / 2f;
+                Vector3 skyDiagonal = room.aabb.max - room.aabb.min;
+                camG.transform.SetParent(transform);
                 camG.transform.position = skyPos;
                 skyCamera = camG.AddComponent<Camera>();
                 skyCamera.depth = -10;
                 skyCamera.clearFlags = CameraClearFlags.SolidColor;
                 skyCamera.backgroundColor = fogColor;
+                skyCamera.farClipPlane = skyDiagonal.magnitude / 2f;
                 break;
             }
         }
     }
 
     private void Start() {
-        //apply fog settings
+        SetFog();
+    }
+
+    private void SetFog() {
         RenderSettings.fog = fogStart > 0f;
         RenderSettings.fogColor = fogColor;
         RenderSettings.fogMode = FogMode.Linear;
         RenderSettings.fogStartDistance = fogStart;
         RenderSettings.fogEndDistance = fogEnd;
+    }
+
+    private void SetRenderSettings() {
+        RenderSettings.ambientLight = defaultAmbient;
+        SetFog();
     }
 
     public void ApplyCameraSettings(Camera playerCamera) {
@@ -79,6 +90,9 @@ public class UFPlayerInfo : MonoBehaviour {
         else
             //no clearing; time for trippy background effects
             playerCamera.clearFlags = CameraClearFlags.Nothing;
+
+        //far clipping
+        playerCamera.farClipPlane = fogEnd;
     }
 
     public void UpdateCamera(Camera playerCamera) {
@@ -96,8 +110,10 @@ public class UFPlayerInfo : MonoBehaviour {
         float r = Time.deltaTime / ambChangeTime;
         RenderSettings.ambientLight = UFUtils.MoveTowards(currentAmb, targetAmb, r);
 
-        if(skyCamera != null)
+        if(skyCamera != null) {
             skyCamera.transform.rotation = playerCamera.transform.rotation;
+            skyCamera.fieldOfView = playerCamera.fieldOfView;
+        }
     }
 
     /// <summary>
