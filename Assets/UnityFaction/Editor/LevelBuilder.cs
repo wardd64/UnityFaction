@@ -214,23 +214,8 @@ public class LevelBuilder : EditorWindow {
     private void BuildMovers() {
         Transform p = MakeParent("Movers");
 
-        //build moving geometry
-        Transform geomHolder = (new GameObject("Moving geometry")).transform;
-        geomHolder.SetParent(p);
-
-        movingMeshColliders = 0;
-        foreach(Brush b in level.movingGeometry) {
-            string name = "Brush_" + GetIdString(b.transform);
-            Transform brush = (MakeMeshObject(b.geometry, name)).transform;
-            GiveBrushCollider(brush);
-            brush.SetParent(geomHolder);
-            UFUtils.SetTransform(brush, b.transform);
-            UFLevel.SetObject(b.transform.id, brush.gameObject);
-        }
-        if(movingMeshColliders > 0)
-            Debug.LogWarning("A number of moving brushes are using mesh colliders: " + movingMeshColliders + 
-                ". Consider giving them compound colliders for efficiency.");
-
+        //make moving groups
+        List<int> ghostMovers = new List<int>();
         Transform groupHolder = (new GameObject("Moving groups")).transform;
         groupHolder.SetParent(p);
 
@@ -252,7 +237,28 @@ public class LevelBuilder : EditorWindow {
             mov.stopClip = GetClip(group.stopClip);
 
             mov.AddAudio();
+
+            if(mov.noPlayerCollide)
+                ghostMovers.AddRange(mov.links);
         }
+
+        //build moving geometry
+        Transform geomHolder = (new GameObject("Moving geometry")).transform;
+        geomHolder.SetParent(p);
+
+        movingMeshColliders = 0;
+        foreach(Brush b in level.movingGeometry) {
+            string name = "Brush_" + GetIdString(b.transform);
+            Transform brush = (MakeMeshObject(b.geometry, name)).transform;
+            if(!ghostMovers.Contains(b.transform.id))
+                GiveBrushCollider(brush);
+            brush.SetParent(geomHolder);
+            UFUtils.SetTransform(brush, b.transform);
+            UFLevel.SetObject(b.transform.id, brush.gameObject);
+        }
+        if(movingMeshColliders > 0)
+            Debug.LogWarning("A number of moving brushes are using mesh colliders: " + movingMeshColliders + 
+                ". Consider giving them compound colliders for efficiency.");
     }
 
     private void BuildClutter() {
@@ -608,11 +614,29 @@ public class LevelBuilder : EditorWindow {
     private static int movingMeshColliders;
 
     private static void GiveBrushCollider(Transform brush) {
-        Vector3[] verts = brush.GetComponent<MeshFilter>().sharedMesh.vertices;
+        //collapse vertices close to eachother
+        Vector3[] originalVerts = brush.GetComponent<MeshFilter>().sharedMesh.vertices;
+        List<Vector3> verts = new List<Vector3>();
+
+        foreach(Vector3 v in originalVerts) {
+            bool overlap = false;
+            foreach(Vector3 ov in verts) {
+                if((v - ov).sqrMagnitude < GEOM_DELTA) {
+                    overlap = true;
+                    break;
+                }
+            }
+            if(!overlap)
+                verts.Add(v);
+        }
+
+        //check if mesh is at least a plane
+        if(verts.Count < 3)
+            return;
 
         //check if mesh is a simple, axis aligned box
-        int nboVerts = verts.Length;
-        bool validBox = nboVerts == 8 || nboVerts == 24;
+        int nboVerts = verts.Count;
+        bool validBox = nboVerts == 4 || nboVerts == 8;
         if(validBox) {
             for(int coord = 0; coord < 3; coord++) {
                 List<float> values = new List<float>();
@@ -637,9 +661,27 @@ public class LevelBuilder : EditorWindow {
 
         //if not, use a mesh collider in stead (and warn the user)
         MeshCollider mc = brush.gameObject.AddComponent<MeshCollider>();
-        mc.inflateMesh = true;
-        mc.convex = true;
         movingMeshColliders++;
+
+        //check if points are nearly co-planar
+        bool coplanar = verts.Count == 3;
+        if(!coplanar) {
+            coplanar = true;
+            Plane plane = new Plane(verts[0], verts[1], verts[2]);
+            for(int i = 3; i < verts.Count; i++) {
+                float d = Mathf.Abs(plane.GetDistanceToPoint(verts[i]));
+                if(d > GEOM_DELTA) {
+                    coplanar = false;
+                    break;
+                }
+            }
+        }
+
+        //if not make mesh convex
+        if(!coplanar) {
+            mc.inflateMesh = true;
+            mc.convex = true;
+        }
     }
 
     public static GameObject GetPrefab(string name) {
