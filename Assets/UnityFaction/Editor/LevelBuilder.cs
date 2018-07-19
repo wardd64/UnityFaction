@@ -264,7 +264,8 @@ public class LevelBuilder : EditorWindow {
     private void BuildClutter() {
         Transform p = MakeParent("Clutter");
         foreach(Clutter clutter in level.clutter) {
-            GameObject prefab = GetPrefab(clutter.name);
+            string modelName = TableReader.FindClutterModel(clutter.name);
+            GameObject prefab = GetPrefab(modelName);
             if(prefab == null)
                 continue;
             GameObject g = GameObject.Instantiate(prefab, p);
