@@ -48,7 +48,7 @@ public class UFParticleEmitter : MonoBehaviour {
 
         float rMin = emit.radius - emit.radiusRandomize;
         float rMax = emit.radius + emit.radiusRandomize;
-        psMain.startSize = new ParticleSystem.MinMaxCurve(rMin, rMax);
+        psMain.startSize = new ParticleSystem.MinMaxCurve(2f * rMin, 2f * rMax);
 
         float decMin = emit.decay - emit.decayRandomize;
         float decMax = emit.decay + emit.decayRandomize;
@@ -56,13 +56,17 @@ public class UFParticleEmitter : MonoBehaviour {
 
         float velMin = emit.velocity - emit.velocityRandomize;
         float velMax = emit.velocity + emit.velocityRandomize;
-        psMain.startLifetime = new ParticleSystem.MinMaxCurve(velMin, velMax);
+        psMain.startSpeed = new ParticleSystem.MinMaxCurve(velMin, velMax);
 
         ParticleSystem.EmissionModule psEmission = ps.emission;
         float spwMin = 1f / (emit.spawnDelay + emit.spawnRandomize);
+        if(float.IsInfinity(spwMin) || float.IsNaN(spwMin))
+            spwMin = 0f;
         float spwMax = Mathf.Min(50f, 1f / (emit.spawnDelay - emit.spawnRandomize));
         psEmission.rateOverTime = new ParticleSystem.MinMaxCurve(spwMin, spwMax);
-        psMain.maxParticles = 200;
+
+        int maxParticles = Mathf.CeilToInt(spwMax * decMax);
+        psMain.maxParticles = Mathf.Min(200, maxParticles);
 
         psMain.startColor = emit.particleColor;
 
@@ -77,7 +81,7 @@ public class UFParticleEmitter : MonoBehaviour {
         if(emit.growthRate != 0f) {
             psSolt.enabled = true;
             float finalSize = (emit.radius + emit.growthRate * time) / emit.radius;
-            AnimationCurve curve = AnimationCurve.Linear(0f, 1f, time, finalSize);
+            AnimationCurve curve = AnimationCurve.Linear(0f, 1f, 1f, finalSize);
             psSolt.size = new ParticleSystem.MinMaxCurve(1f, curve);
         }
 
@@ -85,7 +89,7 @@ public class UFParticleEmitter : MonoBehaviour {
         if(emit.acceleration != 0f) {
             psVolt.enabled = true;
             float finalVel = (emit.velocity + emit.acceleration * time) / emit.velocity;
-            AnimationCurve curve = AnimationCurve.Linear(0f, 1f, time, finalVel);
+            AnimationCurve curve = AnimationCurve.Linear(0f, 1f, 1f, finalVel);
             psVolt.speedModifier = new ParticleSystem.MinMaxCurve(1f, curve);
         }
 
