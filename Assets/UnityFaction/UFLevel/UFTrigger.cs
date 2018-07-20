@@ -128,7 +128,7 @@ public class UFTrigger : MonoBehaviour {
         if(switchRef >= 0) {
             IDRef swtch = UFLevel.GetByID(switchRef);
             UFClutter s = swtch.objectRef.GetComponent<UFClutter>();
-            s.Activate();
+            s.Activate(true);
         }
     }
 
@@ -156,15 +156,31 @@ public class UFTrigger : MonoBehaviour {
         break;
 
         case IDRef.Type.Event:
-        obj.objectRef.GetComponentInParent<UFEvent>().Activate(positive);
+        obj.objectRef.GetComponent<UFEvent>().Activate(positive);
         break;
 
         case IDRef.Type.ParticleEmitter:
-        obj.objectRef.GetComponentInParent<UFParticleEmitter>().Activate(positive);
+        obj.objectRef.GetComponent<UFParticleEmitter>().Activate(positive);
         break;
 
         case IDRef.Type.BoltEmitter:
-        obj.objectRef.GetComponentInParent<UFBoltEmitter>().Activate(positive);
+        obj.objectRef.GetComponent<UFBoltEmitter>().Activate(positive);
+        break;
+
+        case IDRef.Type.Clutter:
+        obj.objectRef.GetComponent<UFClutter>().Activate(positive);
+        break;
+
+        case IDRef.Type.Light:
+        obj.objectRef.GetComponent<UnityEngine.Light>().enabled = positive;
+        break;
+
+        case IDRef.Type.AmbSound:
+        AudioSource sound = obj.objectRef.GetComponent<AudioSource>();
+        if(positive)
+            sound.Play();
+        else
+            sound.Stop();
         break;
 
         default:

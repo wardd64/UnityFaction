@@ -49,21 +49,6 @@ public class UFMover : MonoBehaviour {
 
         rb = gameObject.AddComponent<Rigidbody>();
         rb.isKinematic = true;
-
-        ResetMotion();
-    }
-
-    public void AddAt(Transform brush, PosRot pr) {
-        brush.SetParent(this.transform);
-        UFUtils.SetTransform(brush, pr);
-
-        //pr is always relative to keys[0]
-        if(lastKey != 0) {
-            //shift position to the actual starting key
-            Vector3 at = keys[0].transform.posRot.position;
-            Vector3 to = keys[lastKey].transform.posRot.position;
-            brush.transform.localPosition += to - at;
-        }
     }
 
     public void AddAudio() {
@@ -111,12 +96,9 @@ public class UFMover : MonoBehaviour {
                 foreach(Collider c in cols) {
                     if(!c.isTrigger)
                         c.enabled = false;
-                }
-                    
+                }  
             }
         }
-
-        
     }
 
     private void Start() {
@@ -134,8 +116,12 @@ public class UFMover : MonoBehaviour {
         paused = false;
         baseRot = Quaternion.identity;
 
+        rb.position = keys[0].transform.posRot.position;
+        rb.rotation = keys[0].transform.posRot.rotation;
+        RecordPosition();
         rb.position = keys[startKey].transform.posRot.position;
         transform.position = keys[startKey].transform.posRot.position;
+        ApplyDeltas();
 
         if(rotateInPlace || forceOrient) {
             rb.rotation = Quaternion.identity;
@@ -143,31 +129,45 @@ public class UFMover : MonoBehaviour {
         }
     }
 
+    Quaternion recordRot;
+    Vector3 recordPos;
+
     private void Update() {
         if(!moving)
             return;
 
+        RecordPosition();
+
         time += Time.fixedDeltaTime;
         if(!PauseUpdate()) {
-            if(rotateInPlace) {
-                Quaternion deltaRot = rb.rotation;
+            if(rotateInPlace)
                 RotateUpdate();
-                deltaRot = rb.rotation * Quaternion.Inverse(deltaRot);
-                foreach(Rigidbody rb in content) {
-                    rb.position = UFUtils.RotateAroundPivot(rb.position, this.rb.position, deltaRot);
-                    rb.rotation = deltaRot * rb.rotation;
-                } 
-            }
-            else {
-                Vector3 deltaPos = rb.position;
+            else
                 PathUpdate();
-                deltaPos = rb.position - deltaPos;
-                foreach(Rigidbody rb in content) {
-                    rb.position = rb.position + deltaPos;
-                }
-            }
         }
 
+        ApplyDeltas();
+    }
+
+    private void RecordPosition() {
+        recordRot = rb.rotation;
+        recordPos = rb.position;
+    }
+
+    private void ApplyDeltas() {
+        if(rotateInPlace) {
+            Quaternion deltaRot = rb.rotation * Quaternion.Inverse(recordRot);
+            foreach(Rigidbody rb in content) {
+                rb.position = UFUtils.RotateAroundPivot(rb.position, this.rb.position, deltaRot);
+                rb.rotation = deltaRot * rb.rotation;
+            }
+        }
+        else {
+            Vector3 deltaPos = rb.position - recordPos;
+            foreach(Rigidbody rb in content) {
+                rb.position = rb.position + deltaPos;
+            }
+        }
     }
 
     /// <summary>

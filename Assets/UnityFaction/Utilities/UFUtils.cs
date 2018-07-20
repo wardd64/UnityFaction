@@ -4,6 +4,8 @@ using System;
 using UFLevelStructure;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Globalization;
+using System.Threading;
 
 public class UFUtils {
 
@@ -407,4 +409,45 @@ public class UFUtils {
         go.AddComponent<T>();
         return GetCopyOf(go.GetComponent<T>(), toAdd);
     }
+
+    public static string Capitalize(string input) {
+        CultureInfo cultureInfo = Thread.CurrentThread.CurrentCulture;
+        TextInfo textInfo = cultureInfo.TextInfo;
+        return textInfo.ToTitleCase(input);
+    }
+
+    public static Mesh MakeQuad(Vector3 extents) {
+        float width = extents.x;
+        float height = extents.y;
+        return MakeQuad(width, height);
+    }
+
+    public static Mesh MakeQuad(float width, float height) {
+        Mesh mesh = new Mesh();
+
+        Vector3[] vertices = new Vector3[4];
+        vertices[0] = new Vector3(0, 0, 0);
+        vertices[1] = new Vector3(width, 0, 0);
+        vertices[2] = new Vector3(0, height, 0);
+        vertices[3] = new Vector3(width, height, 0);
+
+        mesh.vertices = vertices;
+        int[] tri = new int[] { 0, 2, 1, 2, 3, 1 };
+        mesh.triangles = tri;
+
+        Vector3[] normals = new Vector3[4];
+        for(int i = 0; i < 4; i++)
+            normals[i] = -Vector3.forward;
+        mesh.normals = normals;
+
+        Vector2[] uv = new Vector2[4];
+        uv[0] = new Vector2(0, 0);
+        uv[1] = new Vector2(1, 0);
+        uv[2] = new Vector2(0, 1);
+        uv[3] = new Vector2(1, 1);
+        mesh.uv = uv;
+
+        return mesh;
+    }
+
 }

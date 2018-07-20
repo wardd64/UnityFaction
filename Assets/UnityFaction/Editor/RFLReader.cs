@@ -357,9 +357,9 @@ public class RFLReader {
 
             byte typeByte = UFUtils.GetNibble(bytes, pointer, false);
             nextLight.type = (UFLevelStructure.Light.LightType)typeByte;
-            nextLight.dynamic = UFUtils.GetFlag(bytes, pointer + 1, 0);
-            nextLight.shadows = UFUtils.GetFlag(bytes, pointer + 1, 2);
-            nextLight.enabled = UFUtils.GetFlag(bytes, pointer + 1, 3);
+            nextLight.dynamic = UFUtils.GetFlag(bytes, pointer, 0);
+            nextLight.shadows = UFUtils.GetFlag(bytes, pointer, 2);
+            nextLight.enabled = UFUtils.GetFlag(bytes, pointer, 3);
             nextLight.color = UFUtils.GetRGBAColor(bytes, pointer + 4);
             nextLight.range = BitConverter.ToSingle(bytes, pointer + 8);
             nextLight.fov = BitConverter.ToSingle(bytes, pointer + 12);
@@ -1224,7 +1224,13 @@ public class RFLReader {
             nextRoom.life = BitConverter.ToSingle(bytes, pointer);
             pointer += 4;
 
-            nextRoom.eaxEffect = UFUtils.ReadRFLString(bytes, ref pointer);
+            string eaxEffect = UFUtils.ReadRFLString(bytes, ref pointer);
+            if(string.IsNullOrEmpty(eaxEffect))
+                nextRoom.eaxEffect = Room.EAXEffectType.none;
+            else {
+                object eaxParse = Enum.Parse(typeof(Room.EAXEffectType), eaxEffect);
+                nextRoom.eaxEffect = (Room.EAXEffectType)eaxParse;
+            }
 
             if(nextRoom.hasLiquid) {
                 Room.LiquidProperties liquid;

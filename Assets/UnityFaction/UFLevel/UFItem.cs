@@ -27,6 +27,8 @@ public class UFItem : MonoBehaviour {
     }
 
     private static ItemType GetItemType(string itemName) {
+        itemName = itemName.Replace(' ', '_');
+
         switch(itemName) {
         case ".50cal_ammo":
         case "10gauge_ammo":

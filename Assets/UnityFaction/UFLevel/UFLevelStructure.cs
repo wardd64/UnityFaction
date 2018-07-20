@@ -147,7 +147,13 @@ namespace UFLevelStructure {
         public AxisAlignedBoundingBox aabb;
         public bool isSkyRoom, isCold, isOutside, isAirlock, hasLiquid, hasAmbientLight, isSubRoom;
         public float life; // -1 -> infinite
-        public string eaxEffect;
+        public EAXEffectType eaxEffect;
+
+        public enum EAXEffectType {
+            none, generic, paddedcell, room, bathroom, livingroom, stoneroom, auditorium, conerthall, cave,
+            arena, hangar, carpetedhallway, hallway, stonecorridor, alley, forest, city, mountains, quarry,
+            plain, parkinglot, sewerpipe, underwater, drugged, dizzy, psychotic
+        }
 
         //only available when hasLiquid == true
         public LiquidProperties liquidProperties;
@@ -231,7 +237,7 @@ namespace UFLevelStructure {
 
         public LightType type;
         public enum LightType {
-            undefined, point, spotlight, tube
+            undefined, pointLight, spotlight, tubeLight
         }
 
         public bool dynamic, shadows, enabled;
@@ -376,21 +382,6 @@ namespace UFLevelStructure {
         public UFTransform transform;
 
         public string name;
-
-        /*
-        public ItemType type;
-        public enum ItemType {
-            __50cal_ammo, _10gauge_ammo, _12mm_ammo, _5_56mm_ammo, _7_62mm_ammo, _Assault_Rifle,
-            _base_blue, _base_red, _Brainstem, _CTF_Banner_Blue, _CTF_Banner_Red, _Demo_K000,
-            _Doctor_Uniform, _explosive_5_56mm_rounds, _First_Aid_Kit, _flag_blue, _flag_red,
-            _flamethrower, grenades, Handgun, _heavy_machine_gun, _keycard, _Machine_Pistol,
-            _Medical_Kit, _Miner_Envirosuit, _Multi_Damage_amplifier, _Multi_Invulnerability,
-            _Multi_Super_Armor, _Multi_Super_Health, _Napalm, _rail_gun, _railgun_bolts,
-            _Remote_Charges, _riot_shield, _Riot_Stick, _riot_stick_battery, _rocket_launcher,
-            _rocket_launcher_ammo, _scope_assault_rifle, _Shotgun, _shoulder_cannon,
-            _Silenced_12mm_Handgun, _Sniper_Rifle, _Suit_Repair
-        }
-        */
 
         public int count;
         public int respawnTime;  //-1 is infinite

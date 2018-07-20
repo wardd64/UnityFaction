@@ -8,7 +8,7 @@ using UnityEngine;
 public class TableReader{
 
     public enum TableType {
-        clutter
+        clutter, items
     }
 
     private static Dictionary<TableType, string[]> tables;
@@ -16,19 +16,31 @@ public class TableReader{
     private const string tableExt = ".tbl";
 
     public static string FindClutterModel(string name) {
-        string[] table = GetTable(TableType.clutter);
+        return FindValue(TableType.clutter, "$V3D Filename", name);
+    }
 
-        for (int i = 0; i < table.Length; i++) {
+    public static string FindItemModel(string name) {
+        return FindValue(TableType.items, "$V3D Filename", name);
+    }
+
+    //TODO make particle system from data in vclip.tbl
+
+    private static string FindValue(TableType tableType, string property, string name) {
+        string[] table = GetTable(tableType);
+
+        for(int i = 0; i < table.Length; i++) {
             string line = table[i];
             bool header = line.Contains("Class Name:") && line.Contains(name);
             if(header) {
-                string quotedFileName = Regex.Match(table[i + 1], "\"([^\"]*)\"").Value;
+                while(!line.StartsWith(property))
+                    line = table[++i];
+                string quotedFileName = Regex.Match(line, "\"([^\"]*)\"").Value;
                 int qfnLength = quotedFileName.Length;
                 return quotedFileName.Substring(1, qfnLength - 6);
             }
         }
 
-        Debug.LogWarning("Could not find " + name + " in Clutter table");
+        Debug.LogWarning("Could not find " + name + " in Item table");
         return name;
     }
 

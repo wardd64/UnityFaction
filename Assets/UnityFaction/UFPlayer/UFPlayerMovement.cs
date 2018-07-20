@@ -95,8 +95,13 @@ public class UFPlayerMovement : MonoBehaviour {
         playerCamera = this.GetComponentInChildren<Camera>();
         moveSound = this.GetComponentInChildren<UFPlayerMoveSounds>();
         playerInfo = FindObjectOfType<UFPlayerInfo>();
-        if(playerInfo != null)
+        if(playerInfo != null) {
             playerInfo.ApplyCameraSettings(playerCamera);
+            UFLevelStructure.PosRot pr = playerInfo.GetSpawn(UFPlayerInfo.PlayerClass.Free);
+            this.transform.position = pr.position;
+            this.transform.rotation = Quaternion.Euler(0f, pr.rotation.eulerAngles.y, 0f);
+            playerCamera.transform.rotation = Quaternion.Euler(pr.rotation.x, 0f, 0f);
+        }
         SetRotSmoothing(rotSmoothing);
     }
 

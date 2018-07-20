@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UFLevelStructure;
 using UnityEngine;
 
@@ -34,13 +35,20 @@ public class UFPlayerInfo : MonoBehaviour {
         List<Room> roomList = new List<Room>();
         foreach(Room room in level.staticGeometry.rooms) {
             Vector3 roomExtents = room.aabb.max - room.aabb.min;
-            bool realRoom = roomExtents.x > 3f;
+            Vector3 roomCenter = (room.aabb.max + room.aabb.min)/2f;
+            bool realRoom = !room.isSkyRoom;
+            realRoom &= roomExtents.x > 3f;
             realRoom &= roomExtents.z > 3f;
             realRoom &= roomExtents.y > 1.5f;
 
             //TODO use life value of rooms
-            if(realRoom)
-                roomList.Add(room);
+            if(!realRoom)
+                continue;
+            
+            roomList.Add(room);
+
+            MakeEAX(room.eaxEffect, roomCenter, roomExtents.magnitude / 2f);
+            
         }
         this.rooms = roomList.ToArray();
 
@@ -58,6 +66,39 @@ public class UFPlayerInfo : MonoBehaviour {
                 skyCamera.farClipPlane = skyDiagonal.magnitude / 2f;
                 break;
             }
+        }
+    }
+
+    private void MakeEAX(Room.EAXEffectType eax, Vector3 roomCenter, float roomRadius) {
+        switch(eax) {
+        case Room.EAXEffectType.none:
+        case Room.EAXEffectType.generic:
+        return;
+        }
+
+        GameObject g = new GameObject("RoomEAX_" + eax);
+        g.transform.SetParent(this.transform);
+        g.transform.position = roomCenter;
+        AudioReverbZone effect = g.AddComponent<AudioReverbZone>();
+        effect.maxDistance = roomRadius;
+        effect.minDistance = roomRadius / 2f;
+        effect.reverbPreset = GetReverbPreset(eax);
+    }
+
+    private AudioReverbPreset GetReverbPreset(Room.EAXEffectType effect) {
+        string effectString = UFUtils.Capitalize(effect.ToString());
+        if(Enum.IsDefined(typeof(AudioReverbPreset), effectString))
+            return (AudioReverbPreset)Enum.Parse(typeof(AudioReverbPreset), effectString);
+        
+        switch(effect) {
+        case Room.EAXEffectType.paddedcell: return AudioReverbPreset.PaddedCell;
+        case Room.EAXEffectType.stonecorridor: return AudioReverbPreset.StoneCorridor;
+        case Room.EAXEffectType.carpetedhallway: return AudioReverbPreset.CarpetedHallway;
+        case Room.EAXEffectType.parkinglot: return AudioReverbPreset.ParkingLot;
+        case Room.EAXEffectType.sewerpipe: return AudioReverbPreset.SewerPipe;
+        default:
+        Debug.LogWarning("Encountered unkown eax effect type: " + effect);
+        return AudioReverbPreset.Off;
         }
     }
 

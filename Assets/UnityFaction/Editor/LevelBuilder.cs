@@ -12,8 +12,8 @@ public class LevelBuilder : EditorWindow {
     private LevelData level;
 
     //GUI variables
-    bool showGeneralContents, showGeometryContents, 
-        showObjectContents, showMoverContents;
+    bool showContents, showGeneralContents, showGeometryContents, 
+        showObjectContents, showMoverContents, showBuildOptions;
 
     //Build options
     //...
@@ -57,57 +57,54 @@ public class LevelBuilder : EditorWindow {
         contentFoldout.fontStyle = FontStyle.Bold;
         contentFoldout.fontSize = 14;
 
-        showGeneralContents = EditorGUILayout.Foldout(showGeneralContents, "General content", contentFoldout);
-        if(showGeneralContents) {
-            level.name = EditorGUILayout.TextField("   Level name", level.name);
-            level.author = EditorGUILayout.TextField("   Author name", level.author);
-            level.multiplayer = EditorGUILayout.Toggle("   Multiplayer", level.multiplayer);
-            level.playerStart.position = EditorGUILayout.Vector3Field("   Player start", level.playerStart.position);
-        }
+        showContents = EditorGUILayout.Foldout(showContents, "View level contents", contentFoldout);
 
-        showGeometryContents = EditorGUILayout.Foldout(showGeometryContents, "Static geometry content", contentFoldout);
-        if(showGeometryContents) {
-            GUILayout.Label("   Vertices: " + level.staticGeometry.vertices.Length);
-            GUILayout.Label("   Faces: " + level.staticGeometry.faces.Length);
-            GUILayout.Label("   Rooms: " + level.staticGeometry.rooms.Length);
-            GUILayout.Label("   Brushes: " + level.brushes.Length);
-        }
+        if(showContents) {
+            showGeneralContents = EditorGUILayout.Foldout(showGeneralContents, "   General content", contentFoldout);
+            if(showGeneralContents) {
+                level.name = EditorGUILayout.TextField("      Level name", level.name);
+                level.author = EditorGUILayout.TextField("      Author name", level.author);
+                level.multiplayer = EditorGUILayout.Toggle("      Multiplayer", level.multiplayer);
+                level.playerStart.position = EditorGUILayout.Vector3Field("      Player start", level.playerStart.position);
+            }
 
-        showObjectContents = EditorGUILayout.Foldout(showObjectContents, "Object content", contentFoldout);
-        if(showObjectContents) {
-            GUILayout.Label("   Lights: " + level.lights.Length);
-            GUILayout.Label("   Ambient sounds: " + level.ambSounds.Length);
-            GUILayout.Label("   Events: " + level.events.Length);
-            GUILayout.Label("   Multi spawn points: " + level.spawnPoints.Length);
-            GUILayout.Label("   Particle emitters: " + level.particleEmitters.Length);
-            GUILayout.Label("   Push regions: " + level.pushRegions.Length);
-            GUILayout.Label("   Decals: " + level.decals.Length);
-            GUILayout.Label("   Climbing regions : " + level.climbingRegions.Length);
-            GUILayout.Label("   Bolt emitters: " + level.boltEmitters.Length);
-            GUILayout.Label("   Targets: " + level.targets.Length);
-            GUILayout.Label("   Entities: " + level.entities.Length);
-            GUILayout.Label("   Items: " + level.items.Length);
-            GUILayout.Label("   Clutter: " + level.clutter.Length);
-            GUILayout.Label("   Triggers: " + level.triggers.Length);
-        }
+            showGeometryContents = EditorGUILayout.Foldout(showGeometryContents, "   Static geometry content", contentFoldout);
+            if(showGeometryContents) {
+                GUILayout.Label("      Vertices: " + level.staticGeometry.vertices.Length);
+                GUILayout.Label("      Faces: " + level.staticGeometry.faces.Length);
+                GUILayout.Label("      Rooms: " + level.staticGeometry.rooms.Length);
+                GUILayout.Label("      Brushes: " + level.brushes.Length);
+            }
 
-        showMoverContents = EditorGUILayout.Foldout(showMoverContents, "Mover content", contentFoldout);
-        if(showMoverContents) {
-            GUILayout.Label("   Moving brushes: " + level.movingGeometry.Length);
-            GUILayout.Label("   Moving groups: " + level.movingGroups.Length);
+            showObjectContents = EditorGUILayout.Foldout(showObjectContents, "   Object content", contentFoldout);
+            if(showObjectContents) {
+                GUILayout.Label("      Lights: " + level.lights.Length);
+                GUILayout.Label("      Ambient sounds: " + level.ambSounds.Length);
+                GUILayout.Label("      Events: " + level.events.Length);
+                GUILayout.Label("      Multi spawn points: " + level.spawnPoints.Length);
+                GUILayout.Label("      Particle emitters: " + level.particleEmitters.Length);
+                GUILayout.Label("      Push regions: " + level.pushRegions.Length);
+                GUILayout.Label("      Decals: " + level.decals.Length);
+                GUILayout.Label("      Climbing regions : " + level.climbingRegions.Length);
+                GUILayout.Label("      Bolt emitters: " + level.boltEmitters.Length);
+                GUILayout.Label("      Targets: " + level.targets.Length);
+                GUILayout.Label("      Entities: " + level.entities.Length);
+                GUILayout.Label("      Items: " + level.items.Length);
+                GUILayout.Label("      Clutter: " + level.clutter.Length);
+                GUILayout.Label("      Triggers: " + level.triggers.Length);
+            }
+
+            showMoverContents = EditorGUILayout.Foldout(showMoverContents, "   Mover content", contentFoldout);
+            if(showMoverContents) {
+                GUILayout.Label("      Moving brushes: " + level.movingGeometry.Length);
+                GUILayout.Label("      Moving groups: " + level.movingGroups.Length);
+            }
         }
 
         if(root == null) {
             if(GUILayout.Button("Make root"))
                 MakeRoot();
             return;
-        }
-
-        GUIStyle bigButton = new GUIStyle("button");
-        bigButton.fontSize = 26;
-        if(GUILayout.Button("Build all", bigButton)) {
-            //TODO
-            Debug.LogWarning("not yet implemented");
         }
 
         if(GUILayout.Button("Refresh level")) {
@@ -117,32 +114,43 @@ public class LevelBuilder : EditorWindow {
             l.Awake();
         }
 
-        if(GUILayout.Button("Build static geometry"))
+        GUIStyle bigButton = new GUIStyle("button");
+        bigButton.fontSize = 26;
+        if(GUILayout.Button("Build all", bigButton)) {
             BuildStaticGeometry();
-
-        if(GUILayout.Button("Build player info"))
+            BuildLights();
             BuildPlayerInfo();
-
-        if(GUILayout.Button("Build geomodder"))
             BuildGeoModder();
-
-        if(GUILayout.Button("Build movers"))
             BuildMovers();
-
-        if(GUILayout.Button("Build clutter"))
             BuildClutter();
-
-        if(GUILayout.Button("Build triggers"))
+            BuildItems();
             BuildTriggers();
-
-        if(GUILayout.Button("Build force regions"))
             BuildForceRegions();
-
-        if(GUILayout.Button("Build events"))
             BuildEvents();
-
-        if(GUILayout.Button("Build emitters"))
             BuildEmitters();
+            BuildAmbSounds();
+            BuildDecals();
+        }
+
+        showBuildOptions = EditorGUILayout.Foldout(showBuildOptions, "Build options", contentFoldout);
+
+        if(showBuildOptions) {
+            if(GUILayout.Button("Build static geometry")) BuildStaticGeometry();
+            if(GUILayout.Button("Build lights")) BuildLights();
+            if(GUILayout.Button("Build player info")) BuildPlayerInfo();
+            if(GUILayout.Button("Build geomodder")) BuildGeoModder();
+            if(GUILayout.Button("Build movers")) BuildMovers();
+            if(GUILayout.Button("Build clutter")) BuildClutter();
+            if(GUILayout.Button("Build items")) BuildItems();
+            if(GUILayout.Button("Build triggers")) BuildTriggers();
+            if(GUILayout.Button("Build force regions")) BuildForceRegions();
+            if(GUILayout.Button("Build events")) BuildEvents();
+            if(GUILayout.Button("Build emitters")) BuildEmitters();
+            if(GUILayout.Button("Build ambient sounds")) BuildAmbSounds();
+            if(GUILayout.Button("Build decals")) BuildDecals();
+
+            //TODO entities?
+        }
     }
 
     /* -----------------------------------------------------------------------------------------------
@@ -195,6 +203,26 @@ public class LevelBuilder : EditorWindow {
             Transform brush = (MakeMeshObject(b.geometry, name)).transform;
             brush.SetParent(destrG.transform);
             UFUtils.SetTransform(brush, b.transform);
+        }
+    }
+
+    private void BuildLights() {
+        Transform p = MakeParent("Lights");
+        foreach(UFLevelStructure.Light l in level.lights) {
+            string name = l.type + "_" + GetIdString(l.transform);
+            UnityEngine.Light light = MakeUFObject<UnityEngine.Light>(name, p, l.transform);
+            light.color = l.color;
+            if(l.type == UFLevelStructure.Light.LightType.spotlight)
+                light.type = LightType.Spot;
+            else
+                light.type = LightType.Point;
+            light.areaSize = new Vector2(l.tubeLength, 0.1f);
+            light.lightmapBakeType = l.dynamic ? LightmapBakeType.Realtime : LightmapBakeType.Mixed;
+            light.enabled = l.enabled;
+            light.spotAngle = l.fov;
+            light.intensity = l.intensity;
+            light.range = l.range;
+            light.shadows = l.shadows ? LightShadows.Soft : LightShadows.None;
         }
     }
 
@@ -270,9 +298,26 @@ public class LevelBuilder : EditorWindow {
                 continue;
             GameObject g = GameObject.Instantiate(prefab, p);
             g.name = "Clutter_" + GetIdString(clutter.transform) + "_" + clutter.name;
-            g.AddComponent<UFClutter>();
+            UFClutter c = g.AddComponent<UFClutter>();
+            c.Set(clutter);
             UFLevel.SetObject(clutter.transform.id, g);
             UFUtils.SetTransform(g.transform, clutter.transform);
+        }
+    }
+
+    private void BuildItems() {
+        Transform p = MakeParent("Items");
+        foreach(Item item in level.items) {
+            string modelName = TableReader.FindItemModel(item.name);
+            GameObject prefab = GetPrefab(modelName);
+            if(prefab == null)
+                continue;
+            GameObject g = GameObject.Instantiate(prefab, p);
+            g.name = "Item_" + GetIdString(item.transform) + "_" + item.name;
+            UFItem i = g.AddComponent<UFItem>();
+            i.Set(item);
+            UFLevel.SetObject(item.transform.id, g);
+            UFUtils.SetTransform(g.transform, item.transform);
         }
     }
 
@@ -336,6 +381,36 @@ public class LevelBuilder : EditorWindow {
             emit.Set(e);
             Material particleMat = GetMaterial(e.texture, assetPath, GetParticleShader(e.fade, e.glow));
             emit.SetMaterial(particleMat);
+        }
+    }
+
+    private void BuildAmbSounds() {
+        Transform p = MakeParent("AmbSounds");
+        foreach(AmbSound s in level.ambSounds) {
+            string name = "Ambient_" + GetIdString(s.transform);
+            AudioSource sound = MakeUFObject<AudioSource>(name, p, s.transform);
+            sound.clip = GetClip(s.clip);
+            sound.volume = s.volume;
+
+            sound.rolloffMode = AudioRolloffMode.Linear;
+            sound.minDistance = s.minDist;
+            sound.maxDistance = s.minDist + (10f * s.minDist * s.volume / s.roloff);
+
+            //TODO make script so delay can be taken into account
+
+            sound.playOnAwake = true;
+            sound.loop = true;
+        }
+    }
+
+    private void BuildDecals() {
+        Transform p = MakeParent("Decals");
+        foreach(Decal d in level.decals) {
+            string name = "Decall_" + GetIdString(d.cbTransform.transform);
+            MeshFilter mf = MakeUFObject<MeshFilter>(name, p, d.cbTransform.transform);
+            mf.sharedMesh = UFUtils.MakeQuad(d.cbTransform.extents);
+            MeshRenderer mr = mf.gameObject.AddComponent<MeshRenderer>();
+            mr.material = GetMaterial(d.texture, assetPath);
         }
     }
 
@@ -463,9 +538,10 @@ public class LevelBuilder : EditorWindow {
         foreach(string result in results) {
             string resultPath = AssetDatabase.GUIDToAssetPath(result);
             string resultName = Path.GetFileName(resultPath);
-            if(resultName == materialName)
+            
+            if(string.Equals(resultName, materialName, StringComparison.OrdinalIgnoreCase))
                 return (Material)AssetDatabase.LoadAssetAtPath(resultPath, typeof(Material));
-            if(resultName == texture)
+            if(string.Equals(resultName, texture, StringComparison.OrdinalIgnoreCase))
                 texPath = resultPath;
         }
 
@@ -691,7 +767,7 @@ public class LevelBuilder : EditorWindow {
         foreach(string result in results) {
             string resultPath = AssetDatabase.GUIDToAssetPath(result);
             string resultName = Path.GetFileName(resultPath);
-            if(resultName == prefabName)
+            if(string.Equals(resultName, prefabName, StringComparison.OrdinalIgnoreCase))
                 return (GameObject)AssetDatabase.LoadAssetAtPath(resultPath, typeof(GameObject));
         }
 
@@ -715,10 +791,9 @@ public class LevelBuilder : EditorWindow {
         string[] results = AssetDatabase.FindAssets(clipName);
 
         foreach(string result in results) {
-            
             string resultPath = AssetDatabase.GUIDToAssetPath(result);
             string resultName = Path.GetFileName(resultPath);
-            if(resultName == clip)
+            if(string.Equals(resultName, clip, StringComparison.OrdinalIgnoreCase))
                 return (AudioClip)AssetDatabase.LoadAssetAtPath(resultPath, typeof(AudioClip));
         }
 

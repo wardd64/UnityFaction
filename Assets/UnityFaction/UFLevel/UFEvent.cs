@@ -242,6 +242,7 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.Play_Sound:
         case UFLevelStructure.Event.EventType.Remove_Object:
         case UFLevelStructure.Event.EventType.Teleport:
+        case UFLevelStructure.Event.EventType.Teleport_Player:
         case UFLevelStructure.Event.EventType.Set_Gravity:
         case UFLevelStructure.Event.EventType.Push_Region_State: 
         case UFLevelStructure.Event.EventType.Display_Fullscreen_Image:
@@ -313,7 +314,6 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.Force_Monitor_Update:
         case UFLevelStructure.Event.EventType.Black_Out_Player:
         case UFLevelStructure.Event.EventType.Turn_Off_Physics:
-        case UFLevelStructure.Event.EventType.Teleport_Player:
         case UFLevelStructure.Event.EventType.Holster_Weapon:
         case UFLevelStructure.Event.EventType.Holster_Player_Weapon:
         case UFLevelStructure.Event.EventType.Clear_Endgame_If_Killed:
