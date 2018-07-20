@@ -19,7 +19,7 @@ public class UFTrigger : MonoBehaviour {
 
     //dynamic variables
     float insideTime, buttonTime;
-    bool inside;
+    bool inside, triggeredOnce;
 
 	public void Set(Trigger trigger) {
 
@@ -91,8 +91,7 @@ public class UFTrigger : MonoBehaviour {
         if(!IsValid(other))
             return;
         inside = false;
-        insideTime = 0f;
-        buttonTime = 0f;
+        UnTrigger();
     }
 
     private bool IsValid(Collider c) {
@@ -132,22 +131,23 @@ public class UFTrigger : MonoBehaviour {
         }
     }
 
+    private void UnTrigger() {
+        insideTime = 0f;
+        buttonTime = 0f;
+        foreach(int link in links)
+            Deactivate(link);
+    }
+
     /// <summary>
     /// Tries to activate an object in the scene with the given ID.
     /// Logs warnings if the ID is invalid for any reason.
     /// Set positive to false to deactivate.
     /// </summary>
     public static void Activate(int id, bool positive = true) {
-        IDRef obj = UFLevel.GetByID(id);
-        if(obj == null) {
-            Debug.LogWarning("Tried activating non existant ID: " + id);
-            return;
-        }
-        if(obj.objectRef == null) {
-            Debug.LogWarning("Tried activating ID that is not in the scene: " + obj.id + ", of type " + obj.type);
-            return;
-        }
 
+        IDRef obj = TryGetObject(id);
+        if(obj == null)
+            return;
 
         switch(obj.type) {
 
@@ -187,5 +187,34 @@ public class UFTrigger : MonoBehaviour {
         Debug.LogWarning("Tried activating object with unkown funcionality: " + obj + ", of type " + obj.type);
         break;
         }
+    }
+
+    public static void Deactivate(int id) {
+        IDRef obj = TryGetObject(id);
+        if(obj == null)
+            return;
+
+        switch(obj.type) {
+
+        case IDRef.Type.Event:
+        obj.objectRef.GetComponent<UFEvent>().Deactivate();
+        break;
+        }
+    }
+
+    private static IDRef TryGetObject(int id) {
+        IDRef toReturn = UFLevel.GetByID(id);
+        if(toReturn == null) {
+            Debug.LogWarning("Tried to link to non existant ID: " + id);
+            return null;
+        }
+
+        GameObject obj = toReturn.objectRef;
+        if(obj == null) {
+            Debug.LogWarning("Tried to link to ID that is not in the scene: " + toReturn.id + ", of type " + toReturn.type);
+            return null;
+        }
+
+        return toReturn;
     }
 }

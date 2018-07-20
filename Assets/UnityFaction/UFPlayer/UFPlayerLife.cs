@@ -37,11 +37,15 @@ public class UFPlayerLife : MonoBehaviour {
         damage = Mathf.Min(amount, health);
         health -= damage; amount -= damage;
 
-        if(amount > 0f) {
-            //TODO implement
-            Debug.Log("DIE");
-        }
+        if(amount > 0f)
+            Die();
 
+    }
+
+    private void Die() {
+        GetComponent<UFPlayerMovement>().Spawn();
+        health = MAX_HP;
+        armor = 0f;
     }
 
     public void SuperHealth() {

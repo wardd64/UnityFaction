@@ -27,16 +27,29 @@ public class UFPlayerInfo : MonoBehaviour {
         this.playerStart = level.playerStart;
         this.multiplayer = level.multiplayer;
         this.spawnPoints = level.spawnPoints;
-        this.fogStart = Mathf.Max(10f, level.nearPlane);
-        this.fogEnd = Mathf.Max(fogStart + 10f, level.farPlane);
+
+        this.fogStart = Mathf.Max(0f, level.nearPlane);
+        if(level.farPlane <= 0f || fogEnd < fogStart)
+            fogEnd = 1000f;
+        else
+            fogEnd = Mathf.Max(fogStart + 10f, level.farPlane);
+
         this.defaultAmbient = level.ambientColor;
         this.fogColor = level.fogColor;
+
+        bool foundSkyRoom = false;
+        Room skyRoom = default(Room);
 
         List<Room> roomList = new List<Room>();
         foreach(Room room in level.staticGeometry.rooms) {
             Vector3 roomExtents = room.aabb.max - room.aabb.min;
             Vector3 roomCenter = (room.aabb.max + room.aabb.min)/2f;
-            bool realRoom = !room.isSkyRoom;
+            bool realRoom = true;
+            if(room.isSkyRoom) {
+                foundSkyRoom = true;
+                skyRoom = room;
+                realRoom = false;
+            }
             realRoom &= roomExtents.x > 3f;
             realRoom &= roomExtents.z > 3f;
             realRoom &= roomExtents.y > 1.5f;
@@ -52,20 +65,17 @@ public class UFPlayerInfo : MonoBehaviour {
         }
         this.rooms = roomList.ToArray();
 
-        foreach(Room room in rooms) {
-            if(room.isSkyRoom) {
-                GameObject camG = new GameObject("SkyCamera");
-                Vector3 skyPos = (room.aabb.min + room.aabb.max) / 2f;
-                Vector3 skyDiagonal = room.aabb.max - room.aabb.min;
-                camG.transform.SetParent(transform);
-                camG.transform.position = skyPos;
-                skyCamera = camG.AddComponent<Camera>();
-                skyCamera.depth = -10;
-                skyCamera.clearFlags = CameraClearFlags.SolidColor;
-                skyCamera.backgroundColor = fogColor;
-                skyCamera.farClipPlane = skyDiagonal.magnitude / 2f;
-                break;
-            }
+        if(foundSkyRoom) {
+            GameObject camG = new GameObject("SkyCamera");
+            Vector3 skyPos = (skyRoom.aabb.min + skyRoom.aabb.max) / 2f;
+            Vector3 skyDiagonal = skyRoom.aabb.max - skyRoom.aabb.min;
+            camG.transform.SetParent(transform);
+            camG.transform.position = skyPos;
+            skyCamera = camG.AddComponent<Camera>();
+            skyCamera.depth = -10;
+            skyCamera.clearFlags = CameraClearFlags.SolidColor;
+            skyCamera.backgroundColor = fogColor;
+            skyCamera.farClipPlane = skyDiagonal.magnitude / 2f;
         }
     }
 
@@ -123,7 +133,7 @@ public class UFPlayerInfo : MonoBehaviour {
         if(skyCamera != null)
             //rely on sky camera to render sky room
             playerCamera.clearFlags = CameraClearFlags.Depth;
-        else if(RenderSettings.fog){
+        else if(fogStart > 0f){
             //aply solid color to represent thick fog
             playerCamera.clearFlags = CameraClearFlags.SolidColor;
             playerCamera.backgroundColor = fogColor;

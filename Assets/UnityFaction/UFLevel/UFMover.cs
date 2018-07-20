@@ -86,6 +86,7 @@ public class UFMover : MonoBehaviour {
             if(rb == null)
                 rb = contents[i].gameObject.AddComponent<Rigidbody>();
             rb.isKinematic = true;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
             this.content[i] = rb;
         }
 
@@ -117,16 +118,16 @@ public class UFMover : MonoBehaviour {
         baseRot = Quaternion.identity;
 
         rb.position = keys[0].transform.posRot.position;
-        rb.rotation = keys[0].transform.posRot.rotation;
-        RecordPosition();
-        rb.position = keys[startKey].transform.posRot.position;
-        transform.position = keys[startKey].transform.posRot.position;
-        ApplyDeltas();
 
-        if(rotateInPlace || forceOrient) {
-            rb.rotation = Quaternion.identity;
-            transform.rotation = Quaternion.identity;
+        //set appropriate starting position (for path movers)
+        if(!rotateInPlace && lastKey > 0) {
+            RecordPosition();
+            rb.position = keys[startKey].transform.posRot.position;
+            ApplyDeltas();
         }
+
+        if(rotateInPlace || forceOrient)
+            rb.rotation = Quaternion.identity;
     }
 
     Quaternion recordRot;

@@ -96,6 +96,9 @@ public class UFEvent : MonoBehaviour {
                 Trigger(positiveSignal, ignoredType);
                 timer = 0f;
             }
+            else if(etc == EventTypeClass.ContinuousEffect) {
+                DoContinuousEffect();
+            }
         }
            
         
@@ -106,7 +109,28 @@ public class UFEvent : MonoBehaviour {
             positiveSignal = positive;
             timer = Time.deltaTime;
         }
+    }
 
+    public void Deactivate() {
+        if(GetEventTypeClass(type) == EventTypeClass.ContinuousEffect)
+            timer = 0f;
+    }
+
+    public void DoContinuousEffect() {
+        switch(type) {
+
+        case UFLevelStructure.Event.EventType.Continuous_Damage:
+        //TODO use damage type (int2)
+        float dps = int1;
+        if(int1 <= 0)
+            dps = float.PositiveInfinity;
+        UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(Time.deltaTime * dps);
+        break;
+
+        default:
+        Debug.LogError("Event type " + type + " not implemented");
+        break;
+        }
     }
 
     private void Trigger(bool positive, IDRef.Type ignoredType = IDRef.Type.None) {
@@ -138,6 +162,7 @@ public class UFEvent : MonoBehaviour {
         player.position = transform.position;
         float rot = transform.rotation.eulerAngles.y;
         player.rotation = Quaternion.Euler(0f, rot, 0f);
+        player.GetComponent<CharacterController>().Move(Vector3.zero);
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Music_Start:
@@ -179,10 +204,6 @@ public class UFEvent : MonoBehaviour {
         //TODO
         return IDRef.Type.None;
 
-        case UFLevelStructure.Event.EventType.Continuous_Damage:
-        UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(float1);
-        return IDRef.Type.None;
-
         default:
         Debug.LogError("Event type " + type + " not implemented");
         return IDRef.Type.None;
@@ -198,7 +219,7 @@ public class UFEvent : MonoBehaviour {
     }
 
     private enum EventTypeClass {
-        None, StartTrigger, Signal, Detector, Effect
+        None, StartTrigger, Signal, Detector, Effect, ContinuousEffect
     }
 
     private List<T> GetLinksOfType<T>(IDRef.Type type) where T : Component{
@@ -232,7 +253,6 @@ public class UFEvent : MonoBehaviour {
         return EventTypeClass.Signal;
 
         case UFLevelStructure.Event.EventType.Bolt_state:
-        case UFLevelStructure.Event.EventType.Continuous_Damage:
         case UFLevelStructure.Event.EventType.Explode:
         case UFLevelStructure.Event.EventType.Heal:
         case UFLevelStructure.Event.EventType.Message:
@@ -250,6 +270,9 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.Reverse_Mover:
         case UFLevelStructure.Event.EventType.Mover_Pause:
         return EventTypeClass.Effect;
+
+        case UFLevelStructure.Event.EventType.Continuous_Damage:
+        return EventTypeClass.ContinuousEffect;
 
         case UFLevelStructure.Event.EventType.When_Countdown_Over:
         case UFLevelStructure.Event.EventType.When_Enter_Vehicle:

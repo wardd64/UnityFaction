@@ -411,6 +411,7 @@ public class LevelBuilder : EditorWindow {
             mf.sharedMesh = UFUtils.MakeQuad(d.cbTransform.extents);
             MeshRenderer mr = mf.gameObject.AddComponent<MeshRenderer>();
             mr.material = GetMaterial(d.texture, assetPath);
+            SnapToGeometry(mf.transform, d.cbTransform.extents.z);
         }
     }
 
@@ -793,8 +794,13 @@ public class LevelBuilder : EditorWindow {
         foreach(string result in results) {
             string resultPath = AssetDatabase.GUIDToAssetPath(result);
             string resultName = Path.GetFileName(resultPath);
-            if(string.Equals(resultName, clip, StringComparison.OrdinalIgnoreCase))
-                return (AudioClip)AssetDatabase.LoadAssetAtPath(resultPath, typeof(AudioClip));
+            if(string.Equals(resultName, clip, StringComparison.OrdinalIgnoreCase)) {
+                AudioClip toReturn = (AudioClip)AssetDatabase.LoadAssetAtPath(resultPath, typeof(AudioClip));
+                if(toReturn == null)
+                    Debug.LogWarning("Failed to load AudioClip " + resultName +
+                        ". This problem might be fixed by importing and reexporting the clip in an audio editor.");
+                return toReturn;
+            }
         }
 
         //audio clip does not exist
@@ -851,6 +857,22 @@ public class LevelBuilder : EditorWindow {
         mesh.RecalculateBounds();
 
         return mesh;
+    }
+
+    const float DECALL_SNAP_DIST = 1e-2f;
+
+    private void SnapToGeometry(Transform t, float range) {
+        Vector3 dir = t.forward;
+        Vector3 start = t.position - 0.5f * range * dir;
+        Ray ray = new Ray(start, dir);
+        RaycastHit hit;
+        if(Physics.Raycast(ray, out hit, range)) {
+            Vector3 newPos = start + (hit.distance - DECALL_SNAP_DIST) * dir;
+            t.position = newPos;
+            t.rotation = Quaternion.LookRotation(-hit.normal);
+        }
+        else
+            Debug.LogWarning("Could not snap decall " + t.name + " to any geometry.");
     }
 }
 

@@ -21,9 +21,10 @@ public class UFItem : MonoBehaviour {
         this.type = GetItemType(item.name);
 
         this.count = Mathf.Max(1, item.count);
-        this.respawnTimer = Mathf.Max(0f, item.respawnTime);
+        this.respawnTime = item.respawnTime;
         SphereCollider sc = gameObject.AddComponent<SphereCollider>();
-        sc.radius = .8f;
+        sc.isTrigger = true;
+        sc.radius = 1.5f;
     }
 
     private static ItemType GetItemType(string itemName) {
@@ -33,9 +34,9 @@ public class UFItem : MonoBehaviour {
         case ".50cal_ammo":
         case "10gauge_ammo":
         case "12mm_ammo":
-        case "5_56mm_ammo":
-        case "7_62mm_ammo":
-        case "explosive_5_56mm_rounds":
+        case "5.56mm_ammo":
+        case "7.62mm_ammo":
+        case "explosive_5.56mm_rounds":
         case "railgun_bolts":
         return ItemType.GunAmmo;
 
@@ -77,7 +78,7 @@ public class UFItem : MonoBehaviour {
         case "keycard":
         return ItemType.Key;
 
-        case "Multi_Damage_amplifier":
+        case "Multi_Damage_Amplifier":
         return ItemType.DamageAmp;
 
         case "Multi_Invulnerability":
@@ -114,18 +115,23 @@ public class UFItem : MonoBehaviour {
         if(!IsPlayer(other))
             return;
 
-        if(respawnTimer <= 0f) {
+        if(respawnTimer == 0f) {
             if(PickUp())
                 respawnTimer = respawnTime;
         }
     }
 
     private void Update() {
+        if(respawnTimer < 0f) {
+            SetAttainable(false);
+            return;
+        }
+
         respawnTimer -= Time.deltaTime;
         if(respawnTimer < 0f)
             respawnTimer = 0f;
 
-        SetAttainable(respawnTimer <= 0f);
+        SetAttainable(respawnTimer == 0f);
     }
 
     private void SetAttainable(bool value) {
@@ -145,14 +151,14 @@ public class UFItem : MonoBehaviour {
 
         case ItemType.Health:
         if(life.CanPickUpHealth()) {
-            life.GainHealth(50f);
+            life.GainHealth(count);
             return true;
         }
         return false;
 
         case ItemType.Armor:
         if(life.CanPickUpArmor()) {
-            life.GainArmor(50f);
+            life.GainArmor(count);
             return true;
         }
         return false;

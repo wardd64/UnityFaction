@@ -95,14 +95,25 @@ public class UFPlayerMovement : MonoBehaviour {
         playerCamera = this.GetComponentInChildren<Camera>();
         moveSound = this.GetComponentInChildren<UFPlayerMoveSounds>();
         playerInfo = FindObjectOfType<UFPlayerInfo>();
-        if(playerInfo != null) {
+        
+        
+    }
+
+    private void Start() {
+        if(playerInfo != null)
             playerInfo.ApplyCameraSettings(playerCamera);
-            UFLevelStructure.PosRot pr = playerInfo.GetSpawn(UFPlayerInfo.PlayerClass.Free);
-            this.transform.position = pr.position;
-            this.transform.rotation = Quaternion.Euler(0f, pr.rotation.eulerAngles.y, 0f);
-            playerCamera.transform.rotation = Quaternion.Euler(pr.rotation.x, 0f, 0f);
-        }
         SetRotSmoothing(rotSmoothing);
+        Spawn();
+    }
+
+    public void Spawn() {
+        UFLevelStructure.PosRot pr = default(UFLevelStructure.PosRot);
+        if(playerInfo != null)
+            pr = playerInfo.GetSpawn(UFPlayerInfo.PlayerClass.Free);
+
+        this.transform.position = pr.position;
+        this.transform.rotation = Quaternion.Euler(0f, pr.rotation.eulerAngles.y, 0f);
+        playerCamera.transform.rotation = Quaternion.Euler(pr.rotation.x, 0f, 0f);
     }
 
     private void OnEnable() {
@@ -196,7 +207,8 @@ public class UFPlayerMovement : MonoBehaviour {
         if(this.platform != null) {
             Vector3 platformDelta = this.platform.position - this.lastPlatformPosition;
             cc.Move(platformDelta);
-            this.lastPlatformPosition = this.platform.position;
+            if(this.platform != null)
+                this.lastPlatformPosition = this.platform.position;
         }
 
         //seperate motion updates

@@ -302,7 +302,7 @@ namespace UFLevelStructure {
 
         public GeoShape shape;
         public enum GeoShape {
-            undefined = 0, sphere = 2, box = 4
+            undefined = 0, sphere = 2, box = 12
         }
 
         public bool ice, shallow;

@@ -426,10 +426,12 @@ public class UFUtils {
         Mesh mesh = new Mesh();
 
         Vector3[] vertices = new Vector3[4];
-        vertices[0] = new Vector3(0, 0, 0);
-        vertices[1] = new Vector3(width, 0, 0);
-        vertices[2] = new Vector3(0, height, 0);
-        vertices[3] = new Vector3(width, height, 0);
+        float x = width / 2f;
+        float y = height / 2f;
+        vertices[0] = new Vector3(-x, -y, 0);
+        vertices[1] = new Vector3(x, -y, 0);
+        vertices[2] = new Vector3(-x, y, 0);
+        vertices[3] = new Vector3(x, y, 0);
 
         mesh.vertices = vertices;
         int[] tri = new int[] { 0, 2, 1, 2, 3, 1 };

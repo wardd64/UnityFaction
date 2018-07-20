@@ -115,6 +115,7 @@ public class UFParticleEmitter : MonoBehaviour {
             float stick = emit.stickieness / 15f;
             psCollision.dampen = new ParticleSystem.MinMaxCurve(stick);
             psCollision.enableDynamicColliders = false;
+            psCollision.radiusScale = .5f;
             //TODO: explodeOnImpact, collidWithLiquids, playCollisionSounds
         }
 

@@ -67,8 +67,8 @@ public class UFLevel : MonoBehaviour {
     }
 
     public static T GetPlayer<T>() where T : Component{
-        //TODO make more efficient and robust
-        return FindObjectOfType<T>();
+        UFPlayerMovement mov = FindObjectOfType<UFPlayerMovement>();
+        return mov.GetComponentInChildren<T>();
     }
 
     private void SetID(int id, IDRef.Type type) {

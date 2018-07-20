@@ -388,7 +388,7 @@ public class RFLReader {
         for(int i = 0; i < nboAmbSounds; i++) {
             AmbSound nextSound;
 
-            int id = BitConverter.ToInt32(bytes, pointer + 12);
+            int id = BitConverter.ToInt32(bytes, pointer);
             pointer += 4;
             Vector3 pos = UFUtils.Getvector3(bytes, pointer);
             nextSound.transform = new UFTransform(pos, id);
@@ -1093,7 +1093,7 @@ public class RFLReader {
             if(nextTrigger.box) {
                 Quaternion rotation = UFUtils.GetRotation(bytes, pointer);
                 Vector3 wdh = UFUtils.Getvector3(bytes, pointer + 36);
-                nextTrigger.extents = new Vector3(wdh.y, wdh.z, wdh.x);
+                nextTrigger.extents = new Vector3(wdh.y, wdh.x, wdh.z);
                 nextTrigger.oneWay = BitConverter.ToBoolean(bytes, pointer + 48);
                 nextTrigger.transform = new UFTransform(position, rotation, id);
                 pointer += 49;
