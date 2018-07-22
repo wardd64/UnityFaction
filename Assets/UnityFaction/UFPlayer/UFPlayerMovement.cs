@@ -45,7 +45,7 @@ public class UFPlayerMovement : MonoBehaviour {
     private const float airSteeringMax = 14.5f; //push force while flying slow
     private const float climbSteering = 40f; //push force while climbing
     private const float swimSteering = 8f; //push force while swimming
-    private const float jumpHeight = 1.3f; //height in m the player can jump
+    private const float jumpHeight = 1.4f; //height in m the player can jump
     private const float minJumpSpeed = 1f; //additive jump speed when player is walking up a ramp
     private const float stepOver = 0.2f; //Highest distance player can safely step over
     private const float footing = 0.1f; //extra distance to make sure player holds on to the ground
@@ -437,6 +437,8 @@ public class UFPlayerMovement : MonoBehaviour {
             //hit slope we should slide off of
             velocity -= Vector3.Project(velocity, hit.normal);
         }
+
+        //TODO provide option to use rb.GetPointVelocity(hit.point) to carry player in stead
     }
 
     private void SetPlatform(Transform transform) {
@@ -453,6 +455,7 @@ public class UFPlayerMovement : MonoBehaviour {
         motionState = MotionState.ground;
         moveSound.Jump();
         jumpTime = 0f;
+        vertVel = 0f;
     }
 
     /// <summary>

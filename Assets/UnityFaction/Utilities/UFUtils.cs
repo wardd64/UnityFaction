@@ -456,4 +456,22 @@ public class UFUtils {
         return value.x.ToString("n2") + "_" + value.y.ToString("n2");
     }
 
+    public static Vector3 GetAxis(Quaternion q) {
+        Vector3 v = Vector3.forward;
+        float angle = GetQuatAngle(q);
+        return angle * Vector3.Cross(v, q*v).normalized;
+    }
+
+    public static float GetQuatAngle(Quaternion q) {
+        float angle = Quaternion.Angle(Quaternion.identity, q);
+
+        if(angle < 45f) {
+            Vector3 v = Vector3.forward;
+            float sinRad = Vector3.Cross(v, q * v).magnitude;
+            return Mathf.Asin(sinRad) * Mathf.Rad2Deg;
+        }
+        else
+            return angle;
+    }
+
 }

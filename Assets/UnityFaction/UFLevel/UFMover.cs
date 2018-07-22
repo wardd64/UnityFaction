@@ -159,14 +159,20 @@ public class UFMover : MonoBehaviour {
         if(rotateInPlace) {
             Quaternion deltaRot = rb.rotation * Quaternion.Inverse(recordRot);
             foreach(Rigidbody rb in content) {
-                rb.position = UFUtils.RotateAroundPivot(rb.position, this.rb.position, deltaRot);
+                Vector3 newPos = UFUtils.RotateAroundPivot(rb.position, this.rb.position, deltaRot);
+                Vector3 deltaPos = newPos - rb.position;
+
+                rb.position = newPos;
+                rb.velocity = deltaPos / Time.deltaTime;
                 rb.rotation = deltaRot * rb.rotation;
+                rb.angularVelocity = UFUtils.GetAxis(deltaRot);
             }
         }
         else {
             Vector3 deltaPos = rb.position - recordPos;
             foreach(Rigidbody rb in content) {
                 rb.position = rb.position + deltaPos;
+                rb.velocity = deltaPos / Time.deltaTime;
             }
         }
     }
