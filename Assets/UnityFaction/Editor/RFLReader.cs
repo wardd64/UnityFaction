@@ -293,7 +293,7 @@ public class RFLReader {
             nextRegion.shallow = UFUtils.GetFlag(bytes, pointer + 4, 5);
 
             byte shapeByte = UFUtils.GetNibble(bytes, pointer + 4, true);
-            nextRegion.shape = (GeoRegion.GeoShape)shapeByte;
+            nextRegion.shape = (GeoRegion.GeoShape)(shapeByte & 7);
             nextRegion.hardness = bytes[pointer + 6];
             pointer += 8;
 
@@ -1197,6 +1197,8 @@ public class RFLReader {
             nextScroll.faceRef = BitConverter.ToInt32(bytes, pointer);
             nextScroll.scrollVelocity = UFUtils.Getvector2(bytes, pointer + 4);
             pointer += 12;
+
+            geometry.scrolls[i] = nextScroll;
         }
 
         int nboRooms = BitConverter.ToInt32(bytes, pointer);
@@ -1292,6 +1294,7 @@ public class RFLReader {
             Face nextFace;
             pointer += 16;
             nextFace.texture = BitConverter.ToInt32(bytes, pointer);
+            nextFace.id = BitConverter.ToInt32(bytes, pointer + 8);
             pointer += 24;
 
             nextFace.showSky = UFUtils.GetFlag(bytes, pointer, 0);

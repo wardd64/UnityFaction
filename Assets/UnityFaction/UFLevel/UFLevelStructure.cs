@@ -132,6 +132,7 @@ namespace UFLevelStructure {
     [Serializable]
     public struct Face {
         public int texture;
+        public int id;
         public bool showSky, mirrored, fullBright;
         public FaceVertex[] vertices;
     }
@@ -302,7 +303,7 @@ namespace UFLevelStructure {
 
         public GeoShape shape;
         public enum GeoShape {
-            undefined = 0, sphere = 2, box = 12
+            undefined = 0, sphere = 2, box = 4
         }
 
         public bool ice, shallow;
