@@ -452,4 +452,8 @@ public class UFUtils {
         return mesh;
     }
 
+    public static string GetVecStr(Vector2 value) {
+        return value.x.ToString("n2") + "_" + value.y.ToString("n2");
+    }
+
 }

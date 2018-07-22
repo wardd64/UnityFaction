@@ -9,6 +9,8 @@ public class UFItem : MonoBehaviour {
     public int count;
     public float respawnTime;
 
+    private const float ROTATE_SPEED = 90;
+
     float respawnTimer;
 
     public enum ItemType {
@@ -132,6 +134,8 @@ public class UFItem : MonoBehaviour {
             respawnTimer = 0f;
 
         SetAttainable(respawnTimer == 0f);
+
+        transform.Rotate(0f, Time.deltaTime * ROTATE_SPEED, 0f);
     }
 
     private void SetAttainable(bool value) {

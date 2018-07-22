@@ -88,6 +88,12 @@ public class UFEvent : MonoBehaviour {
                 Trigger(!positiveSignal);
                 timer = 0f;
                 break;
+
+                case UFLevelStructure.Event.EventType.Switch:
+                bool1 = !bool1;
+                Trigger(bool1);
+                timer = 0f;
+                break;
                 }
             }
             else if(etc == EventTypeClass.Effect) {
@@ -193,7 +199,7 @@ public class UFEvent : MonoBehaviour {
         return IDRef.Type.Keyframe;
 
         case UFLevelStructure.Event.EventType.Modify_Rotating_Mover:
-        bool increase = int1 != 0;
+        bool increase = string1.Equals("Increase");
         float factor = increase ? 1f + (float1 / 100f) : 1f - (float1 / 100f);
         foreach(UFMover mov in GetLinksOfType<UFMover>(IDRef.Type.Keyframe))
             mov.ChangeRotationSpeed(factor);
@@ -250,6 +256,7 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.Delay:
         case UFLevelStructure.Event.EventType.Invert:
         case UFLevelStructure.Event.EventType.Cyclic_Timer:
+        case UFLevelStructure.Event.EventType.Switch:
         return EventTypeClass.Signal;
 
         case UFLevelStructure.Event.EventType.Bolt_state:
@@ -320,7 +327,6 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.Armor:
         case UFLevelStructure.Event.EventType.Spawn_Object:
         case UFLevelStructure.Event.EventType.Swap_Textures:
-        case UFLevelStructure.Event.EventType.Switch:
         case UFLevelStructure.Event.EventType.Switch_Model:
         case UFLevelStructure.Event.EventType.Alarm:
         case UFLevelStructure.Event.EventType.Alarm_Siren:

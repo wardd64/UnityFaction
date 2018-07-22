@@ -64,7 +64,9 @@ public class UFTrigger : MonoBehaviour {
             insideTime += Time.deltaTime;
             if(insideTime >= insideDelay) {
                 if(requireUseKey) {
-                    if(Input.GetKey(useKey)) {
+                    bool key = buttonTime <= 0f && Input.GetKeyDown(useKey);
+                    key |= buttonTime > 0f && Input.GetKey(useKey);
+                    if(key) {
                         buttonTime += Time.deltaTime;
                         if(buttonTime >= buttonDelay)
                             Trigger();

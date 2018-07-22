@@ -21,7 +21,7 @@ public class UFPlayerInfo : MonoBehaviour {
     public Camera skyCamera;
 
 
-    public void Set(LevelData level) {
+    public void Set(LevelData level, int skyLayer) {
         this.levelName = level.name;
         this.author = level.author;
         this.playerStart = level.playerStart;
@@ -76,6 +76,7 @@ public class UFPlayerInfo : MonoBehaviour {
             skyCamera.clearFlags = CameraClearFlags.SolidColor;
             skyCamera.backgroundColor = fogColor;
             skyCamera.farClipPlane = skyDiagonal.magnitude / 2f;
+            skyCamera.cullingMask = LayerMask.GetMask(LayerMask.LayerToName(skyLayer));
         }
     }
 
