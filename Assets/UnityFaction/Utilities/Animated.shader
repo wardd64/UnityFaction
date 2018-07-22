@@ -10,7 +10,7 @@
 		_Frame("Per Frame Length", Float) = 0.5
 	}
 
-		SubShader
+	SubShader
 	{
 		Tags{"Queue"="Transparent" "RenderType" = "Transparent" }
 		LOD 100
@@ -19,66 +19,67 @@
 		Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
-	{
-		CGPROGRAM
-#pragma vertex vert
-#pragma fragment frag
+		{
+			CGPROGRAM
 
-#include "UnityCG.cginc"
+			#pragma vertex vert
+			#pragma fragment frag
 
-		struct appdata
-	{
-		float4 vertex : POSITION;
-		float2 uv : TEXCOORD0;
-	};
+			#include "UnityCG.cginc"
 
-	struct v2f
-	{
-		float2 uv : TEXCOORD0;
-		float4 vertex : SV_POSITION;
-	};
+			struct appdata
+			{
+				float4 vertex : POSITION;
+				float2 uv : TEXCOORD0;
+			};
 
-	sampler2D _MainTex;
-	float4 _MainTex_ST;
+			struct v2f
+			{
+				float2 uv : TEXCOORD0;
+				float4 vertex : SV_POSITION;
+			};
 
-	fixed4 _Color;
+			sampler2D _MainTex;
+			float4 _MainTex_ST;
 
-	uint _Cols;
-	uint _Rows;
+			fixed4 _Color;
 
-	float _Frame;
+			uint _Cols;
+			uint _Rows;
 
-	fixed4 shot(sampler2D tex, float2 uv, float dx, float dy, int frame) {
-		return tex2D(tex, float2(
-			(uv.x * dx) + fmod(frame, _Cols) * dx,
-			1.0 - ((uv.y * dy) + (frame / _Cols) * dy)
-			));
-	}
+			float _Frame;
 
-	v2f vert(appdata v) {
-		v2f o;
-		o.vertex = UnityObjectToClipPos(v.vertex);
-		o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-		return o;
-	}
+			fixed4 shot(sampler2D tex, float2 uv, float dx, float dy, int frame) {
+				return tex2D(tex, float2(
+					(uv.x * dx) + fmod(frame, _Cols) * dx,
+					1.0 - ((uv.y * dy) + (frame / _Cols) * dy)
+					));
+			}
 
-	fixed4 frag(v2f i) : SV_Target{
-		int frames = _Rows * _Cols;
-		float r = fmod(_Time.y, _Frame);
-		float frame = fmod(_Time.y / _Frame, frames);
-		int current = floor(frame);
-		int next = floor(fmod(frame + 1, frames));
+			v2f vert(appdata v) {
+				v2f o;
+				o.vertex = UnityObjectToClipPos(v.vertex);
+				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+				return o;
+			}
 
-		float dx = 1.0 / _Cols;
-		float dy = 1.0 / _Rows;
+			fixed4 frag(v2f i) : SV_Target{
+				int frames = _Rows * _Cols;
+				float r = fmod(_Time.y, _Frame);
+				float frame = fmod(_Time.y / _Frame, frames);
+				int current = floor(frame);
+				int next = floor(fmod(frame + 1, frames));
 
-		fixed4 left = shot(_MainTex, i.uv, dx, dy, current);
-		fixed4 right = shot(_MainTex, i.uv, dx, dy, next);
-		fixed4 toReturn = lerp(left, right, r) * _Color;
-		return toReturn;
-	}
+				float dx = 1.0 / _Cols;
+				float dy = 1.0 / _Rows;
 
-		ENDCG
-	}
+				fixed4 left = shot(_MainTex, i.uv, dx, dy, current);
+				fixed4 right = shot(_MainTex, i.uv, dx, dy, next);
+				fixed4 toReturn = lerp(left, right, r) * _Color;
+				return toReturn;
+			}
+
+			ENDCG
+		}
 	}
 }
