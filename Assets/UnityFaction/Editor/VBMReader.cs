@@ -7,6 +7,12 @@ using UnityEngine;
 
 public class VBMReader {
 
+    /* A VBM is a RedFaction image file that encodes an animated image, like a gif.
+     * (Volition BitMap?) The file consists of a short header which details the remaining contents.
+     * The contents are a simple series of bitmap images, with r,g,b,a values, encoded in one of 
+     * a series of formats.
+     */
+
     [MenuItem("UnityFaction/Convert VBM")]
     public static void ConvertVBM() {
 
@@ -66,10 +72,16 @@ public class VBMReader {
         MakeTexture(bytes);
     }
 
+    /// <summary>
+    /// makes animated material loaded in this reader and exports it the default asset path.
+    /// </summary>
     public void MakeMaterialAtAssetPath() {
         MakeMaterial(assetPath);
     }
 
+    /// <summary>
+    /// Makes animated material loaded in this reader and exports it to the export folder.
+    /// </summary>
     private void MakeMaterial(string exportFolder) {
         string texAssetPath = exportFolder + fileName + ".png";
         string texPath = Application.dataPath + texAssetPath.Substring(6);
@@ -89,6 +101,12 @@ public class VBMReader {
         AssetDatabase.CreateAsset(mat, matPath);
     }
 
+    /// <summary>
+    /// Reads data from the file and uses it to generate a new texture.
+    /// This texture contains each frame of the animation in paralel, so 
+    /// an animation can simply hop over the uv from one frame to the next 
+    /// to play it.
+    /// </summary>
     private void MakeTexture(byte[] bytes) {
         pointer = 0;
         ReadHeader(bytes);
@@ -116,7 +134,11 @@ public class VBMReader {
         }
     }
 
-
+    /// <summary>
+    /// Converts given 16 bit integer to the Color it encodes.
+    /// Several different encodings can be used, and should be 
+    /// specified the parameter format.
+    /// </summary>
     private Color ReadPixel(ushort raw) {
         byte red, green, blue, alpha;
 
@@ -148,6 +170,10 @@ public class VBMReader {
         }
     }
 
+    /// <summary>
+    /// Read header of the VBM file, which contains general data about the encoded texture;
+    /// width, height, color coding format, fps, number of frames etc.
+    /// </summary>
     private void ReadHeader(byte[] bytes) {
         uint signature = BitConverter.ToUInt32(bytes, pointer);
         uint version = BitConverter.ToUInt32(bytes, pointer + 4);

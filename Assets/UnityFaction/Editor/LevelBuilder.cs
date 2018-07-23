@@ -19,6 +19,9 @@ public class LevelBuilder : EditorWindow {
     //Build options
     public int skyLayer;
 
+    /// <summary>
+    /// Read RFL file and build its contents into the current Unity scene.
+    /// </summary>
     [MenuItem("UnityFaction/Build Level (RFL)")]
     public static void BuildLevel() {
         //let user select rfl file that needs to be built into the scene
@@ -42,22 +45,30 @@ public class LevelBuilder : EditorWindow {
             AssetDatabase.CreateFolder(Path.GetDirectoryName(lastRFLPath), VPPUnpacker.assetFolder);
     }
 
+    /// <summary>
+    /// Level builder GUI
+    /// </summary>
     private void OnGUI() {
+        //title
         GUIStyle header = new GUIStyle();
         header.fontSize = 22;
         GUILayout.Label("UNITY FACTION LEVEL BUILDER", header);
+
+        //button for loading level if none is available yet
         if(level == null) {
             if(GUILayout.Button("Load RFL file"))
                 BuildLevel();
             return;
         }
 
+        //general info and style
         string fileName = Path.GetFileNameWithoutExtension(lastRFLPath);
         GUILayout.Label("Loaded file: " + fileName, EditorStyles.largeLabel);
         GUIStyle contentFoldout = new GUIStyle("foldout");
         contentFoldout.fontStyle = FontStyle.Bold;
         contentFoldout.fontSize = 14;
 
+        //show contents of the current level
         showContents = EditorGUILayout.Foldout(showContents, "View level contents", contentFoldout);
 
         if(showContents) {
@@ -102,12 +113,14 @@ public class LevelBuilder : EditorWindow {
             }
         }
 
+        //make root object to put the level under
         if(root == null) {
             if(GUILayout.Button("Make root"))
                 MakeRoot();
             return;
         }
 
+        //reload the root script with ID references (usefull after recompiling)
         if(GUILayout.Button("Refresh level")) {
             GameObject.DestroyImmediate(root.GetComponent<UFLevel>());
             UFLevel l = root.gameObject.AddComponent<UFLevel>();
@@ -115,6 +128,7 @@ public class LevelBuilder : EditorWindow {
             l.Awake();
         }
 
+        //Build all button, do everything at once
         GUIStyle bigButton = new GUIStyle("button");
         bigButton.fontSize = 26;
         if(GUILayout.Button("Build all", bigButton)) {
@@ -133,6 +147,7 @@ public class LevelBuilder : EditorWindow {
             BuildDecals();
         }
 
+        //Build one class of objects seperately + options for building
         showBuildOptions = EditorGUILayout.Foldout(showBuildOptions, "Build options", contentFoldout);
 
         if(showBuildOptions) {
@@ -160,6 +175,15 @@ public class LevelBuilder : EditorWindow {
      * -----------------------------------------------------------------------------------------------
      */
 
+    /// <summary>
+    /// Builds all the non-moving geometry in a set of objects:
+    /// Standard static geometry
+    /// Invisible static geometry (colliders but no renderers)
+    /// Destructible brushes (glass)
+    /// Liquids; surfaces and volume triggers
+    /// Faces with scrolling textures
+    /// Sky room; dynamic skybox in the level
+    /// </summary>
     private void BuildStaticGeometry() {
         //set up split
         int split = 5;
@@ -296,6 +320,10 @@ public class LevelBuilder : EditorWindow {
         sky.layer = skyLayer;
     }
 
+    /// <summary>
+    /// Builds standard Unity lights into the scene with 
+    /// properties as close as possible to the Redfaction types
+    /// </summary>
     private void BuildLights() {
         Transform p = MakeParent("Lights");
         foreach(UFLevelStructure.Light l in level.lights) {
@@ -316,12 +344,20 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    /// <summary>
+    /// Build specialized player info object that handles parameters such as 
+    /// global lighting, fog, skyroom etc.
+    /// </summary>
     private void BuildPlayerInfo() {
         Transform p = MakeParent("PlayerInfo");
         UFPlayerInfo info = p.gameObject.AddComponent<UFPlayerInfo>();
         info.Set(level, skyLayer);
     }
 
+    /// <summary>
+    /// Build specialized geomodder object that encodes level strength
+    /// and allows player to breach static geometry when needed.
+    /// </summary>
     private void BuildGeoModder() {
         Transform p = MakeParent("GeoModder");
         UFGeoModder gm = p.gameObject.AddComponent<UFGeoModder>();
@@ -329,6 +365,14 @@ public class LevelBuilder : EditorWindow {
         gm.Set(level, geoMat);
     }
 
+    /// <summary>
+    /// Build moving groups and their associated moving geometry.
+    /// Moving groups can be linked to any number of UnityFaction
+    /// objects in the scene and will drag them along their motion.
+    /// Moving geometry consist of individual brushes, with simple colliders attached.
+    /// Colliders cannot be assigned accurately in general, so extra work may be 
+    /// required to get them in proper working condition.
+    /// </summary>
     private void BuildMovers() {
         Transform p = MakeParent("Movers");
 
@@ -379,6 +423,10 @@ public class LevelBuilder : EditorWindow {
                 ". Consider giving them compound colliders for efficiency.");
     }
 
+    /// <summary>
+    /// Builds geometric objects into the scene including 
+    /// things like furniture, machines, switches and plants.
+    /// </summary>
     private void BuildClutter() {
         Transform p = MakeParent("Clutter");
         foreach(Clutter clutter in level.clutter) {
@@ -395,6 +443,10 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    /// <summary>
+    /// Build items into the scene that players can pick up.
+    /// Includes health packs, powerups, weapons and ammo.
+    /// </summary>
     private void BuildItems() {
         Transform p = MakeParent("Items");
         foreach(Item item in level.items) {
@@ -411,6 +463,10 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    /// <summary>
+    /// Build Triggers into the scene that respond to the player's actions
+    /// and activate other UnityFaction objects in response (mainly events and movers!)
+    /// </summary>
     private void BuildTriggers() {
         Transform p = MakeParent("Triggers");
         foreach(Trigger trigger in level.triggers) {
@@ -420,6 +476,9 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    /// <summary>
+    /// Build ladder and push regions that work with UFPlayerMovement
+    /// </summary>
     private void BuildForceRegions() {
         Transform p = MakeParent("ForceRegions");
         foreach(PushRegion region in level.pushRegions) {
@@ -434,6 +493,10 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    /// <summary>
+    /// Builds special event objects that have unique effects when activated.
+    /// Events are to be activated mainly by triggers and other events.
+    /// </summary>
     private void BuildEvents() {
         Transform p = MakeParent("Events");
         foreach(UFLevelStructure.Event e in level.events) {
@@ -445,6 +508,9 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    /// <summary>
+    /// Build particle and bolt emitters into the scene. 
+    /// </summary>
     private void BuildEmitters() {
         Transform p = MakeParent("Emitters");
 
@@ -474,6 +540,9 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    /// <summary>
+    /// Build ambient sound objects that constantly emit faint 3D noise.
+    /// </summary>
     private void BuildAmbSounds() {
         Transform p = MakeParent("AmbSounds");
         foreach(AmbSound s in level.ambSounds) {
@@ -493,6 +562,11 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    /// <summary>
+    /// Build decals, which are small images that are pasted onto nearby geometry.
+    /// UnityFaction implements these as seperate faces hovering slightly over
+    /// their intended location.
+    /// </summary>
     private void BuildDecals() {
         Transform p = MakeParent("Decals");
         foreach(Decal d in level.decals) {
@@ -510,6 +584,11 @@ public class LevelBuilder : EditorWindow {
      * -----------------------------------------------------------------------------------------------
      */
 
+    /// <summary>
+    /// Handles set of repeated operations needed for nearly all objects created by the LevelBuilder.
+    /// This includes: creating a gameObject with the given name, setting its parent,
+    /// setting its location, linking it to UFLevel id's and adding its functional component.
+    /// </summary>
     private T MakeUFObject<T>(string name, Transform parent, UFTransform transform) where T : Component {
         GameObject g = new GameObject(name);
         g.transform.SetParent(parent);
@@ -520,14 +599,19 @@ public class LevelBuilder : EditorWindow {
         return g.AddComponent<T>();
     }
 
+    /// <summary>
+    /// Returns asset folder in which to put/find additional assets associated with the last readed RFL.
+    /// </summary>
     private static string assetPath {  get { return Path.GetDirectoryName(lastRFLPath) + "/" + VPPUnpacker.assetFolder + "/"; } }
-    private static string[] searchFolders { get { return new string[] {
-        assetPath.TrimEnd('/'),
-        Path.GetDirectoryName(lastRFLPath),
-        VPPUnpacker.GetRFSourcePath().TrimEnd('/')
-    }; } }
+
+    /// <summary>
+    /// Returns name to be used for the root object of the current level.
+    /// </summary>
     private string rootName { get { return "UF_<" + level.name + ">"; } }
 
+    /// <summary>
+    /// Returns or generates root object for the currently loaded level.
+    /// </summary>
     private Transform root
     {
         get
@@ -541,6 +625,10 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    /// <summary>
+    /// Make root object for the current level. The root object contains a UFLevel script
+    /// that handles ID references within its children.
+    /// </summary>
     private void MakeRoot() {
         GameObject r = new GameObject(rootName);
         UFLevel l = r.AddComponent<UFLevel>();
@@ -548,6 +636,11 @@ public class LevelBuilder : EditorWindow {
         l.Awake();
     }
 
+    /// <summary>
+    /// Makes a parent object that is parented to the level root.
+    /// This parent object should hold one type of child objects,
+    /// such as the static geometry or events.
+    /// </summary>
     private Transform MakeParent(string name) {
         for(int i = 0; i < root.childCount; i++) {
             if(name == root.GetChild(i).name)
@@ -559,17 +652,29 @@ public class LevelBuilder : EditorWindow {
         return parent.transform;
     }
 
+    /// <summary>
+    /// Returns consistent string format for the given id.
+    /// String is padded to the left with '0' so to make sure that 
+    /// consecutive ids are always sorted alphabetically.
+    /// </summary>
     private static string GetIdString(UFTransform t) {
         int nboIDs = UFLevel.singleton.idDictionary.Count;
         int idLength = Mathf.CeilToInt(Mathf.Log10(nboIDs + 1));
         return t.id.ToString().PadLeft(idLength, '0');
     }
 
+    /// <summary>
+    /// Makes a single object containing mesh data (and renderer) of the given geometry.
+    /// </summary>
     private static GameObject MakeMeshObject(Geometry geometry, string name) {
         List<Face> faces = new List<Face>(geometry.faces);
         return MakeMeshObject(geometry, faces, name);
     }
 
+    /// <summary>
+    /// Makes a single object containing mesh data (and renderer) of the given faces.
+    /// This only works correctly when all given faces are part of the given geometry.
+    /// </summary>
     public static GameObject MakeMeshObject(Geometry geometry, List<Face> faces, string name) {
         //make object
         GameObject g = new GameObject(name);
@@ -605,6 +710,10 @@ public class LevelBuilder : EditorWindow {
         return g;
     }
 
+    /// <summary>
+    /// Return or generate standard materials for each of the given texture names.
+    /// Appropriate files are searched for in the given assetPath.
+    /// </summary>
     public static Material[] GetMaterials(string[] textures, string assetPath) {
         Material[] materials = new Material[textures.Length];
         for(int i = 0; i < materials.Length; i++)
@@ -612,14 +721,26 @@ public class LevelBuilder : EditorWindow {
         return materials;
     }
 
+    /// <summary>
+    /// Return or generate standard materials for each of the given texture names.
+    /// Appropriate files are searched for in the given assetPath.
+    /// </summary>
     public static Material[] GetMaterials(List<string> textures, string assetPath) {
         return GetMaterials(textures.ToArray(), assetPath);
     }
 
+    /// <summary>
+    /// Return or generate a standard material for the given texture name.
+    /// Appropriate files are searched for in the given assetPath.
+    /// </summary>
     public static Material GetMaterial(string texture, string assetPath) {
         return GetMaterial(texture, assetPath, "Standard");
     }
 
+    /// <summary>
+    /// Return or generate a material with a custom shader for the given texture name.
+    /// Appropriate files are searched for in the given assetPath.
+    /// </summary>
     private static Material GetMaterial(string texture, string assetPath, string shader) {
         string textureName = Path.GetFileNameWithoutExtension(texture);
         string materialName = textureName + ".mat";
@@ -653,6 +774,9 @@ public class LevelBuilder : EditorWindow {
         return new Material(Shader.Find(shader));
     }
 
+    /// <summary>
+    /// Find and return texture file with the given name
+    /// </summary>
     private static Texture2D GetTexture(string texture) {
         string textureName = Path.GetFileNameWithoutExtension(texture);
         string[] results = AssetDatabase.FindAssets(textureName);
@@ -668,6 +792,9 @@ public class LevelBuilder : EditorWindow {
         return null;
     }
 
+    /// <summary>
+    /// Returns name of the shader to be used with particles with the given properties.
+    /// </summary>
     private static string GetParticleShader(bool fade, bool glow) {
         if(glow)
             return "Particles/Additive";
@@ -677,6 +804,11 @@ public class LevelBuilder : EditorWindow {
             return "Particles/Standard Unlit";
     }
 
+    /// <summary>
+    /// Finds or generates a special scrolling material 
+    /// with the given texture and scrollspeed.
+    /// Note that each scrollspeed will lead to a new material being generated.
+    /// </summary>
     private static Material GetScrollingTexture(string texture, Vector2 scroll) {
         string scrollStr = UFUtils.GetVecStr(scroll);
         string matName = Path.GetFileNameWithoutExtension(texture) + "_scroll_" + scrollStr;
@@ -704,6 +836,11 @@ public class LevelBuilder : EditorWindow {
         return mat;
     }
 
+    /// <summary>
+    /// DOES NOT WORK AS OF YET
+    /// Returns material for the given texture which automatically has the appropriate
+    /// render settings (e.g. being transparant, cutout, fade or opaque).
+    /// </summary>
     private static Material GetStandardMaterialFor(Texture2D tex) {
         Material mat = new Material(Shader.Find("Standard"));
         float minAlpha = 1f, avgAlpha = 0f;
@@ -770,6 +907,9 @@ public class LevelBuilder : EditorWindow {
         return toReturn;
     }
 
+    /// <summary>
+    /// Returns true if the given brush is contained in any of this level's moving geometry.
+    /// </summary>
     private bool IsMover(Brush brush) {
         foreach(Brush mb in level.movingGeometry) {
             if(mb.transform.id == brush.transform.id)
@@ -778,6 +918,10 @@ public class LevelBuilder : EditorWindow {
         return false;
     }
 
+    /// <summary>
+    /// Returns true if the given face is embedded in one of the faces of the given list of brushes.
+    /// This usually means that the given face is part of one of those brushes, altough exceptions may occur.
+    /// </summary>
     private static bool FaceIsContainedInBrushes(Geometry geometry, Face face, List<Brush> brushes) {
         foreach(Brush b in brushes) {
             if(FaceIsContainedIn(geometry, face, b))
@@ -820,13 +964,32 @@ public class LevelBuilder : EditorWindow {
         return true;
     }
 
+    /// <summary>
+    /// Small delta value used to detect corresponding pieces of geometry.
+    /// </summary>
     private const float GEOM_DELTA = 1e-4f;
+
+    /// <summary>
+    /// parameter to keep count of moving brushes that have mesh colliders attached (and may be optimized)
+    /// </summary>
     private static int movingMeshColliders;
 
+    /// <summary>
+    /// True if the given face lies lies (horizontally) in one of the liquid surfaces of the level.
+    /// This usually means that the face is part of the liquid surface.
+    /// </summary>
+    /// <param name="geometry">(Static) geometry that contains the given face.</param>
+    /// <param name="liquids">List of liquid rooms in which to search for the face.</param>
     private static bool FaceIsContainedInLiquidSurface(Geometry geometry, List<Room> liquids, Face face) {
         return GetLiquidRoomOfFace(geometry, liquids, face) >= 0;
     }
 
+    /// <summary>
+    /// Returns first index of the room in the given list of liquid rooms that 
+    /// contains the given face in its liquid surface.
+    /// </summary>
+    /// <param name="geometry">(Static) geometry that contains the given face.</param>
+    /// <param name="liquids">List of liquid rooms in which to search for the face.</param>
     private static int GetLiquidRoomOfFace(Geometry geometry, List<Room> liquids, Face face) {
         for(int i = 0; i < liquids.Count; i++){
             Room room = liquids[i];
@@ -834,8 +997,12 @@ public class LevelBuilder : EditorWindow {
             float y = room.aabb.min.y + room.liquidProperties.depth;
 
             foreach(FaceVertex v in face.vertices) {
-                float vy = geometry.vertices[v.vertexRef].y;
-                onSurface &= Mathf.Abs(y - vy) < GEOM_DELTA;
+                Vector3 vert = geometry.vertices[v.vertexRef];
+                onSurface &= Mathf.Abs(y - vert.y) < GEOM_DELTA;
+                onSurface &= vert.x > room.aabb.min.x - GEOM_DELTA;
+                onSurface &= vert.z > room.aabb.min.z - GEOM_DELTA;
+                onSurface &= vert.x < room.aabb.max.x + GEOM_DELTA;
+                onSurface &= vert.z < room.aabb.max.z + GEOM_DELTA;
                 if(!onSurface)
                     break;
             }
@@ -847,12 +1014,17 @@ public class LevelBuilder : EditorWindow {
         return -1;
     }
 
+    /// <summary>
+    /// Returns true if the given face lies completely in the given room.
+    /// To be used to detect and seperate skyroom geometry.
+    /// </summary>
+    /// <param name="geometry">(Static) geometry that contains the given face.</param>
     private static bool FaceIsInRoom(Geometry geometry, Room room, Face face) {
         foreach(FaceVertex v in face.vertices) {
             Vector3 vert = geometry.vertices[v.vertexRef];
             for(int i = 0; i < 3; i++) {
-                bool vertInRoom = vert[i] - room.aabb.min[i] > -GEOM_DELTA;
-                vertInRoom &= room.aabb.max[i] - vert[i] > -GEOM_DELTA;
+                bool vertInRoom = vert[i] > room.aabb.min[i] - GEOM_DELTA;
+                vertInRoom &= vert[i] < room.aabb.max[i] + GEOM_DELTA;
                 if(!vertInRoom)
                     return false;
             }
@@ -860,6 +1032,10 @@ public class LevelBuilder : EditorWindow {
         return true;
     }
 
+    /// <summary>
+    /// Attaches an appropriate (moving) collider to the given brush.
+    /// This brush is expected to have a MeshFilter component.
+    /// </summary>
     private static void GiveBrushCollider(Transform brush) {
         //collapse vertices close to eachother
         Vector3[] originalVerts = brush.GetComponent<MeshFilter>().sharedMesh.vertices;
@@ -931,6 +1107,10 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    /// <summary>
+    /// Find and returns prefab with the given name.
+    /// To be used to find clutter and item objects that were made by the VPPUnpacker.
+    /// </summary>
     public static GameObject GetPrefab(string name) {
         string prefabName = name + ".prefab";
         string[] results = AssetDatabase.FindAssets(name);
@@ -945,6 +1125,11 @@ public class LevelBuilder : EditorWindow {
         return null;
     }
 
+    /// <summary>
+    /// Returns true if the given string likely encodes a valid audioclip,
+    /// since it is not empty and has the appropriate extension.
+    /// This is usefull to detect audio events ahead of time.
+    /// </summary>
     public static bool IsValidAudioClipName(string clip) {
         if(string.IsNullOrEmpty(clip))
             return false;
@@ -953,6 +1138,10 @@ public class LevelBuilder : EditorWindow {
         return new List<string> { "wav", "mp3", "ogg" }.Contains(ext);
     }
 
+    /// <summary>
+    /// Finds and returns an AudioClip with the given name.
+    /// Spits out warnings if the clip does not exist or is unreadable.
+    /// </summary>
     public static AudioClip GetClip(string clip) {
         if(string.IsNullOrEmpty(clip))
             return null;
@@ -977,6 +1166,15 @@ public class LevelBuilder : EditorWindow {
         return null;
     }
 
+    /// <summary>
+    /// Helper method for making a unity mesh out of a RedFaction geometry.
+    /// </summary>
+    /// <param name="geometry">Geometry that contains the given faces.</param>
+    /// <param name="faces">Faces to be built</param>
+    /// <param name="texMap">Maps RedFaction texture index to the index of textures actually contained within the list of faces. 
+    /// This is needed since the given list of faces may not contain all textures in the given geometry.</param>
+    /// <param name="texCount">Number of different textures contained in the given list of faces.</param>
+    /// <returns></returns>
     private static Mesh MakeMesh(Geometry geometry, List<Face> faces, int[] texMap, int texCount) {
         Mesh mesh = new Mesh();
 
@@ -1028,8 +1226,17 @@ public class LevelBuilder : EditorWindow {
         return mesh;
     }
 
+    /// <summary>
+    /// Distance that a decall will hover above the geometry it is intended to snap on to.
+    /// </summary>
     const float DECALL_SNAP_DIST = 1e-2f;
 
+    /// <summary>
+    /// Takes the transform and attempts to snap it to a nearby collider which is within the 
+    /// range of the directions forward or backward of the current transform position.
+    /// Very useful for snapping decals to their intended geometry.
+    /// </summary>
+    /// <param name="range">Maximum forward/backward distance in which the transform is allowed to move</param>
     private void SnapToGeometry(Transform t, float range) {
         Vector3 dir = t.forward;
         Vector3 start = t.position - 0.5f * range * dir;

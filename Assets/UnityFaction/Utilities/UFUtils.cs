@@ -241,6 +241,9 @@ public class UFUtils {
      * -----------------------------------------------------------------------------------------------
      */
 
+    /// <summary>
+    /// Returns number of "true" values in the given array
+    /// </summary>
     public static int Count(bool[] values) {
         int toReturn = 0;
         for(int i = 0; i < values.Length; i++)
@@ -249,11 +252,17 @@ public class UFUtils {
         return toReturn;
     }
 
+    /// <summary>
+    /// return an element of the given array at random.
+    /// </summary>
     public static T GetRandom<T>(T[] list) {
         int index = UnityEngine.Random.Range(0, list.Length);
         return list[index];
     }
 
+    /// <summary>
+    /// return an element of the given list at random.
+    /// </summary>
     public static T GetRandom<T>(List<T> list) {
         int index = UnityEngine.Random.Range(0, list.Count);
         return list[index];
@@ -294,6 +303,9 @@ public class UFUtils {
         return new Color(vecReturn.x, vecReturn.y, vecReturn.z, vecReturn.w);
     }
 
+    /// <summary>
+    /// Returns true if the given point lies in a box or sphere with the given parameters.
+    /// </summary>
     public static bool Inside(Vector3 point, PosRot center, float radius, Vector3 extents, bool box) {
         if(box)
             return InsideBox(point, new CenteredBox(center, extents));
@@ -301,10 +313,16 @@ public class UFUtils {
             return InsideSphere(point, center.position, radius);
     }
 
+    /// <summary>
+    /// Returns true if the given points lies in the given sphere.
+    /// </summary>
     public static bool InsideSphere(Vector3 point, Vector3 center, float radius) {
         return (point - center).sqrMagnitude < radius * radius;
     }
 
+    /// <summary>
+    /// Returns true if the given points list in the given box.
+    /// </summary>
     public static bool InsideBox(Vector3 point, CenteredBox cb) {
         Vector3 relativePoint = point - cb.transform.posRot.position;
         Quaternion rot = Quaternion.Inverse(cb.transform.posRot.rotation);
@@ -318,21 +336,35 @@ public class UFUtils {
         return inside;
     }
 
+    /// <summary>
+    /// Resets the local transform parameters to their default values.
+    /// </summary>
     public static void LocalReset(Transform transform) {
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
         transform.localScale = Vector3.one;
     }
 
+    /// <summary>
+    /// Sets the given Unity transform to correspond to the given UnityFaction transform.
+    /// Affects global transforms, not local ones.
+    /// </summary>
     public static void SetTransform(Transform transform, UFTransform ufTransform) {
         SetTransform(transform, ufTransform.posRot);
     }
 
+    /// <summary>
+    /// Sets the given Unity transform to correspond to the given position and rotation.
+    /// Affects global transforms, not local ones.
+    /// </summary>
     public static void SetTransform(Transform transform, PosRot pr) {
         transform.position = pr.position;
         transform.rotation = pr.rotation;
     }
 
+    /// <summary>
+    /// Returns position of the given point after rotating it around the pivot with the given rotation.
+    /// </summary>
     public static Vector3 RotateAroundPivot(Vector3 point, Vector3 pivot, Quaternion rotation) {
         Vector3 dir = point - pivot;
         Vector3 rotatedDir = rotation * dir;
@@ -373,6 +405,10 @@ public class UFUtils {
         return collidesWithTerrain(hits, out hit);
     }
 
+    /// <summary>
+    /// Returns a simple color gradient that progresses from the given startColor to
+    /// the given endColor. This effect includes alpha values.
+    /// </summary>
     public static Gradient GetLinearGradient(Color startColor, Color endColor) {
         Gradient toReturn = new Gradient();
         GradientAlphaKey startAlpha = new GradientAlphaKey(startColor.a, 0f);
@@ -384,6 +420,9 @@ public class UFUtils {
         return toReturn;
     }
 
+    /// <summary>
+    /// Copies component values of other to the component comp.
+    /// </summary>
     public static T GetCopyOf<T>(Component comp, T other) where T : Component {
         Type type = comp.GetType();
         if(type != other.GetType())
@@ -405,23 +444,37 @@ public class UFUtils {
         return comp as T;
     }
 
+    /// <summary>
+    /// Adds a copy of the component toAdd to the gameObject go.
+    /// The copy will be a seperate component of the same type with the same parameters set.
+    /// </summary>
     public static T AddComponent<T>(GameObject go, T toAdd) where T : Component {
         go.AddComponent<T>();
         return GetCopyOf(go.GetComponent<T>(), toAdd);
     }
 
+    /// <summary>
+    /// Returns given string set to title case.
+    /// If this is a text string without spaces, the first letter will be capitalized.
+    /// </summary>
     public static string Capitalize(string input) {
         CultureInfo cultureInfo = Thread.CurrentThread.CurrentCulture;
         TextInfo textInfo = cultureInfo.TextInfo;
         return textInfo.ToTitleCase(input);
     }
 
+    /// <summary>
+    /// Returns a centered rectangle mesh with the given x, y extents.
+    /// </summary>
     public static Mesh MakeQuad(Vector3 extents) {
         float width = extents.x;
         float height = extents.y;
         return MakeQuad(width, height);
     }
 
+    /// <summary>
+    /// Returns a centered rectangle mesh (a quad) with the given width and height.
+    /// </summary>
     public static Mesh MakeQuad(float width, float height) {
         Mesh mesh = new Mesh();
 
@@ -452,16 +505,29 @@ public class UFUtils {
         return mesh;
     }
 
+    /// <summary>
+    /// Returns a simple string that roughly encodes the given vector.
+    /// </summary>
     public static string GetVecStr(Vector2 value) {
         return value.x.ToString("n2") + "_" + value.y.ToString("n2");
     }
 
+    /// <summary>
+    /// Converts the given rotation (delta) to an angleAxis format.
+    /// The given vector will point in the right-hand-rule direction of the rotation,
+    /// and have magnitude corresponding the the angle covered.
+    /// </summary>
     public static Vector3 GetAxis(Quaternion q) {
         Vector3 v = Vector3.forward;
         float angle = GetQuatAngle(q);
         return angle * Vector3.Cross(v, q*v).normalized;
     }
 
+    /// <summary>
+    /// Returns the smallest angle covered by the given quaternion, 
+    /// relative to the identity quaternion. This method has improved accuracy 
+    /// when dealing with small angles, when compared the the Unity standard method.
+    /// </summary>
     public static float GetQuatAngle(Quaternion q) {
         float angle = Quaternion.Angle(Quaternion.identity, q);
 
