@@ -1,6 +1,8 @@
-#Example and testing levels from redfaction
+#Examples, testings levels, source files and game specific files
 Assets/Examples
 Assets/Examples.meta
+Assets/GameFiles
+Assets/GameFiles.meta
 RFTools
 Assets/UnityFaction/RFSource
 Assets/UnityFaction/RFSource.meta
