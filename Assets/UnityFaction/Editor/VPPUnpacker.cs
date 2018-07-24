@@ -50,6 +50,28 @@ public class VPPUnpacker {
         AssetDatabase.Refresh();
     }
 
+    [MenuItem("UnityFaction/AutoUnpack")]
+    public static void UnpackMultiVPP() {
+        // let user select folder to unpack the vpp to
+        string fileSearchMessage = "Select folder in which to look for vpp files to unpack";
+        string importFolder = EditorUtility.OpenFolderPanel(fileSearchMessage, "Assets", "");
+        if(string.IsNullOrEmpty(importFolder))
+            return;
+
+        string[] files = Directory.GetFiles(importFolder);
+        foreach(string file in files) {
+            if(Path.GetExtension(file).ToLower() == ".vpp") {
+                string vppName = Path.GetFileNameWithoutExtension(file);
+                string exportFolder = importFolder + "/" + vppName;
+                if(!Directory.Exists(exportFolder)) {
+                    string relImpPath = UFUtils.GetRelativeUnityPath(importFolder);
+                    AssetDatabase.CreateFolder(relImpPath, vppName);
+                }
+                ReadFile(file, exportFolder);
+            }
+        }
+    }
+
     [MenuItem("UnityFaction/Import RF Source")]
     public static void ReadSource() {
         //let user select source folder with all the vpp goodies
