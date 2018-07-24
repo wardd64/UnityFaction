@@ -15,6 +15,7 @@ public class UFBoltEmitter : MonoBehaviour {
     public float decay, decayRandomize, delay, delayRandomize;
 
     //bolt animation variables
+    public bool initOn;
     public int targetID;
     public float jitter;
     public AnimationCurve boltShape;
@@ -22,7 +23,7 @@ public class UFBoltEmitter : MonoBehaviour {
     public void Set(BoltEmitter emit) {
         LineRenderer lr = gameObject.AddComponent<LineRenderer>();
 
-        this.emitting = emit.initOn;
+        this.initOn = emit.initOn;
 
         lr.positionCount = Mathf.Max(2, emit.nboSegments + 1);
         lr.startWidth = emit.thickness;
@@ -88,6 +89,8 @@ public class UFBoltEmitter : MonoBehaviour {
         }
 
         Destroy(boltTemplate);
+
+        this.emitting = this.initOn;
     }
 
     private void LateUpdate() {
