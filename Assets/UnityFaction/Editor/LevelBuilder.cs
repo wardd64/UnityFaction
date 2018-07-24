@@ -209,8 +209,6 @@ public class LevelBuilder : EditorWindow {
             }
         }
 
-
-
         //split faces
         int nboFaces = level.staticGeometry.faces.Length;
         for(int i = 0; i < nboFaces; i++){
@@ -237,8 +235,6 @@ public class LevelBuilder : EditorWindow {
 
             faceSplit[sort].Add(face);
         }
-        
-        //TODO option to include culled faces in seperate object
 
         //make objects
         Transform p = MakeParent("StaticGeometry");
@@ -267,6 +263,36 @@ public class LevelBuilder : EditorWindow {
             destr.Set(b);
             brush.gameObject.AddComponent<MeshCollider>();
         }
+
+        bool foundAirPortals = false;
+
+        //portal geometry: sometimes needed sometimes not
+        GameObject portalG = new GameObject("PortalGeometry");
+        portalG.transform.SetParent(p);
+        brushes = GetExceptedBrushes();
+        foreach(Brush b in brushes) {
+            if(!b.isAir) {
+                //solid portal brushes can be safely ignored
+                continue;
+            }
+
+            /*
+             * Air portals lead to faulty geometry: 
+             * build them and warn the player about their presence.
+             */
+
+            foundAirPortals = true;
+            string name = "Brush_" + GetIdString(b.transform);
+            Transform brush = (MakeMeshObject(b.geometry, name)).transform;
+            brush.SetParent(portalG.transform);
+            UFUtils.SetTransform(brush, b.transform);
+            brush.gameObject.SetActive(false);
+            
+        }
+        if(foundAirPortals)
+            Debug.LogWarning("Portal air brushes may lead to faulty geometry! " +
+                "These brushes were built under the StaticGeometry/PortalGeometry GameObject. " +
+                "Please return to the RED level editor and replace these brushes with solid plane portals.");
 
         //liquid surfaces
         GameObject surf = new GameObject("Liquids");
@@ -898,9 +924,8 @@ public class LevelBuilder : EditorWindow {
         List<Brush> toReturn = new List<Brush>();
 
         foreach(Brush b in level.brushes) {
-            if(!b.isAir && b.isPortal) {
-                if(!IsMover(b))
-                    toReturn.Add(b);
+            if(b.isPortal && !IsMover(b)) {
+                toReturn.Add(b);
             }
         }
 
@@ -919,8 +944,7 @@ public class LevelBuilder : EditorWindow {
     }
 
     /// <summary>
-    /// Returns true if the given face is embedded in one of the faces of the given list of brushes.
-    /// This usually means that the given face is part of one of those brushes, altough exceptions may occur.
+    /// Returns true if the given face is embedded in one of the given brushes.
     /// </summary>
     private static bool FaceIsContainedInBrushes(Geometry geometry, Face face, List<Brush> brushes) {
         foreach(Brush b in brushes) {
@@ -954,6 +978,9 @@ public class LevelBuilder : EditorWindow {
                     Vector3 v2 = faceVertices[faceTriangles[(i * 3) + 1]];
                     Vector3 v3 = faceVertices[faceTriangles[(i * 3) + 2]];
                     foundMatch |= Triangulator.VertexInTriangle(vertex, v1, v2, v3, GEOM_DELTA);
+
+                    if(foundMatch)
+                        break;
                 }
             }
 
