@@ -9,25 +9,18 @@ using UnityEngine;
 /// </summary>
 public class InputInterface : MonoBehaviour {
 
-    private static InputInterface singleton { get
-        {
+    public static InputInterface input { get {
             if(instance == null)
                 instance = FindObjectOfType<InputInterface>();
             return instance;
-        } }
+    } }
     private static InputInterface instance;
 
     //values set in Unity editor are the default values
     public KeyBinding[] bindings;
-    public static KeyBinding[] bindingList { get { return singleton.bindings; } }
     public AudioSource changeBindingSound;
 
     private void Awake() {
-        if(this != singleton) {
-            Destroy(this.gameObject);
-            return;
-        }
-
         LoadBindings();
     }
 
@@ -45,9 +38,9 @@ public class InputInterface : MonoBehaviour {
         return Input.anyKey;
     }
 
-    public static void SaveBindings() {
-        for(int i = 0; i < singleton.bindings.Length; i++) {
-            PlayerPrefs.SetInt(singleton.bindings[i].name, (int)singleton.bindings[i].code);
+    public void SaveBindings() {
+        for(int i = 0; i < bindings.Length; i++) {
+            PlayerPrefs.SetInt(bindings[i].name, (int)bindings[i].code);
         }
     }
 
@@ -61,7 +54,7 @@ public class InputInterface : MonoBehaviour {
     /// <summary>
     /// true if given key string exists and has been pressed during last frame.
     /// </summary>
-    public static bool GetKeyDown(string keyName) {
+    public bool GetKeyDown(string keyName) {
         KeyCode code = GetKeyCode(keyName);
         return Input.GetKeyDown(code) || Input.GetKeyDown(GetKeyTwin(code));
     }
@@ -69,7 +62,7 @@ public class InputInterface : MonoBehaviour {
     /// <summary>
     /// true if given key string exists and is currently being held down.
     /// </summary>
-    public static bool GetKey(string keyName) {
+    public bool GetKey(string keyName) {
         KeyCode code = GetKeyCode(keyName);
         return Input.GetKey(code) || Input.GetKey(GetKeyTwin(code));
     }
@@ -99,7 +92,7 @@ public class InputInterface : MonoBehaviour {
     /// <summary>
     /// Return name of given key that player may recognize on his keyboard.
     /// </summary>
-    public static string GetKeyName(string keyName) {
+    public string GetKeyName(string keyName) {
         return GetKeyName(GetKeyCode(keyName));
     }
 
@@ -116,13 +109,13 @@ public class InputInterface : MonoBehaviour {
         return code.ToString();
     }
 
-    public static KeyCode GetKeyCode(string keyName) {
+    public KeyCode GetKeyCode(string keyName) {
         if(keyName.StartsWith("Mouse", StringComparison.OrdinalIgnoreCase)) {
             return KeyCode.Mouse0 + int.Parse(keyName.Substring(5));
         }
-        for(int i = 0; i < singleton.bindings.Length; i++) {
-            if(keyName.Equals(singleton.bindings[i].name, StringComparison.OrdinalIgnoreCase))
-                return singleton.bindings[i].code;
+        for(int i = 0; i < bindings.Length; i++) {
+            if(keyName.Equals(bindings[i].name, StringComparison.OrdinalIgnoreCase))
+                return bindings[i].code;
         }
 
         Debug.LogError("Looked for unknown key: " + keyName);
@@ -133,12 +126,12 @@ public class InputInterface : MonoBehaviour {
     /// Inserts this binding into the binding list. Does nothing if given 
     /// keyName does not exist.
     /// </summary>
-    public static void SetBinding(KeyBinding binding, bool initialSet) {
-        if(!initialSet && singleton.changeBindingSound != null)
-            singleton.changeBindingSound.Play();
-        for(int i = 0; i < bindingList.Length; i++) {
-            if(binding.name.Equals(bindingList[i].name, StringComparison.OrdinalIgnoreCase)) {
-                bindingList[i] = binding;
+    public void SetBinding(KeyBinding binding, bool initialSet) {
+        if(!initialSet && changeBindingSound != null)
+            changeBindingSound.Play();
+        for(int i = 0; i < bindings.Length; i++) {
+            if(binding.name.Equals(bindings[i].name, StringComparison.OrdinalIgnoreCase)) {
+                bindings[i] = binding;
                 return;
             }
         }

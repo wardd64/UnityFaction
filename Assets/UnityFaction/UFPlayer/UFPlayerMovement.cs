@@ -190,13 +190,13 @@ public class UFPlayerMovement : MonoBehaviour {
 
     private void MoveUpdate() {
         //input
-        bool right = InputInterface.GetKey("right");
-        bool left = InputInterface.GetKey("left");
-        bool forward = InputInterface.GetKey("forward");
-        bool backward = InputInterface.GetKey("backward");
-        bool jumpDown = InputInterface.GetKeyDown("jump");
-        bool jump = InputInterface.GetKey("jump");
-        bool crouch = InputInterface.GetKey("crouch");
+        bool right = InputInterface.input.GetKey("right");
+        bool left = InputInterface.input.GetKey("left");
+        bool forward = InputInterface.input.GetKey("forward");
+        bool backward = InputInterface.input.GetKey("backward");
+        bool jumpDown = InputInterface.input.GetKeyDown("jump");
+        bool jump = InputInterface.input.GetKey("jump");
+        bool crouch = InputInterface.input.GetKey("crouch");
 
         hitGround = false;
 
