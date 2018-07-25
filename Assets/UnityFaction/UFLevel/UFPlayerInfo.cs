@@ -126,6 +126,7 @@ public class UFPlayerInfo : MonoBehaviour {
     }
 
     private void SetRenderSettings() {
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
         RenderSettings.ambientLight = defaultAmbient;
         SetFog();
     }
