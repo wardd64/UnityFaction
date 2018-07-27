@@ -24,6 +24,7 @@ public class UFBoltEmitter : MonoBehaviour {
         LineRenderer lr = gameObject.AddComponent<LineRenderer>();
 
         this.initOn = emit.initOn;
+        jitter = emit.jitter;
 
         lr.positionCount = Mathf.Max(2, emit.nboSegments + 1);
         lr.startWidth = emit.thickness;
@@ -65,6 +66,10 @@ public class UFBoltEmitter : MonoBehaviour {
             boltShapeKeys.Add(new UnityEngine.Keyframe(0f, 0f, -2f * emit.trgCtrlDist, 0f));
 
         boltShape = new AnimationCurve(boltShapeKeys.ToArray());
+
+        lr.numCapVertices = 3;
+        lr.numCornerVertices = 1;
+        
     }
 
     public void SetMaterial(Material material) {
@@ -81,7 +86,7 @@ public class UFBoltEmitter : MonoBehaviour {
 
         //initialize bolts
         for(int i = 0; i < bolts.Length; i++) {
-            GameObject g = new GameObject("Bolt_" + i.ToString().PadLeft('0'));
+            GameObject g = new GameObject("Bolt_" + i.ToString().PadLeft(2, '0'));
             g.transform.SetParent(transform);
             g.transform.localPosition = Vector3.zero;
             g.transform.localRotation = Quaternion.identity;
@@ -94,15 +99,17 @@ public class UFBoltEmitter : MonoBehaviour {
     }
 
     private void LateUpdate() {
-        if(emitting)
-            EmitUpdate();
-
+        //update existing bolts
         foreach(Bolt bolt in bolts) {
             if(!bolt.DecayTick()) {
                 Transform boltTarget = UFLevel.GetByID(targetID).objectRef.transform;
                 bolt.Animate(boltTarget, jitter, boltShape);
             }
         }
+
+        //emit new bolts
+        if(emitting)
+            EmitUpdate();
     }
 
     private void EmitUpdate() {
@@ -116,12 +123,22 @@ public class UFBoltEmitter : MonoBehaviour {
 
     private void FireNewBolt() {
         float nextDecay = GetRandomTime(decay, decayRandomize);
+        Bolt oldestBolt = bolts[0];
+        float oldestBoltTime = 0f;
+
         foreach(Bolt bolt in bolts) {
             if(bolt.decayed) {
                 bolt.Fire(nextDecay);
                 return;
             }
+            else if(bolt.time > oldestBoltTime){
+                oldestBolt = bolt;
+                oldestBoltTime = bolt.time;
+            }
         }
+
+        //if no decayed bolts exist, refresh the oldest one
+        oldestBolt.Fire(nextDecay);
     }
 
 
