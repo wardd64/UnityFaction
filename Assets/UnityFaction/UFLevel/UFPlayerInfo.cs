@@ -20,6 +20,7 @@ public class UFPlayerInfo : MonoBehaviour {
     public Room[] rooms;
     public Camera skyCamera;
 
+    public LayerMask skyMask;
 
     public void Set(LevelData level, int skyLayer) {
         this.levelName = level.name;
@@ -27,6 +28,8 @@ public class UFPlayerInfo : MonoBehaviour {
         this.playerStart = level.playerStart;
         this.multiplayer = level.multiplayer;
         this.spawnPoints = level.spawnPoints;
+
+        this.skyMask = LayerMask.GetMask(LayerMask.LayerToName(skyLayer));
 
         this.fogStart = Mathf.Max(0f, level.nearPlane);
         if(level.farPlane <= 0f || fogEnd < fogStart)
@@ -40,19 +43,25 @@ public class UFPlayerInfo : MonoBehaviour {
         bool foundSkyRoom = false;
         Room skyRoom = default(Room);
 
+        AxisAlignedBoundingBox levelBox = level.staticGeometry.rooms[0].aabb;
+
         List<Room> roomList = new List<Room>();
         foreach(Room room in level.staticGeometry.rooms) {
             Vector3 roomExtents = room.aabb.max - room.aabb.min;
             Vector3 roomCenter = (room.aabb.max + room.aabb.min)/2f;
+
             bool realRoom = true;
             if(room.isSkyRoom) {
                 foundSkyRoom = true;
                 skyRoom = room;
                 realRoom = false;
             }
+
             realRoom &= roomExtents.x > 3f;
             realRoom &= roomExtents.z > 3f;
             realRoom &= roomExtents.y > 1.5f;
+
+            levelBox = UFUtils.Join(levelBox, room.aabb);
 
             //TODO use life value of rooms
             if(!realRoom)
@@ -61,9 +70,13 @@ public class UFPlayerInfo : MonoBehaviour {
             roomList.Add(room);
 
             MakeEAX(room.eaxEffect, roomCenter, roomExtents.magnitude / 2f);
-            
         }
         this.rooms = roomList.ToArray();
+
+        BoxCollider bc = gameObject.AddComponent<BoxCollider>();
+        bc.isTrigger = true;
+        bc.center = (levelBox.min + levelBox.max) / 2f;
+        bc.size = levelBox.max - levelBox.min;
 
         if(foundSkyRoom) {
             GameObject camG = new GameObject("SkyCamera");
@@ -76,7 +89,7 @@ public class UFPlayerInfo : MonoBehaviour {
             skyCamera.clearFlags = CameraClearFlags.SolidColor;
             skyCamera.backgroundColor = fogColor;
             skyCamera.farClipPlane = skyDiagonal.magnitude / 2f;
-            skyCamera.cullingMask = LayerMask.GetMask(LayerMask.LayerToName(skyLayer));
+            skyCamera.cullingMask = skyMask;
         }
     }
 
@@ -146,6 +159,7 @@ public class UFPlayerInfo : MonoBehaviour {
 
         //far clipping
         playerCamera.farClipPlane = fogEnd;
+        playerCamera.cullingMask &= ~skyMask; //remove skymask layers from direct player view
     }
 
     public void UpdateCamera(Camera playerCamera) {
@@ -167,6 +181,12 @@ public class UFPlayerInfo : MonoBehaviour {
             skyCamera.transform.rotation = playerCamera.transform.rotation;
             skyCamera.fieldOfView = playerCamera.fieldOfView;
         }
+    }
+
+    private void Update() {
+        playerMissingCount++;
+        if(playerMissingCount % 5 == 4)
+            UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(1250f * Time.deltaTime);
     }
 
     /// <summary>
@@ -195,7 +215,13 @@ public class UFPlayerInfo : MonoBehaviour {
         return UFUtils.GetRandom(candidates).transform.posRot;
     }
 
-    
+    private int playerMissingCount;
+
+    private void OnTriggerStay(Collider other) {
+        UFPlayerLife player = other.GetComponent<UFPlayerLife>();
+        if(player != null)
+            playerMissingCount = 0;
+    }
 
     public string GetLevelInfo() {
         return levelName + ", made by " + author;
