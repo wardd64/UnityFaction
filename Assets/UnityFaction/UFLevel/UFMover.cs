@@ -22,6 +22,8 @@ public class UFMover : MonoBehaviour {
     public AudioClip startClip, loopClip, stopClip, closeClip;
     public float startVol, loopVol, stopVol, closeVol;
 
+    private const float MIN_TRAV_TIME = 1e-2f;
+
     public void Set(MovingGroup group) {
         
         //assign variables
@@ -213,6 +215,8 @@ public class UFMover : MonoBehaviour {
             //keyframe is finished, wrap up
             TriggerKeyLink(keys[0]);
             time -= travTime;
+            if(travTime < MIN_TRAV_TIME)
+                time = 0f;
             FinishSequence();
             baseRot = rb.rotation;
 
@@ -250,7 +254,10 @@ public class UFMover : MonoBehaviour {
             //keyframe is finished, wrap up
             TriggerKeyLink(keys[nextKey]);
             lastKey = nextKey;
+            
             time -= travTime;
+            if(travTime < MIN_TRAV_TIME)
+                time = 0f;
             if(AtLastKeyInSequence())
                 FinishSequence();
 

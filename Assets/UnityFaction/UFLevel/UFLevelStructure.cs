@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
+
 namespace UFLevelStructure {
 
     /* -----------------------------------------------------------------------------------------------
@@ -12,7 +13,9 @@ namespace UFLevelStructure {
     public struct PosRot {
         public Vector3 position;
 
+#if UNITY_EDITOR
         [SerializeField, EulerAngles]
+#endif
         public Quaternion rotation;
 
         public PosRot(Vector3 position, Quaternion rotation) {

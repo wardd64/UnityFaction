@@ -4,12 +4,16 @@ using UnityEngine;
 
 public class UFPlayerLife : MonoBehaviour {
 
-    private float health, armor;
+    protected float health, armor;
 
     const float MAX_HP = 100f;
     const float SUPER_HP = 200f;
 
-    public void Start() {
+    protected virtual void Start() {
+        SetBaseHealth();
+    }
+
+    protected void SetBaseHealth() {
         health = MAX_HP;
         armor = 0f;
     }
@@ -30,7 +34,10 @@ public class UFPlayerLife : MonoBehaviour {
         armor = Mathf.Min(armor + amount, MAX_HP);
     }
 
-    public void TakeDamage(float amount) {
+    public virtual void TakeDamage(float amount) {
+        if(health <= 0f)
+            return;
+
         float damage = Mathf.Min(amount, armor);
         armor -= damage; amount -= damage;
 
@@ -39,13 +46,11 @@ public class UFPlayerLife : MonoBehaviour {
 
         if(amount > 0f)
             Die();
-
     }
 
-    private void Die() {
+    protected virtual void Die() {
         GetComponent<UFPlayerMovement>().Spawn();
-        health = MAX_HP;
-        armor = 0f;
+        SetBaseHealth();
     }
 
     public void SuperHealth() {

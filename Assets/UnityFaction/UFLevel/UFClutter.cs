@@ -8,8 +8,8 @@ public class UFClutter : MonoBehaviour {
     public bool isSwitch;
 
     public void Set(Clutter clutter) {
-        string name = clutter.name;
-        isSwitch = name.Contains("switch") || name.Contains("Console Button");
+        string name = clutter.name.ToLower();
+        isSwitch = name.Contains("switch") || name.Contains("console button");
 
         foreach(MeshFilter mf in GetComponentsInChildren<MeshFilter>())
             mf.gameObject.AddComponent<MeshCollider>();

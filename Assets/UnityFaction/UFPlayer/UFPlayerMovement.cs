@@ -275,11 +275,8 @@ public class UFPlayerMovement : MonoBehaviour {
             //simply walking
             MoveCCWalking();
 
-            if(!hitGround) {
-                //walked off of an object
-                vertVel = 0f;
-                motionState = MotionState.air;
-            }
+            if(!hitGround)
+                WalkOff();
         }
     }
 
@@ -308,17 +305,19 @@ public class UFPlayerMovement : MonoBehaviour {
 
         MoveCCWalking();
 
-        if(!hitGround) {
-            //walked off of an object
-            vertVel = 0f;
-            motionState = MotionState.air;
-        }
+        if(!hitGround)
+            WalkOff();
         else if(!crouch) {
             //stand up
             bool canStandUp = CheckIfClearForStandingUp();
             if(canStandUp)
                 motionState = MotionState.ground;
         }
+    }
+
+    private void WalkOff() {
+        vertVel = 0f;
+        motionState = MotionState.air;
     }
 
     private float GetGravMultiplier(float max, float time, float v0, float g) {
@@ -421,21 +420,26 @@ public class UFPlayerMovement : MonoBehaviour {
     /// </summary>
     void OnControllerColliderHit(ControllerColliderHit hit) {
         float y = hit.normal.y;
-        float hor = Vector3.Dot(horVel.normalized, hit.normal);
 
         //set motions state according to what we hit...
         if(y > wallLimit) {
             //we hit the ground
             hitGround = true;
             moveSound.SetLastGroundObject(hit.collider);
-            walkSlope = Mathf.Rad2Deg*Mathf.Atan2(y, hor) - 90f;
+
+            Vector3 gradient = -Vector3.ProjectOnPlane(hit.normal, Vector3.up);
+            float x = Vector3.Dot(gradient, horVel.normalized);
+            float atan = Mathf.Atan2(y, x);
+            walkSlope = 90f - (Mathf.Rad2Deg * atan);
+
             SetPlatform(hit.transform);
-            if(motionState == MotionState.air && vertVel <= 0f)
+            if(motionState == MotionState.air && vertVel < 1e-2f)
                 Land();
         }
         else if(y > 0f) {
             //hit slope we should slide off of
-            velocity -= Vector3.Project(velocity, hit.normal);
+            if(Vector3.Dot(velocity, hit.normal) < 0f)
+                velocity -= Vector3.Project(velocity, hit.normal);
         }
 
         //TODO provide option to use rb.GetPointVelocity(hit.point) to carry player in stead
@@ -455,7 +459,6 @@ public class UFPlayerMovement : MonoBehaviour {
         motionState = MotionState.ground;
         moveSound.Jump();
         jumpTime = 0f;
-        vertVel = 0f;
     }
 
     /// <summary>
@@ -510,6 +513,9 @@ public class UFPlayerMovement : MonoBehaviour {
         
         cc.Move(acceleration * dt * dt / 2f);
         velocity += acceleration * dt;
+        if(hitGround)
+            vertVel = 0f;
+
     }
 
     /// <summary>
