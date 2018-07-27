@@ -1213,6 +1213,9 @@ public class LevelBuilder : EditorWindow {
             triangles[i] = new List<int>();
 
         foreach(Face face in faces) {
+            if(face.showSky)
+                continue;
+
             //extract required data
             int nboPoints = face.vertices.Length;
             Vector3[] faceVertices = new Vector3[nboPoints];
