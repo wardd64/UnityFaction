@@ -540,4 +540,16 @@ public class UFUtils {
             return angle;
     }
 
+    /// <summary>
+    /// Returns axis aligned bounding box that tightly encompasses the given boxes
+    /// </summary>
+    public static AxisAlignedBoundingBox Join(AxisAlignedBoundingBox box1, AxisAlignedBoundingBox box2) {
+        Vector3 newMin = Vector3.zero, newMax = Vector3.zero;
+        for(int i = 0; i < 3; i++) {
+            newMin[i] = Mathf.Min(box1.min[i], box2.min[i]);
+            newMax[i] = Mathf.Max(box1.max[i], box2.max[i]);
+        }
+        return new AxisAlignedBoundingBox(newMin, newMax);
+    }
+
 }
