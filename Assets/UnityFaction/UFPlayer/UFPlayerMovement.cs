@@ -54,6 +54,7 @@ public class UFPlayerMovement : MonoBehaviour {
     private const float standingHeight = 1.85f, crouchingHeight = 1.15f; //cc height
     private const float standingRadius = 0.6f, crouchingRadius = 0.55f; //cc radius
     private const float antJmpGMulplr = 4f; //maximum gravity multiplier used to cut jump short
+
     private const float sharpEdgeTrshold = 2.5f; //speed above which sharp edge correction activates
 
     /// <summary>
@@ -583,4 +584,6 @@ public class UFPlayerMovement : MonoBehaviour {
         motionState = MotionState.swim;
         this.platform = null;
     }
+
+    public virtual void InButtonRange(KeyCode useKey) { }
 }

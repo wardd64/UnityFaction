@@ -73,6 +73,9 @@ public class UFTrigger : MonoBehaviour {
                     }
                     else
                         buttonTime = 0f;
+
+                    if(resetsRemaining != 0)
+                        UFLevel.GetPlayer<UFPlayerMovement>().InButtonRange(useKey);
                 }
                 else
                     Trigger();
