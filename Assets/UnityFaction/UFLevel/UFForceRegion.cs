@@ -43,6 +43,8 @@ public class UFForceRegion : MonoBehaviour {
         this.transform.position = push.transform.posRot.position;
         if(!aligned)
             this.transform.rotation = push.transform.posRot.rotation;
+        else
+            this.transform.localRotation = Quaternion.identity;
         forwardDir = push.transform.posRot.rotation * Vector3.forward;
 
         power = push.strength;
