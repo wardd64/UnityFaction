@@ -18,6 +18,7 @@ public class LevelBuilder : EditorWindow {
 
     //Build options
     public int skyLayer;
+    public bool convexMovers;
 
     /// <summary>
     /// Read RFL file and build its contents into the current Unity scene.
@@ -156,6 +157,7 @@ public class LevelBuilder : EditorWindow {
             if(GUILayout.Button("Build lights")) BuildLights();
             if(GUILayout.Button("Build player info")) BuildPlayerInfo();
             if(GUILayout.Button("Build geomodder")) BuildGeoModder();
+            convexMovers = EditorGUILayout.Toggle("Mke mesh clldrs convex", convexMovers);
             if(GUILayout.Button("Build movers")) BuildMovers();
             if(GUILayout.Button("Build clutter")) BuildClutter();
             if(GUILayout.Button("Build items")) BuildItems();
@@ -1063,7 +1065,7 @@ public class LevelBuilder : EditorWindow {
     /// Attaches an appropriate (moving) collider to the given brush.
     /// This brush is expected to have a MeshFilter component.
     /// </summary>
-    private static void GiveBrushCollider(Transform brush) {
+    private void GiveBrushCollider(Transform brush) {
         //collapse vertices close to eachother
         Vector3[] originalVerts = brush.GetComponent<MeshFilter>().sharedMesh.vertices;
         List<Vector3> verts = new List<Vector3>();
@@ -1113,24 +1115,26 @@ public class LevelBuilder : EditorWindow {
         MeshCollider mc = brush.gameObject.AddComponent<MeshCollider>();
         movingMeshColliders++;
 
-        //check if points are nearly co-planar
-        bool coplanar = verts.Count == 3;
-        if(!coplanar) {
-            coplanar = true;
-            Plane plane = new Plane(verts[0], verts[1], verts[2]);
-            for(int i = 3; i < verts.Count; i++) {
-                float d = Mathf.Abs(plane.GetDistanceToPoint(verts[i]));
-                if(d > GEOM_DELTA) {
-                    coplanar = false;
-                    break;
+        if(convexMovers) {
+            //check if points are nearly co-planar
+            bool coplanar = verts.Count == 3;
+            if(!coplanar) {
+                coplanar = true;
+                Plane plane = new Plane(verts[0], verts[1], verts[2]);
+                for(int i = 3; i < verts.Count; i++) {
+                    float d = Mathf.Abs(plane.GetDistanceToPoint(verts[i]));
+                    if(d > GEOM_DELTA) {
+                        coplanar = false;
+                        break;
+                    }
                 }
             }
-        }
 
-        //if not make mesh convex
-        if(!coplanar) {
-            mc.inflateMesh = true;
-            mc.convex = true;
+            //if not make mesh convex
+            if(!coplanar) {
+                mc.inflateMesh = true;
+                mc.convex = true;
+            }
         }
     }
 
