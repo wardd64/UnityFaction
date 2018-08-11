@@ -214,6 +214,9 @@ public class UFMover : MonoBehaviour {
         if(time > travTime) {
             //keyframe is finished, wrap up
             TriggerKeyLink(keys[0]);
+
+            rb.rotation = Quaternion.AngleAxis(angle, axis) * baseRot;
+
             time -= travTime;
             if(travTime < MIN_TRAV_TIME)
                 time = 0f;
@@ -221,7 +224,7 @@ public class UFMover : MonoBehaviour {
             baseRot = rb.rotation;
 
             paused = moving && keys[lastKey].pauseTime > 0f;
-            if(moving)
+            if(moving && !paused)
                 RotateUpdate();
         }
     }
@@ -254,6 +257,8 @@ public class UFMover : MonoBehaviour {
             //keyframe is finished, wrap up
             TriggerKeyLink(keys[nextKey]);
             lastKey = nextKey;
+
+            rb.position = to.position;
             
             time -= travTime;
             if(travTime < MIN_TRAV_TIME)
@@ -262,7 +267,7 @@ public class UFMover : MonoBehaviour {
                 FinishSequence();
 
             paused = moving && keys[lastKey].pauseTime > 0f;
-            if(moving)
+            if(moving && !paused)
                 PathUpdate();
         }
     }
@@ -453,8 +458,10 @@ public class UFMover : MonoBehaviour {
         forward = !forward;
         if(!completedSequence)
             completedSequence = true;
-        else
+        else {
+            completedSequence = false;
             moving = false;
+        }
         break;
 
         case MovingGroup.MovementType.PingPongInfinite:
