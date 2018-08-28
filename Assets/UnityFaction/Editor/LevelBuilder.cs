@@ -17,7 +17,7 @@ public class LevelBuilder : EditorWindow {
         showObjectContents, showMoverContents, showBuildOptions;
 
     //Build options
-    public int skyLayer;
+    public int levelLayer, playerLayer, skyLayer;
     public bool convexMovers;
 
     /// <summary>
@@ -152,9 +152,11 @@ public class LevelBuilder : EditorWindow {
         showBuildOptions = EditorGUILayout.Foldout(showBuildOptions, "Build options", contentFoldout);
 
         if(showBuildOptions) {
+            levelLayer = EditorGUILayout.LayerField("Level layer", levelLayer);
             skyLayer = EditorGUILayout.LayerField("Sky layer", skyLayer);
             if(GUILayout.Button("Build static geometry")) BuildStaticGeometry();
             if(GUILayout.Button("Build lights")) BuildLights();
+            playerLayer = EditorGUILayout.LayerField("player layer", playerLayer);
             if(GUILayout.Button("Build player info")) BuildPlayerInfo();
             if(GUILayout.Button("Build geomodder")) BuildGeoModder();
             convexMovers = EditorGUILayout.Toggle("Mke mesh clldrs convex", convexMovers);
@@ -246,6 +248,7 @@ public class LevelBuilder : EditorWindow {
         visG.isStatic = true;
         visG.transform.SetParent(p);
         visG.AddComponent<MeshCollider>();
+        visG.layer = levelLayer;
 
         //static invisible; disabled renderers, but still active colliders
         GameObject invisG = MakeMeshObject(level.staticGeometry, faceSplit[1], "StaticInvisible");
@@ -253,6 +256,7 @@ public class LevelBuilder : EditorWindow {
         invisG.transform.SetParent(p);
         invisG.GetComponent<MeshRenderer>().enabled = false;
         invisG.AddComponent<MeshCollider>();
+        invisG.layer = levelLayer;
 
         //destructible geometry: brushes that can be shot and shattered (glass)
         GameObject destrG = new GameObject("Destructible");
@@ -392,7 +396,7 @@ public class LevelBuilder : EditorWindow {
     private void BuildPlayerInfo() {
         Transform p = MakeParent("PlayerInfo");
         UFPlayerInfo info = p.gameObject.AddComponent<UFPlayerInfo>();
-        info.Set(level, skyLayer);
+        info.Set(level, levelLayer, playerLayer, skyLayer);
     }
 
     /// <summary>

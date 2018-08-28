@@ -20,15 +20,19 @@ public class UFPlayerInfo : MonoBehaviour {
     public Room[] rooms;
     public Camera skyCamera;
 
+    public LayerMask levelMask;
+    public int playerLayer;
     public LayerMask skyMask;
 
-    public void Set(LevelData level, int skyLayer) {
+    public void Set(LevelData level, int levelLayer, int playerLayer, int skyLayer) {
         this.levelName = level.name;
         this.author = level.author;
         this.playerStart = level.playerStart;
         this.multiplayer = level.multiplayer;
         this.spawnPoints = level.spawnPoints;
 
+        this.levelMask = LayerMask.GetMask(LayerMask.LayerToName(levelLayer));
+        this.playerLayer = playerLayer;
         this.skyMask = LayerMask.GetMask(LayerMask.LayerToName(skyLayer));
 
         this.fogStart = Mathf.Max(0f, level.nearPlane);

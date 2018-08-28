@@ -17,6 +17,13 @@ public class UFLevel : MonoBehaviour {
         } }
     private static UFLevel instance;
 
+    private static UFPlayerInfo ufPlayerInfo;
+    public static UFPlayerInfo playerInfo { get {
+            if(ufPlayerInfo == null)
+                ufPlayerInfo = singleton.GetComponentInChildren<UFPlayerInfo>();
+            return ufPlayerInfo;
+    } }
+
     [SerializeField]
     public List<IDRef> idDictionary;
 
