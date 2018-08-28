@@ -243,11 +243,13 @@ public class LevelBuilder : EditorWindow {
 
         //static visible geometry; all standard stuff
         GameObject visG = MakeMeshObject(level.staticGeometry, faceSplit[0], "StaticVisible");
+        visG.isStatic = true;
         visG.transform.SetParent(p);
         visG.AddComponent<MeshCollider>();
 
         //static invisible; disabled renderers, but still active colliders
         GameObject invisG = MakeMeshObject(level.staticGeometry, faceSplit[1], "StaticInvisible");
+        invisG.isStatic = true;
         invisG.transform.SetParent(p);
         invisG.GetComponent<MeshRenderer>().enabled = false;
         invisG.AddComponent<MeshCollider>();
@@ -322,6 +324,7 @@ public class LevelBuilder : EditorWindow {
 
         //static scrolling textures
         GameObject scrol = new GameObject("Scrollers");
+        scrol.isStatic = true;
         scrol.transform.SetParent(p);
         for(int i = 0; i < faceSplit[3].Count; i++){
             Face face = faceSplit[3][i];
@@ -344,6 +347,7 @@ public class LevelBuilder : EditorWindow {
         }
 
         GameObject sky = MakeMeshObject(level.staticGeometry, faceSplit[4], "SkyRoom");
+        sky.isStatic = true;
         sky.transform.SetParent(p);
         sky.layer = skyLayer;
     }
@@ -357,13 +361,22 @@ public class LevelBuilder : EditorWindow {
         foreach(UFLevelStructure.Light l in level.lights) {
             string name = l.type + "_" + GetIdString(l.transform);
             UnityEngine.Light light = MakeUFObject<UnityEngine.Light>(name, p, l.transform);
-            light.color = l.color;
+
             if(l.type == UFLevelStructure.Light.LightType.spotlight)
                 light.type = LightType.Spot;
             else
                 light.type = LightType.Point;
+
+            if(l.dynamic) {
+                light.lightmapBakeType = LightmapBakeType.Realtime;
+            }
+            else {
+                light.lightmapBakeType = LightmapBakeType.Baked;
+                light.gameObject.isStatic = true;
+            }
+
+            light.color = l.color;
             light.areaSize = new Vector2(l.tubeLength, 0.1f);
-            light.lightmapBakeType = l.dynamic ? LightmapBakeType.Realtime : LightmapBakeType.Mixed;
             light.enabled = l.enabled;
             light.spotAngle = l.fov;
             light.intensity = l.intensity;
