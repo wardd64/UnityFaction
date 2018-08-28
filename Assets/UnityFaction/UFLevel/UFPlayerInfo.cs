@@ -128,6 +128,9 @@ public class UFPlayerInfo : MonoBehaviour {
 
     private void Start() {
         SetFog();
+
+        if(this.GetComponent<Collider>() == null)
+            Debug.LogWarning("Player Info has no bound collider, please rebuild the level");
     }
 
     private void SetFog() {
