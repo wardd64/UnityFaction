@@ -4,14 +4,9 @@ using System;
 
 public class UFPlayerMovement : MonoBehaviour {
 
-    public Animator characterAnim;
-    public Transform heartPoint;
-
     private CharacterController cc;
     private Camera playerCamera;
     private UFPlayerMoveSounds moveSound;
-
-    private UFPlayerInfo playerInfo;
 
     private MotionState motionState;
     public enum MotionState {
@@ -23,6 +18,7 @@ public class UFPlayerMovement : MonoBehaviour {
     private float walkSlope;
     private bool hitGround;
     private float jumpTime;
+    protected bool doubleJumped;
 
     private float rotationX, rotationY;
     private const int rotSmoothing = 3;
@@ -36,26 +32,25 @@ public class UFPlayerMovement : MonoBehaviour {
     private Vector3 lastPlatformPosition;
 
     //movement constants
-    private const float walkSpeed = 8f; //movement speed in m/s
-    private const float airSpeed = 5.2f; //base horizontal movement speed when jumping
-    private const float swimSpeed = 3f; //target speed while swimming
-    private const float accelTime = 0.2f; //time needed to achieve walkspeed
-    private const float verticalDrag = 0.5f; //aerial vertical drag force
-    private const float airSteeringMin = 1f; //push force the player can use to steer flying fast
-    private const float airSteeringMax = 14.5f; //push force while flying slow
-    private const float climbSteering = 40f; //push force while climbing
-    private const float swimSteering = 8f; //push force while swimming
-    private const float jumpHeight = 1.4f; //height in m the player can jump
-    private const float minJumpSpeed = 1f; //additive jump speed when player is walking up a ramp
-    private const float stepOver = 0.2f; //Highest distance player can safely step over
-    private const float footing = 0.1f; //extra distance to make sure player holds on to the ground
-    private const float slideSlope = 65f; //Angle that seperates floors from walls
-    private const float crouchSpeed = 6f; //movement speed while crouching
-    private const float standingHeight = 1.85f, crouchingHeight = 1.15f; //cc height
-    private const float standingRadius = 0.6f, crouchingRadius = 0.55f; //cc radius
-    private const float antJmpGMulplr = 4f; //maximum gravity multiplier used to cut jump short
-
-    private const float sharpEdgeTrshold = 2.5f; //speed above which sharp edge correction activates
+    public float walkSpeed = 8f; //movement speed in m/s
+    public float airSpeed = 5.2f; //base horizontal movement speed when jumping
+    public float swimSpeed = 3f; //target speed while swimming
+    public float accelTime = 0.2f; //time needed to achieve walkspeed
+    public float verticalDrag = 0.5f; //aerial vertical drag force
+    public float airSteeringMin = 1f; //push force the player can use to steer flying fast
+    public float airSteeringMax = 14.5f; //push force while flying slow
+    public float climbSteering = 40f; //push force while climbing
+    public float swimSteering = 8f; //push force while swimming
+    public float jumpHeight = 1.4f; //height in m the player can jump
+    public float minJumpSpeed = 1f; //additive jump speed when player is walking up a ramp
+    public float stepOver = 0.2f; //Highest distance player can safely step over
+    public float footing = 0.1f; //extra distance to make sure player holds on to the ground
+    public float slideSlope = 65f; //Angle that seperates floors from walls
+    public float crouchSpeed = 6f; //movement speed while crouching
+    public float standingHeight = 1.85f, crouchingHeight = 1.15f; //cc height
+    public float standingRadius = 0.6f, crouchingRadius = 0.55f; //cc radius
+    public float antJmpGMulplr = 4f; //maximum gravity multiplier used to cut jump short
+    public float sharpEdgeTrshold = 2.5f; //speed above which sharp edge correction activates
 
     /// <summary>
     /// Unit vector pointing horizontally in the direction the player is turned towards
@@ -98,22 +93,21 @@ public class UFPlayerMovement : MonoBehaviour {
         cc = this.GetComponent<CharacterController>();
         playerCamera = this.GetComponentInChildren<Camera>();
         moveSound = this.GetComponentInChildren<UFPlayerMoveSounds>();
-        playerInfo = FindObjectOfType<UFPlayerInfo>();
-        
-        
     }
 
     private void Start() {
-        if(playerInfo != null)
-            playerInfo.ApplyCameraSettings(playerCamera);
+        if(UFLevel.playerInfo != null)
+            UFLevel.playerInfo.ApplyCameraSettings(playerCamera);
         SetRotSmoothing(rotSmoothing);
         Spawn();
     }
 
-    public void Spawn() {
+    public virtual void Spawn() {
         UFLevelStructure.PosRot pr = default(UFLevelStructure.PosRot);
-        if(playerInfo != null)
-            pr = playerInfo.GetSpawn(UFPlayerInfo.PlayerClass.Free);
+        if(UFLevel.playerInfo != null)
+            pr = UFLevel.playerInfo.GetSpawn(UFPlayerInfo.PlayerClass.Free);
+
+        this.gameObject.layer = UFLevel.playerInfo.playerLayer;
 
         this.transform.position = pr.position;
         this.transform.rotation = Quaternion.Euler(0f, pr.rotation.eulerAngles.y, 0f);
@@ -135,36 +129,41 @@ public class UFPlayerMovement : MonoBehaviour {
     }
 
     private void Update() {
-        //change active camera
-        if(playerCamera == null || !playerCamera.isActiveAndEnabled)
-            playerCamera = FindObjectOfType<Camera>();
-
         MoveUpdate();
 
         //animation states:
-        //characterAnim.SetBool("Airborne", motionState == MotionState.air);
-        //characterAnim.SetBool("Crouch", motionState == MotionState.crouch);
+        SetAnimation("Airborne", motionState == MotionState.air);
+        SetAnimation("Crouch", motionState == MotionState.crouch);
 
         MouseUpdate();
-        if(playerInfo != null)
-            playerInfo.UpdateCamera(playerCamera);
+        if(UFLevel.playerInfo != null)
+            UFLevel.playerInfo.UpdateCamera(playerCamera);
     }
 
     private void MouseUpdate() {
-        //input
-        //bool click = Input.GetMouseButtonDown(0);
+        MouseRotate();
 
-        //TODO: FPS movement
-        float sensitivity = 10f;
+        transform.localEulerAngles = new Vector3(0, rotationX, 0);
+        playerCamera.transform.localRotation = Quaternion.Euler(-rotationY, 0, 0);
+    }
+
+    public Vector2 MouseRotate() {
+        float sensitivity = GetSensitivity();
 
         for(int i = 0; i < rotSmoothing - 1; i++) {
             prevRotX[i] = prevRotX[i + 1];
             prevRotY[i] = prevRotY[i + 1];
         }
 
-        float newRotX = prevRotX[rotSmoothing - 1] + Input.GetAxis("Mouse X") * sensitivity;
+        float xInput = 0f, yInput = 0f;
+        if(!IgnoreInput()) {
+            xInput = Input.GetAxis("Mouse X");
+            yInput = Input.GetAxis("Mouse Y");
+        }
+
+        float newRotX = prevRotX[rotSmoothing - 1] + xInput * sensitivity;
         prevRotX[rotSmoothing - 1] = newRotX;
-        float newRotY = prevRotY[rotSmoothing - 1] + Input.GetAxis("Mouse Y") * sensitivity;
+        float newRotY = prevRotY[rotSmoothing - 1] + yInput * sensitivity;
         prevRotY[rotSmoothing - 1] = Mathf.Clamp(newRotY, minY, maxY);
 
         rotationX = 0f;
@@ -176,8 +175,7 @@ public class UFPlayerMovement : MonoBehaviour {
         rotationX /= rotSmoothing;
         rotationY /= rotSmoothing;
 
-        transform.localEulerAngles = new Vector3(0, rotationX, 0);
-        playerCamera.transform.localRotation = Quaternion.Euler(-rotationY, 0, 0);
+        return new Vector2(rotationX, rotationY);
     }
 
     private void SetRotSmoothing(int rotSmoothing) {
@@ -190,14 +188,16 @@ public class UFPlayerMovement : MonoBehaviour {
 
 
     private void MoveUpdate() {
+
         //input
-        bool right = InputInterface.input.GetKey("right");
-        bool left = InputInterface.input.GetKey("left");
-        bool forward = InputInterface.input.GetKey("forward");
-        bool backward = InputInterface.input.GetKey("backward");
-        bool jumpDown = InputInterface.input.GetKeyDown("jump");
-        bool jump = InputInterface.input.GetKey("jump");
-        bool crouch = InputInterface.input.GetKey("crouch");
+        bool allow = !IgnoreInput();
+        bool right = allow && InputInterface.input.GetKey("right");
+        bool left = allow && InputInterface.input.GetKey("left");
+        bool forward = allow && InputInterface.input.GetKey("forward");
+        bool backward = allow && InputInterface.input.GetKey("backward");
+        bool jumpDown = allow && InputInterface.input.GetKeyDown("jump");
+        bool jump = allow && InputInterface.input.GetKey("jump");
+        bool crouch = allow && InputInterface.input.GetKey("crouch");
 
         hitGround = false;
 
@@ -221,7 +221,7 @@ public class UFPlayerMovement : MonoBehaviour {
         GroundMove(movement, jumpDown, crouch);
         break;
         case MotionState.air:
-        AirMove(movement, jump);
+        AirMove(movement, jump, jumpDown);
         break;
         case MotionState.crouch:
         CrouchMove(movement, crouch);
@@ -238,9 +238,9 @@ public class UFPlayerMovement : MonoBehaviour {
         }
 
         //animation motion state
-        //float angle = Vector3.SignedAngle(this.forward, horVel, Vector3.up);
-        //characterAnim.SetBool("Moving", horSpeed > 0.01f);
-        //characterAnim.SetFloat("MoveAngle", angle);
+        float angle = Vector3.SignedAngle(this.forward, horVel, Vector3.up);
+        SetAnimation("Moving", horSpeed > 0.01f);
+        SetAnimation("MoveAngle", false, angle);
 
         //crouching
         if(crouch && !crouching)
@@ -251,6 +251,18 @@ public class UFPlayerMovement : MonoBehaviour {
 
         //others
         shiftVelocity = Vector3.zero;
+    }
+
+    protected virtual bool IgnoreInput() {
+        return false;
+    }
+
+    protected virtual bool AllowStableJump() {
+        return false;
+    }
+
+    protected virtual float GetSensitivity() {
+        return 10f;
     }
 
     private void GroundMove(Vector3 movement, bool jumpDown, bool crouch) {
@@ -265,7 +277,7 @@ public class UFPlayerMovement : MonoBehaviour {
 
         if(jumpDown) {
             Jump();
-            AirMove(movement / walkSpeed, true);
+            AirMove(movement / walkSpeed, true, false);
         }
         else if(crouch) {
             motionState = MotionState.crouch;
@@ -283,7 +295,7 @@ public class UFPlayerMovement : MonoBehaviour {
 
     private void Jump() {
         jumpTime = Time.deltaTime;
-        //characterAnim.SetTrigger("Jump");
+        SetAnimation("Jump");
         moveSound.Jump();
 
         //vertical velocity
@@ -296,6 +308,13 @@ public class UFPlayerMovement : MonoBehaviour {
         horVel *= airSpeed / walkSpeed;
 
         motionState = MotionState.air;
+    }
+
+    private void StableJump() {
+        jumpTime = Time.deltaTime;
+        velocity = jumpSpeed * Vector3.up;
+        SetAnimation("Jump");
+        doubleJumped = true;
     }
 
     private void CrouchMove(Vector3 movement, bool crouch) {
@@ -326,18 +345,22 @@ public class UFPlayerMovement : MonoBehaviour {
         return Mathf.Max(max - b * time, 1f);
     }
 
-    private void AirMove(Vector3 movement, bool jump) {
+    private void AirMove(Vector3 movement, bool jump, bool jumpDown) {
         float velFactor = Vector3.Dot(velocity, movement.normalized) / jumpSpeed;
         float steering = Mathf.Lerp(airSteeringMax, airSteeringMin, velFactor);
         Vector3 acceleration = movement * steering;
         Vector3 grav = Physics.gravity;
 
         //unphysically push player down when hes not holding the jump button
-        if(jumpTime > 0f) {
+        if(AllowShortJump() && jumpTime > 0f) {
             jumpTime += Time.deltaTime;
             if(!jump)
                 grav *= GetGravMultiplier(antJmpGMulplr, jumpTime, jumpSpeed, grav.magnitude);
         }
+
+        //do stabilizing jump to make platforming easier
+        if(jumpDown && AllowStableJump())
+            StableJump();
 
         acceleration += grav;
 
@@ -346,6 +369,10 @@ public class UFPlayerMovement : MonoBehaviour {
         acceleration -= drag;
 
         MoveCCFlying(acceleration);
+    }
+
+    protected virtual bool AllowShortJump() {
+        return false;
     }
 
     private void ClimbMove(Vector3 horMovement, bool up, bool down) {
@@ -460,6 +487,7 @@ public class UFPlayerMovement : MonoBehaviour {
         motionState = MotionState.ground;
         moveSound.Jump();
         jumpTime = 0f;
+        doubleJumped = false;
     }
 
     /// <summary>
@@ -586,4 +614,6 @@ public class UFPlayerMovement : MonoBehaviour {
     }
 
     public virtual void InButtonRange(KeyCode useKey) { }
+
+    protected virtual void SetAnimation(string name, bool boolValue = false, float floatValue = 0f) { }
 }
