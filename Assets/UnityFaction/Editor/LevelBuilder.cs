@@ -247,6 +247,7 @@ public class LevelBuilder : EditorWindow {
         GameObject visG = MakeMeshObject(level.staticGeometry, faceSplit[0], "StaticVisible");
         visG.isStatic = true;
         visG.transform.SetParent(p);
+        visG.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
         visG.AddComponent<MeshCollider>();
         visG.layer = levelLayer;
 
@@ -346,6 +347,7 @@ public class LevelBuilder : EditorWindow {
             GameObject mesh = MakeMeshObject(level.staticGeometry, scrollFaceInList, "ScrolFace_" + scrollID);
             mesh.transform.SetParent(scrol.transform);
             MeshRenderer mr = mesh.GetComponent<MeshRenderer>();
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
             string tex = level.staticGeometry.textures[face.texture];
             mr.material = GetScrollingTexture(tex, scroll.scrollVelocity);
         }
@@ -354,6 +356,7 @@ public class LevelBuilder : EditorWindow {
         sky.isStatic = true;
         sky.transform.SetParent(p);
         sky.layer = skyLayer;
+        sky.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
     }
 
     /// <summary>
