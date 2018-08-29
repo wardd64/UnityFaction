@@ -11,8 +11,11 @@ public class UFClutter : MonoBehaviour {
         string name = clutter.name.ToLower();
         isSwitch = name.Contains("switch") || name.Contains("console button");
 
-        foreach(MeshFilter mf in GetComponentsInChildren<MeshFilter>())
-            mf.gameObject.AddComponent<MeshCollider>();
+        bool hasPrefabColliders = GetComponentInChildren<Collider>() != null;
+        if(!hasPrefabColliders) {
+            foreach(MeshFilter mf in GetComponentsInChildren<MeshFilter>())
+                mf.gameObject.AddComponent<MeshCollider>();
+        }
     }
 
 	public void Activate(bool positive) {
