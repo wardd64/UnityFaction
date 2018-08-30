@@ -173,6 +173,8 @@ public class UFEvent : MonoBehaviour {
 
         case UFLevelStructure.Event.EventType.Music_Start:
         AudioSource sound = this.GetComponent<AudioSource>();
+        if(sound.clip == null)
+            Debug.LogWarning("Music event has no audio clip assigned: " + name);
         sound.volume = 1f; sound.Play();
         return IDRef.Type.None;
 
@@ -218,6 +220,10 @@ public class UFEvent : MonoBehaviour {
 
     private IEnumerator FadeAudioSource(float time, float targetVolume) {
         AudioSource s = GetComponent<AudioSource>();
+
+        if(!s.isPlaying || s.time <= Time.deltaTime)
+            yield break;
+
         while(s.volume != targetVolume) {
             s.volume = Mathf.MoveTowards(s.volume, targetVolume, Time.deltaTime / time);
             yield return null;
