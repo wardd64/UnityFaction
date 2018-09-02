@@ -253,18 +253,6 @@ public class UFPlayerMovement : MonoBehaviour {
         shiftVelocity = Vector3.zero;
     }
 
-    protected virtual bool IgnoreInput() {
-        return false;
-    }
-
-    protected virtual bool AllowStableJump() {
-        return false;
-    }
-
-    protected virtual float GetSensitivity() {
-        return 10f;
-    }
-
     private void GroundMove(Vector3 movement, bool jumpDown, bool crouch) {
         float dv = Time.deltaTime * (walkSpeed / accelTime);
         movement *= walkSpeed;
@@ -310,9 +298,12 @@ public class UFPlayerMovement : MonoBehaviour {
         motionState = MotionState.air;
     }
 
-    private void StableJump() {
+    private void DoubleJump() {
         jumpTime = Time.deltaTime;
-        velocity = jumpSpeed * Vector3.up;
+        if(StabilizeDoubleJump())
+            velocity = jumpSpeed * Vector3.up;
+        else
+            vertVel = jumpSpeed;
         SetAnimation("Jump");
         doubleJumped = true;
     }
@@ -359,8 +350,8 @@ public class UFPlayerMovement : MonoBehaviour {
         }
 
         //do stabilizing jump to make platforming easier
-        if(jumpDown && AllowStableJump())
-            StableJump();
+        if(jumpDown && AllowDoubleJump())
+            DoubleJump();
 
         acceleration += grav;
 
@@ -369,10 +360,6 @@ public class UFPlayerMovement : MonoBehaviour {
         acceleration -= drag;
 
         MoveCCFlying(acceleration);
-    }
-
-    protected virtual bool AllowShortJump() {
-        return false;
     }
 
     private void ClimbMove(Vector3 horMovement, bool up, bool down) {
@@ -593,7 +580,7 @@ public class UFPlayerMovement : MonoBehaviour {
         bool onGround = motionState == MotionState.ground || motionState == MotionState.crouch;
         if(vertVel > 0f && onGround)
             motionState = MotionState.air;
-
+        platform = null;
     }
 
     public void ShiftVelocity(Vector3 velocity) {
@@ -615,5 +602,15 @@ public class UFPlayerMovement : MonoBehaviour {
 
     public virtual void InButtonRange(KeyCode useKey) { }
 
+    public void Reset() {
+        velocity = Vector3.zero;
+        platform = null;
+    }
+
     protected virtual void SetAnimation(string name, bool boolValue = false, float floatValue = 0f) { }
+    protected virtual bool AllowShortJump() { return false; }
+    protected virtual bool IgnoreInput() { return false; }
+    protected virtual bool AllowDoubleJump() { return false; }
+    protected virtual bool StabilizeDoubleJump() { return false; }
+    protected virtual float GetSensitivity() { return 10f; }
 }
