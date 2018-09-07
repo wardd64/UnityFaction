@@ -35,6 +35,10 @@ public class LevelBuilder : EditorWindow {
         if(string.IsNullOrEmpty(rflPath))
             return;
 
+        LoadRFL(rflPath);
+    }
+
+    private static void LoadRFL(string rflPath) {
         LevelBuilder builder = (LevelBuilder)EditorWindow.GetWindow(typeof(LevelBuilder));
         builder.Show();
 
@@ -57,8 +61,29 @@ public class LevelBuilder : EditorWindow {
 
         //button for loading level if none is available yet
         if(level == null) {
-            if(GUILayout.Button("Load RFL file"))
+            GUIStyle largeButton = new GUIStyle("button");
+            largeButton.fontSize = 14;
+            largeButton.fontStyle = FontStyle.Bold;
+            largeButton.padding = new RectOffset(5, 5, 5, 5);
+
+            if(GUILayout.Button("Load RFL file", largeButton))
                 BuildLevel();
+
+            //make good guess for current level
+            if(UFLevel.singleton != null) {
+                string rflPath = UFLevel.playerInfo.levelRFLPath;
+                string levelName = Path.GetFileNameWithoutExtension(rflPath);
+                
+                if(GUILayout.Button("Try load RFL file: " + levelName, largeButton)) {
+                    if(File.Exists(rflPath) && Path.GetExtension(rflPath).ToLower() == ".rfl")
+                        LoadRFL(rflPath);
+                    else
+                        Debug.Log("Could not find rfl file at path: " + rflPath);
+                }
+                
+            }
+            else
+                GUILayout.Label("No UF level found in scene.");
             return;
         }
 
@@ -399,7 +424,7 @@ public class LevelBuilder : EditorWindow {
     private void BuildPlayerInfo() {
         Transform p = MakeParent("PlayerInfo");
         UFPlayerInfo info = p.gameObject.AddComponent<UFPlayerInfo>();
-        info.Set(level, levelLayer, playerLayer, skyLayer);
+        info.Set(level, levelLayer, playerLayer, skyLayer, lastRFLPath);
     }
 
     /// <summary>

@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class UFPlayerInfo : MonoBehaviour {
 
+    public string levelRFLPath;
     public string levelName, author;
     public PosRot playerStart;
 
@@ -24,7 +25,9 @@ public class UFPlayerInfo : MonoBehaviour {
     public int playerLayer;
     public LayerMask skyMask;
 
-    public void Set(LevelData level, int levelLayer, int playerLayer, int skyLayer) {
+    public void Set(LevelData level, int levelLayer, int playerLayer, int skyLayer, string rflPath) {
+        this.levelRFLPath = rflPath;
+
         this.levelName = level.name;
         this.author = level.author;
         this.playerStart = level.playerStart;
