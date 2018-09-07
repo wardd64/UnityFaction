@@ -16,6 +16,11 @@ public class UFClutter : MonoBehaviour {
             foreach(MeshFilter mf in GetComponentsInChildren<MeshFilter>())
                 mf.gameObject.AddComponent<MeshCollider>();
         }
+
+        //clutter with special functionality
+        if(name.Contains("valve wheel")) {
+            isSwitch = true;
+        }
     }
 
 	public void Activate(bool positive) {

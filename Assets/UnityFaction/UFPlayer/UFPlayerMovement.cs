@@ -112,6 +112,8 @@ public class UFPlayerMovement : MonoBehaviour {
         this.transform.position = pr.position;
         this.transform.rotation = Quaternion.Euler(0f, pr.rotation.eulerAngles.y, 0f);
         playerCamera.transform.rotation = Quaternion.Euler(pr.rotation.x, 0f, 0f);
+
+        GetComponent<UFPlayerWeapons>().Reset();
     }
 
     private void OnEnable() {

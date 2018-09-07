@@ -22,6 +22,7 @@ GameObject:
   - component: {fileID: 114556214802785666}
   - component: {fileID: 114569770825763428}
   - component: {fileID: 114818660411063102}
+  - component: {fileID: 114279968163697510}
   - component: {fileID: 143423795294046310}
   m_Layer: 0
   m_Name: BasicPlayer
@@ -365,6 +366,17 @@ Animator:
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
+--- !u!114 &114279968163697510
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1153090057242050}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8fa3aeae6447454283e6ef8c3ed8f1c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &114402557705850420
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -388,8 +400,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d69a6f9ca6d3bc4890aa63f00c1fd44, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  characterAnim: {fileID: 95237348971753588}
-  heartPoint: {fileID: 4853819379599532}
+  walkSpeed: 8
+  airSpeed: 5.2
+  swimSpeed: 3
+  accelTime: 0.2
+  verticalDrag: 0.5
+  airSteeringMin: 1
+  airSteeringMax: 14.5
+  climbSteering: 40
+  swimSteering: 8
+  jumpHeight: 1.4
+  minJumpSpeed: 1
+  stepOver: 0.2
+  footing: 0.1
+  slideSlope: 65
+  crouchSpeed: 6
+  standingHeight: 1.85
+  crouchingHeight: 1.15
+  standingRadius: 0.6
+  crouchingRadius: 0.55
+  antJmpGMulplr: 4
+  sharpEdgeTrshold: 2.5
 --- !u!114 &114569770825763428
 MonoBehaviour:
   m_ObjectHideFlags: 1

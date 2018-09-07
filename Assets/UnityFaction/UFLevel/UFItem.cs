@@ -175,7 +175,21 @@ public class UFItem : MonoBehaviour {
 
         //TODO weapons, invulnerability and stuff
 
+        case ItemType.Explosive:
+        case ItemType.Gun:
+        case ItemType.SpecialWeapon:
+        return UFLevel.GetPlayer<UFPlayerWeapons>().PickupWeapon(this);
+
+        case ItemType.ExplosiveAmmo:
+        case ItemType.GunAmmo:
+        return UFLevel.GetPlayer<UFPlayerWeapons>().PickupAmmo(this);
+
+        case ItemType.DamageAmp:
+        UFLevel.GetPlayer<UFPlayerWeapons>().DamageAmp();
+        return true;
+
         default:
+        Debug.LogWarning("Tried to collect unkown item type: " + type + " of item " + this.name);
         return false;
         }
     }
