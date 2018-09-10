@@ -173,6 +173,9 @@ public class UFItem : MonoBehaviour {
         case ItemType.SuperArmor:
         life.SuperArmor(); return true;
 
+        case ItemType.Invulnerability:
+        life.Invulnerability(); return true;
+
         //TODO weapons, invulnerability and stuff
 
         case ItemType.Explosive:

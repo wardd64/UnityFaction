@@ -5,12 +5,23 @@ using UnityEngine;
 public class UFPlayerLife : MonoBehaviour {
 
     protected float health, armor;
+    protected float timer;
+    protected bool invulnerable { get { return timer > 0f; } }
 
     const float MAX_HP = 100f;
     const float SUPER_HP = 200f;
+    const float INVULN_TIME = 12f;
 
     protected virtual void Start() {
         SetBaseHealth();
+    }
+
+    protected virtual void Update() {
+        if(timer > 0f) {
+            timer -= Time.deltaTime;
+            if(timer < 0f)
+                timer = 0f;
+        }
     }
 
     protected void SetBaseHealth() {
@@ -34,7 +45,14 @@ public class UFPlayerLife : MonoBehaviour {
         armor = Mathf.Min(armor + amount, MAX_HP);
     }
 
-    public virtual void TakeDamage(float amount) {
+    public void TakeDamage(float amount, int type, bool bypassInvuln) {
+        TakeDamage(amount, (DamageType)type, bypassInvuln);
+    }
+
+    public virtual void TakeDamage(float amount, DamageType type, bool bypassInvuln) {
+        if(invulnerable && !bypassInvuln)
+            return;
+
         if(health <= 0f)
             return;
 
@@ -59,5 +77,13 @@ public class UFPlayerLife : MonoBehaviour {
 
     public void SuperArmor() {
         armor = SUPER_HP;
+    }
+
+    public void Invulnerability() {
+        timer = INVULN_TIME;
+    }
+
+    public enum DamageType {
+        Melee, Bullet, ArmorPiercing, Explosive, Fire, Energy, Electrical, Acid, Scalding
     }
 }

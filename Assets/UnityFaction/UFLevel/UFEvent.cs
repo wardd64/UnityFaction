@@ -130,7 +130,7 @@ public class UFEvent : MonoBehaviour {
         float dps = int1;
         if(int1 <= 0)
             dps = float.PositiveInfinity;
-        UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(Time.deltaTime * dps);
+        UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(Time.deltaTime * dps, int2, true);
         break;
 
         default:

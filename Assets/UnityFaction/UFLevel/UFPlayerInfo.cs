@@ -196,7 +196,7 @@ public class UFPlayerInfo : MonoBehaviour {
     private void Update() {
         playerMissingCount++;
         if(playerMissingCount % 5 == 4)
-            UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(1250f * Time.deltaTime);
+            UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(250f * Time.deltaTime, 0, true);
     }
 
     /// <summary>
