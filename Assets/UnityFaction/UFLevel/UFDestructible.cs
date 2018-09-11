@@ -22,5 +22,9 @@ public class UFDestructible : MonoBehaviour {
     private void GetDestroyed() {
         gameObject.SetActive(false);
     }
+
+    public float currentLife{ get {
+            return Mathf.Max(0f, life - damage);
+    }}
 	
 }

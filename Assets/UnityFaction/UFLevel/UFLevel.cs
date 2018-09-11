@@ -24,6 +24,13 @@ public class UFLevel : MonoBehaviour {
             return ufPlayerInfo;
     } }
 
+    private static UFGeoModder ufGeo;
+    public static UFGeoModder geo { get {
+            if(ufGeo == null)
+                ufGeo = singleton.GetComponentInChildren<UFGeoModder>();
+            return ufGeo;
+    } }
+
     [SerializeField]
     public List<IDRef> idDictionary;
 

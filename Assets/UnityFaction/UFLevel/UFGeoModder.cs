@@ -10,6 +10,8 @@ public class UFGeoModder : MonoBehaviour {
     public GeoRegion[] regions;
     public Material geoMaterial;
 
+    private const float GEOM_DELTA = .5f;
+
     public void Set(LevelData level, Material geoMaterial) {
         this.defaultHardness = level.hardness;
         this.regions = level.geoRegions;
@@ -28,7 +30,7 @@ public class UFGeoModder : MonoBehaviour {
     /// <summary>
     /// Get level hardness at specific point in the map.
     /// </summary>
-    private int GetHardness(Vector3 point) {
+    public int GetHardness(Vector3 point) {
         foreach(GeoRegion region in regions) {
             if(Inside(point, region))
                 return region.hardness;
@@ -39,8 +41,8 @@ public class UFGeoModder : MonoBehaviour {
     private bool Inside(Vector3 point, GeoRegion region) {
         PosRot center = region.transform.posRot;
         bool box = region.shape == GeoRegion.GeoShape.box;
-        float radius = region.sphereRadius;
-        Vector3 extents = region.extents;
+        float radius = region.sphereRadius + GEOM_DELTA;
+        Vector3 extents = region.extents + 2f*GEOM_DELTA*Vector3.one;
 
         return UFUtils.Inside(point, center, radius, extents, box);
     }
