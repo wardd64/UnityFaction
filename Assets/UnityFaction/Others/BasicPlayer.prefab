@@ -401,15 +401,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   walkSpeed: 8
-  airSpeed: 5.2
+  airSpeed: 6
   swimSpeed: 3
-  accelTime: 0.2
+  groundAccelTime: 0.2
+  iceAccelTime: 1.5
   verticalDrag: 0.5
   airSteeringMin: 1
   airSteeringMax: 14.5
   climbSteering: 40
   swimSteering: 8
-  jumpHeight: 1.4
+  jumpHeight: 1.25
   minJumpSpeed: 1
   stepOver: 0.2
   footing: 0.1
@@ -484,6 +485,6 @@ CharacterController:
   m_Radius: 0.6
   m_SlopeLimit: 75
   m_StepOffset: 0
-  m_SkinWidth: 0.08
+  m_SkinWidth: 0.01
   m_MinMoveDistance: 0
-  m_Center: {x: 0, y: 0.9, z: 0}
+  m_Center: {x: 0, y: 0.925, z: 0}

@@ -34,7 +34,7 @@ public class UFPlayerMovement : MonoBehaviour {
 
     //movement constants
     public float walkSpeed = 8f; //movement speed in m/s
-    public float airSpeed = 5.2f; //base horizontal movement speed when jumping
+    public float airSpeed = 6f; //base horizontal movement speed when jumping
     public float swimSpeed = 3f; //target speed while swimming
     public float groundAccelTime = 0.2f; //time needed to achieve walkspeed
     public float iceAccelTime = 1.5f; //time needed to achieve walkspeed on ice
@@ -43,7 +43,7 @@ public class UFPlayerMovement : MonoBehaviour {
     public float airSteeringMax = 14.5f; //push force while flying slow
     public float climbSteering = 40f; //push force while climbing
     public float swimSteering = 8f; //push force while swimming
-    public float jumpHeight = 1.4f; //height in m the player can jump
+    public float jumpHeight = 1.25f; //height in m the player can jump
     public float minJumpSpeed = 1f; //additive jump speed when player is walking up a ramp
     public float stepOver = 0.2f; //Highest distance player can safely step over
     public float footing = 0.1f; //extra distance to make sure player holds on to the ground
@@ -88,6 +88,7 @@ public class UFPlayerMovement : MonoBehaviour {
     private float climbDrag { get { return climbSteering / walkSpeed; } }
     private float swimDrag { get { return swimSteering / swimSpeed; } }
     private float accelTime { get { return slippery ? iceAccelTime : groundAccelTime; } }
+    private float termSpeed { get { return Physics.gravity.magnitude / verticalDrag; } }
 
     float wallLimit { get { return Mathf.Sin((90 - slideSlope) * Mathf.Deg2Rad); } }
 
@@ -342,8 +343,11 @@ public class UFPlayerMovement : MonoBehaviour {
     }
 
     private void AirMove(Vector3 movement, bool jump, bool jumpDown) {
-        float velFactor = Vector3.Dot(velocity, movement.normalized) / jumpSpeed;
-        float steering = Mathf.Lerp(airSteeringMax, airSteeringMin, velFactor);
+        float dirSpeed = Vector3.Dot(velocity, movement.normalized);
+        float spdFactor = Mathf.Clamp01(Mathf.Abs((dirSpeed - airSpeed) / airSpeed));
+        float steering = airSteeringMax * spdFactor;
+        if(steering > airSteeringMin && dirSpeed > airSpeed)
+            steering = Mathf.Min(airSteeringMin, steering);
         Vector3 acceleration = movement * steering;
         Vector3 grav = Physics.gravity;
 
@@ -360,7 +364,8 @@ public class UFPlayerMovement : MonoBehaviour {
 
         acceleration += grav;
 
-        float vertDrag = vertVel < 0 ? verticalDrag * vertVel : 0f;
+        float vertFactor = Mathf.Clamp01((-vertVel - jumpSpeed) / (termSpeed - jumpSpeed));
+        float vertDrag = verticalDrag * vertVel * vertFactor;
         Vector3 drag = Vector3.up * vertDrag;
         acceleration -= drag;
 
