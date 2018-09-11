@@ -329,9 +329,9 @@ public class UFUtils {
         relativePoint = rot * relativePoint;
 
         bool inside = true;
-        inside &= Mathf.Abs(relativePoint.x) < cb.extents.x;
-        inside &= Mathf.Abs(relativePoint.y) < cb.extents.y;
-        inside &= Mathf.Abs(relativePoint.z) < cb.extents.z;
+        inside &= Mathf.Abs(relativePoint.x) < cb.extents.x / 2f;
+        inside &= Mathf.Abs(relativePoint.y) < cb.extents.y / 2f;
+        inside &= Mathf.Abs(relativePoint.z) < cb.extents.z / 2f;
 
         return inside;
     }
@@ -550,6 +550,43 @@ public class UFUtils {
             newMax[i] = Mathf.Max(box1.max[i], box2.max[i]);
         }
         return new AxisAlignedBoundingBox(newMin, newMax);
+    }
+
+    /// <summary>
+    /// Returns string that represents given floating point value as well as possible.
+    /// The string will consist of the given amount of charcaters at most.
+    /// </summary>
+    public static string GetShortFormat(float value, int charCount) {
+        if(charCount <= 0)
+            return "";
+
+        if(charCount >= 16f)
+            return value.ToString();
+
+        float max = Mathf.Pow(10f, charCount);
+        int decCount = Mathf.Max(0, charCount - 2);
+        float min = Mathf.Pow(0.1f, decCount);
+
+        if(value > max) {
+            if(charCount < 4)
+                return max.ToString();
+            int pwr = Mathf.FloorToInt(Mathf.Log10(value));
+            value = Mathf.Round(value / Mathf.Pow(10f, pwr));
+            return value + "e+" + pwr;
+        }
+        
+        if(value < min) {
+            if(charCount < 4)
+                return min.ToString();
+            int pwr = -Mathf.FloorToInt(Mathf.Log10(value));
+            value = Mathf.Round(value * Mathf.Pow(10f, pwr));
+            return value + "e-" + pwr;
+
+        }
+
+        if(value > max / 100f)
+            return Mathf.Round(value).ToString();
+        return value.ToString("F" + (charCount - 2));
     }
 
 }
