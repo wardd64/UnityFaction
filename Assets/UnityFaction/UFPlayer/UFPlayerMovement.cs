@@ -15,6 +15,7 @@ public class UFPlayerMovement : MonoBehaviour {
     private bool crouching;
 
     private Vector3 velocity;
+    private bool slippery;
     private float walkSlope;
     private bool hitGround;
     private float jumpTime;
@@ -35,9 +36,10 @@ public class UFPlayerMovement : MonoBehaviour {
     public float walkSpeed = 8f; //movement speed in m/s
     public float airSpeed = 5.2f; //base horizontal movement speed when jumping
     public float swimSpeed = 3f; //target speed while swimming
-    public float accelTime = 0.2f; //time needed to achieve walkspeed
+    public float groundAccelTime = 0.2f; //time needed to achieve walkspeed
+    public float iceAccelTime = 1.5f; //time needed to achieve walkspeed on ice
     public float verticalDrag = 0.5f; //aerial vertical drag force
-    public float airSteeringMin = 1f; //push force the player can use to steer flying fast
+    public float airSteeringMin = 1f; //push force the player can use to steer while flying fast
     public float airSteeringMax = 14.5f; //push force while flying slow
     public float climbSteering = 40f; //push force while climbing
     public float swimSteering = 8f; //push force while swimming
@@ -85,6 +87,7 @@ public class UFPlayerMovement : MonoBehaviour {
     private float jumpSpeed { get { return Mathf.Sqrt(2 * jumpHeight * Physics.gravity.magnitude); } }
     private float climbDrag { get { return climbSteering / walkSpeed; } }
     private float swimDrag { get { return swimSteering / swimSpeed; } }
+    private float accelTime { get { return slippery ? iceAccelTime : groundAccelTime; } }
 
     float wallLimit { get { return Mathf.Sin((90 - slideSlope) * Mathf.Deg2Rad); } }
 
@@ -451,7 +454,7 @@ public class UFPlayerMovement : MonoBehaviour {
 
             SetPlatform(hit.transform);
             if(motionState == MotionState.air && vertVel < 1e-2f)
-                Land();
+                Land(hit.collider);
         }
         else if(y > 0f) {
             //hit slope we should slide off of
@@ -472,11 +475,12 @@ public class UFPlayerMovement : MonoBehaviour {
             this.platform = null;
     }
 
-    private void Land() {
+    private void Land(Collider collider) {
         motionState = MotionState.ground;
         moveSound.Jump();
         jumpTime = 0f;
         doubleJumped = false;
+        slippery = collider.name.ToLower().Contains("icy");
     }
 
     /// <summary>

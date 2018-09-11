@@ -215,7 +215,7 @@ public class LevelBuilder : EditorWindow {
     /// </summary>
     private void BuildStaticGeometry() {
         //set up split
-        int split = 5;
+        int split = 6;
         List<Face>[] faceSplit = new List<Face>[split];
         for(int i = 0; i < split; i++)
             faceSplit[i] = new List<Face>();
@@ -248,7 +248,7 @@ public class LevelBuilder : EditorWindow {
             if(excludedFace)
                 continue;
 
-            int sort;
+            int sort = 0;
             if(FaceIsContainedInLiquidSurface(level.staticGeometry, liquids, face))
                 sort = 2;
             else if(hasSkyRoom && FaceIsInRoom(level.staticGeometry, skyRoom, face))
@@ -259,7 +259,11 @@ public class LevelBuilder : EditorWindow {
                 int texIdx = Mathf.Max(0, face.texture);
                 string nextTex = level.staticGeometry.textures[texIdx];
                 bool invis = nextTex.ToLower().Contains("invis");
-                sort = invis ? 1 : 0;
+                bool icy = nextTex.ToLower().Contains("ice") || nextTex.ToLower().Contains("icy");
+                if(invis)
+                    sort = 1;
+                else if(icy)
+                    sort = 5;
             }
 
             faceSplit[sort].Add(face);
@@ -275,6 +279,14 @@ public class LevelBuilder : EditorWindow {
         visG.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
         visG.AddComponent<MeshCollider>();
         visG.layer = levelLayer;
+
+        //static visible geometry; same as visible (difference depends on name)
+        GameObject icyG = MakeMeshObject(level.staticGeometry, faceSplit[5], "StaticIcy");
+        icyG.isStatic = true;
+        icyG.transform.SetParent(p);
+        icyG.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+        icyG.AddComponent<MeshCollider>();
+        icyG.layer = levelLayer;
 
         //static invisible; disabled renderers, but still active colliders
         GameObject invisG = MakeMeshObject(level.staticGeometry, faceSplit[1], "StaticInvisible");
