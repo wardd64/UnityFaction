@@ -6,6 +6,7 @@ using UnityEditor;
 using System.Collections.Generic;
 using UFLevelStructure;
 using UnityEditorInternal;
+using UnityEditor.SceneManagement;
 
 public class LevelBuilder : EditorWindow {
 
@@ -727,10 +728,13 @@ public class LevelBuilder : EditorWindow {
     /// such as the static geometry or events.
     /// </summary>
     private Transform MakeParent(string name) {
+        EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+
         for(int i = 0; i < root.childCount; i++) {
             if(name == root.GetChild(i).name)
                 DestroyImmediate(root.GetChild(i).gameObject);
         }
+
         GameObject parent = new GameObject(name);
         parent.transform.SetParent(root);
         UFUtils.LocalReset(parent.transform);
