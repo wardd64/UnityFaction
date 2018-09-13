@@ -31,6 +31,13 @@ public class UFLevel : MonoBehaviour {
             return ufGeo;
     } }
 
+    private static UFPlayerMovement ufPlayer;
+    public static UFPlayerMovement player { get {
+            if(ufPlayer == null)
+                ufPlayer = FindObjectOfType<UFPlayerMovement>();
+            return ufPlayer;
+    } }
+
     [SerializeField]
     public List<IDRef> idDictionary;
 
@@ -81,8 +88,7 @@ public class UFLevel : MonoBehaviour {
     }
 
     public static T GetPlayer<T>() where T : Component{
-        UFPlayerMovement mov = FindObjectOfType<UFPlayerMovement>();
-        return mov.GetComponentInChildren<T>();
+        return player.GetComponentInChildren<T>();
     }
 
     private void SetID(int id, IDRef.Type type) {

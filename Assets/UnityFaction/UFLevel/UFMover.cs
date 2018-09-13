@@ -125,7 +125,7 @@ public class UFMover : MonoBehaviour {
         if(!rotateInPlace && lastKey > 0) {
             RecordPosition();
             rb.position = keys[startKey].transform.posRot.position;
-            ApplyDeltas();
+            ApplyDeltas(1f);
         }
 
         if(rotateInPlace || forceOrient)
@@ -141,7 +141,8 @@ public class UFMover : MonoBehaviour {
 
         RecordPosition();
 
-        time += Time.fixedDeltaTime;
+        float dt = Time.deltaTime;
+        time += dt;
         if(!PauseUpdate()) {
             if(rotateInPlace)
                 RotateUpdate();
@@ -149,7 +150,7 @@ public class UFMover : MonoBehaviour {
                 PathUpdate();
         }
 
-        ApplyDeltas();
+        ApplyDeltas(dt);
     }
 
     private void RecordPosition() {
@@ -157,26 +158,74 @@ public class UFMover : MonoBehaviour {
         recordPos = rb.position;
     }
 
-    private void ApplyDeltas() {
+    private void ApplyDeltas(float dt) {
         if(rotateInPlace) {
             Quaternion deltaRot = rb.rotation * Quaternion.Inverse(recordRot);
+
             foreach(Rigidbody rb in content) {
+
                 Vector3 newPos = UFUtils.RotateAroundPivot(rb.position, this.rb.position, deltaRot);
                 Vector3 deltaPos = newPos - rb.position;
 
+                PushPlayer(rb, deltaPos, dt);
+
                 rb.position = newPos;
-                rb.velocity = deltaPos / Time.deltaTime;
+                rb.velocity = deltaPos / dt;
                 rb.rotation = deltaRot * rb.rotation;
                 rb.angularVelocity = UFUtils.GetAxis(deltaRot);
             }
         }
         else {
             Vector3 deltaPos = rb.position - recordPos;
+
             foreach(Rigidbody rb in content) {
+
+                PushPlayer(rb, deltaPos, dt);
+
                 rb.position = rb.position + deltaPos;
-                rb.velocity = deltaPos / Time.deltaTime;
+                rb.velocity = deltaPos / dt;
             }
         }
+    }
+
+    private void PushPlayer(Rigidbody rb, Vector3 delta, float dt) {
+        CharacterController player = UFLevel.GetPlayer<CharacterController>();
+        Collider col = rb.GetComponent<Collider>();
+
+        if(!InMoveRadius(col, delta, player))
+            return;
+
+        float dist = delta.magnitude;
+
+        Vector3 center = player.transform.position + player.center;
+        float capDist = .5f * player.height - 2f * player.radius;
+        Vector3 capOffset = capDist * Vector3.up;
+        Vector3 p1 = center + capOffset;
+        Vector3 p2 = center - capOffset;
+        LayerMask mask = 1 << rb.gameObject.layer;
+
+        RaycastHit[] hits = Physics.CapsuleCastAll(p1, p2, player.radius, -delta, dist, mask);
+        foreach(RaycastHit hit in hits) {
+            if(hit.collider == col) {
+                Vector3 push = hit.distance * delta.normalized;
+                player.GetComponent<UFPlayerMovement>().GetPushed(push, dist / dt);
+                return;
+            }
+        }
+    }
+
+    private static bool InMoveRadius(Collider mover, Vector3 delta, CharacterController player) {
+        if(mover == null)
+            return false;
+
+        Vector3 playerPos = player.transform.position + player.center;
+        Vector3 center = mover.transform.position + .5f * delta;
+        Vector3 mbe = mover.bounds.extents;
+        float moverRadius = 1.5f * Mathf.Max(mbe.x, mbe.y, mbe.z);
+        float playerRadius = player.height / 2f;
+        float radius = moverRadius + playerRadius;
+
+        return UFUtils.InsideSphere(playerPos, center, radius);
     }
 
     /// <summary>

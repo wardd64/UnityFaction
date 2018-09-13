@@ -25,6 +25,8 @@ public class UFPlayerInfo : MonoBehaviour {
     public int playerLayer;
     public LayerMask skyMask;
 
+    public LayerMask playerMask { get { return LayerMask.GetMask(LayerMask.LayerToName(playerLayer)); } }
+
     public void Set(LevelData level, int levelLayer, int playerLayer, int skyLayer, string rflPath) {
         this.levelRFLPath = rflPath;
 

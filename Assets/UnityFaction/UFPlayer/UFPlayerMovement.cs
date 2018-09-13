@@ -53,6 +53,7 @@ public class UFPlayerMovement : MonoBehaviour {
     public float standingRadius = 0.6f, crouchingRadius = 0.55f; //cc radius
     public float antJmpGMulplr = 4f; //maximum gravity multiplier used to cut jump short
     public float sharpEdgeTrshold = 2.5f; //speed above which sharp edge correction activates
+    public float moverHitForce = 1f; //factor by which mover collissions are multiplied
 
     /// <summary>
     /// Unit vector pointing horizontally in the direction the player is turned towards
@@ -466,8 +467,7 @@ public class UFPlayerMovement : MonoBehaviour {
             if(Vector3.Dot(velocity, hit.normal) < 0f)
                 velocity -= Vector3.Project(velocity, hit.normal);
         }
-
-        //TODO provide option to use rb.GetPointVelocity(hit.point) to carry player in stead
+        //otherwise we hit a ceiling or wall, cc can handle on its own
     }
 
     private void SetPlatform(Transform transform) {
@@ -578,12 +578,22 @@ public class UFPlayerMovement : MonoBehaviour {
         return false;
     }
 
+    public void GetPushed(Vector3 delta, float speed) {
+        transform.position += delta;
+        Vector3 pushVel = delta.normalized * speed;
+        SetVelocity(pushVel);
+    }
+
     /// <summary>
     /// returns true if the given array contains any hits with solid terrain
     /// </summary>
     public static bool CollidesWithTerrain(RaycastHit[] hits) {
         RaycastHit hit;
         return CollidesWithTerrain(hits, out hit);
+    }
+
+    public void AddVelocity(Vector3 addVel) {
+        SetVelocity(velocity + addVel);
     }
 
     public void SetVelocity(Vector3 velocity) {
@@ -611,13 +621,12 @@ public class UFPlayerMovement : MonoBehaviour {
         this.platform = null;
     }
 
-    public virtual void InButtonRange(KeyCode useKey) { }
-
     public void Reset() {
         velocity = Vector3.zero;
         platform = null;
     }
 
+    public virtual void InButtonRange(KeyCode useKey) { }
     protected virtual void SetAnimation(string name, bool boolValue = false, float floatValue = 0f) { }
     protected virtual bool AllowShortJump() { return false; }
     protected virtual bool IgnoreInput() { return false; }
