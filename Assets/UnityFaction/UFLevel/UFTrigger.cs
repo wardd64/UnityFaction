@@ -156,6 +156,10 @@ public class UFTrigger : MonoBehaviour {
 
         switch(obj.type) {
 
+        case IDRef.Type.Trigger:
+        obj.objectRef.GetComponent<UFTrigger>().Trigger();
+        break;
+
         case IDRef.Type.Keyframe:
         obj.objectRef.GetComponentInParent<UFMover>().Activate(positive);
         break;
