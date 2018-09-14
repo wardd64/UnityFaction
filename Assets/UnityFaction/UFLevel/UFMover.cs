@@ -218,6 +218,9 @@ public class UFMover : MonoBehaviour {
         if(mover == null)
             return false;
 
+        if(delta == Vector3.zero)
+            return false;
+
         Vector3 playerPos = player.transform.position + player.center;
         Vector3 center = mover.transform.position + .5f * delta;
         Vector3 mbe = mover.bounds.extents;

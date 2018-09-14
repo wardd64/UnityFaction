@@ -422,6 +422,7 @@ MonoBehaviour:
   crouchingRadius: 0.55
   antJmpGMulplr: 4
   sharpEdgeTrshold: 2.5
+  moverHitForce: 1
 --- !u!114 &114569770825763428
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -485,6 +486,6 @@ CharacterController:
   m_Radius: 0.6
   m_SlopeLimit: 75
   m_StepOffset: 0
-  m_SkinWidth: 0.01
+  m_SkinWidth: 0.1
   m_MinMoveDistance: 0
   m_Center: {x: 0, y: 0.925, z: 0}

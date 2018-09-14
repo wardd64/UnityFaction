@@ -464,8 +464,10 @@ public class UFPlayerMovement : MonoBehaviour {
         }
         else if(y > 0f) {
             //hit slope we should slide off of
-            if(Vector3.Dot(velocity, hit.normal) < 0f)
-                velocity -= Vector3.Project(velocity, hit.normal);
+            Vector3 alongVel = Vector3.ProjectOnPlane(velocity, hit.normal);
+            Vector3 normalVel = Vector3.Project(velocity, hit.normal);
+            float r = 1f - UFUtils.LerpExpFactor(.1f);
+            velocity = alongVel + r * normalVel;
         }
         //otherwise we hit a ceiling or wall, cc can handle on its own
     }
@@ -534,12 +536,17 @@ public class UFPlayerMovement : MonoBehaviour {
         if(!cc.gameObject.activeInHierarchy || !cc.enabled || dt <= 0f)
             return;
 
-        //Vector3 fro = transform.position;
-        cc.Move((velocity + shiftVelocity) * dt);
-        //velocity = ((transform.position - fro) / dt) - shiftVelocity;
-        
-        cc.Move(acceleration * dt * dt / 2f);
+        Vector3 distance = (velocity + shiftVelocity) * dt;
+        distance += acceleration * dt * dt / 2f;
         velocity += acceleration * dt;
+
+        if(distance.y < 0f) {
+            cc.Move(footing * Vector3.up);
+            cc.Move(footing * Vector3.down);
+        }
+
+        cc.Move(distance);
+
         if(hitGround)
             vertVel = 0f;
 
