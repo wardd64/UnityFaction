@@ -408,7 +408,7 @@ namespace UFLevelStructure {
         public enum EventType {
             Nothing, StartTrigger, 
             Attack, Bolt_state, Continuous_Damage, Cyclic_Timer, Drop_Point_Marker, Explode, Follow_Player,
-            Follow_Waypoints, Give_item_To_Player, Goal_Create, Goal_Check, Goal_Set, Goto, Goto_Player, Heal,
+            Follow_Waypoints, Give_Item_To_Player, Goal_Create, Goal_Check, Goal_Set, Goto, Goto_Player, Heal,
             Invert, Load_Level, Look_At, Make_Invulnerable, Make_Fly, Make_Walk, Message, Music_Start, Music_Stop,
             Particle_State, Play_Animation, Play_Sound, Slay_Object, Remove_Object, Set_AI_Mode, Set_Light_State,
             Set_Liquid_Depth, Set_Friendliness, Shake_Player, Shoot_At, Shoot_Once, Armor, Spawn_Object, Swap_Textures,
