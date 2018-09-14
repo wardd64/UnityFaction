@@ -71,6 +71,7 @@ public class RFLReader {
     //file structure parameters
     private int pointer;
     private int playerStartOffset, levelInfoOffset, sectionsCount;
+    private bool geometryOffsetWarning, geoDataWarning, clutterDataWarning;
 
     public RFLReader(string path) {
         byte[] bytes = File.ReadAllBytes(path);
@@ -251,7 +252,7 @@ public class RFLReader {
     /// NOTES: 
     /// </summary>
     private void ReadStaticGeometry(Byte[] bytes) {
-        pointer += 18;
+        pointer += 14;
         level.staticGeometry = ReadGeometry(bytes);
     }
 
@@ -307,6 +308,15 @@ public class RFLReader {
             nextRegion.sphereRadius = -1f;
 
             pointer += 60;
+
+            int nextIdx = BitConverter.ToInt32(bytes, pointer);
+            if(nextIdx < 0 || nextIdx > 999999) {
+                if(!geoDataWarning) {
+                    geoDataWarning = true;
+                    Debug.LogWarning("Geo region section contained odd data structure, this may lead to erroneus reading of the RFL file.");
+                }
+                pointer += 4;
+            }
             break;
 
             case GeoRegion.GeoShape.sphere:
@@ -901,7 +911,7 @@ public class RFLReader {
     /// </summary>
     private void ReadPlayerStart(byte[] bytes) {
         if(pointer != playerStartOffset)
-            Debug.LogWarning("Found player start section at wrong location, continuing parsing anyway...");
+            Debug.LogWarning("Found player start section at wrong location!");
         pointer += 8;
         level.playerStart = UFUtils.GetPosRot(bytes, pointer);
         pointer += 48;
@@ -1044,7 +1054,19 @@ public class RFLReader {
 
             nextClutter.transform = ReadFullTransform(bytes, out nextClutter.name);
 
-            pointer += 6; // all null ???
+            pointer += 2; // all null ???
+            bool offset = BitConverter.ToInt32(bytes, pointer) != 0;
+            if(!offset)
+                pointer += 4;
+            int nextIdx = BitConverter.ToInt32(bytes, pointer);
+            if(nextIdx < 0 || nextIdx > 10) {
+                if(!clutterDataWarning) {
+                    clutterDataWarning = true;
+                    Debug.LogWarning("Clutter data contained odd extraneous data, this may lead to erroneus reading of the RFL file.");
+                }
+                pointer += 2;
+                UFUtils.ReadRFLString(bytes, ref pointer);
+            }
 
             nextClutter.links = ReadIntList(bytes);
 
@@ -1161,7 +1183,7 @@ public class RFLReader {
         pointer += 48;
         brush.transform = new UFTransform(posRot, id);
 
-        pointer += 10; // all null ???
+        pointer += 6; // all null ???
         brush.geometry = ReadGeometry(bytes);
 
         brush.isPortal = UFUtils.GetFlag(bytes, pointer, 0);
@@ -1186,6 +1208,14 @@ public class RFLReader {
     /// </summary>
     private Geometry ReadGeometry(byte[] bytes) {
         Geometry geometry;
+
+        bool offset = BitConverter.ToInt32(bytes, pointer) != 0;
+        if(!offset)
+            pointer += 4;
+        else if(!geometryOffsetWarning) {
+            geometryOffsetWarning = true;
+            Debug.LogWarning("Geometry data was offset!");
+        }
 
         geometry.textures = ReadStringList(bytes);
 
@@ -1326,6 +1356,9 @@ public class RFLReader {
 
         int unknownCount2 = BitConverter.ToInt32(bytes, pointer);
         pointer += 4 + (unknownCount2 * 96);
+
+        if(offset)
+            pointer += 4;
 
         return geometry;
     }
