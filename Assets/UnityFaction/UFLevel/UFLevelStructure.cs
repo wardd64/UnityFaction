@@ -154,7 +154,7 @@ namespace UFLevelStructure {
         public EAXEffectType eaxEffect;
 
         public enum EAXEffectType {
-            none, generic, paddedcell, room, bathroom, livingroom, stoneroom, auditorium, conerthall, cave,
+            none, generic, paddedcell, room, bathroom, livingroom, stoneroom, auditorium, concerthall, cave,
             arena, hangar, carpetedhallway, hallway, stonecorridor, alley, forest, city, mountains, quarry,
             plain, parkinglot, sewerpipe, underwater, drugged, dizzy, psychotic
         }
