@@ -1254,7 +1254,7 @@ public class LevelBuilder : EditorWindow {
         }
 
         //audio clip does not exist
-        Debug.LogWarning("Could not audio clip: " + clip);
+        Debug.LogWarning("Could not find audio clip: " + clip);
         return null;
     }
 
