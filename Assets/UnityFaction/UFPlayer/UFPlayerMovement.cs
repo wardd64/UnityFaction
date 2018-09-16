@@ -459,6 +459,7 @@ public class UFPlayerMovement : MonoBehaviour {
             walkSlope = 90f - (Mathf.Rad2Deg * atan);
 
             SetPlatform(hit.transform);
+            slippery = hit.collider.name.ToLower().Contains("icy");
             if(motionState == MotionState.air && vertVel < 1e-2f)
                 Land(hit.collider);
         }
@@ -487,7 +488,6 @@ public class UFPlayerMovement : MonoBehaviour {
         moveSound.Jump();
         jumpTime = 0f;
         doubleJumped = false;
-        slippery = collider.name.ToLower().Contains("icy");
     }
 
     /// <summary>
