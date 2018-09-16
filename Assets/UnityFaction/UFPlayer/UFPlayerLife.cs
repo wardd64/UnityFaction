@@ -8,9 +8,9 @@ public class UFPlayerLife : MonoBehaviour {
     protected float timer;
     protected bool invulnerable { get { return timer > 0f; } }
 
-    const float MAX_HP = 100f;
-    const float SUPER_HP = 200f;
-    const float INVULN_TIME = 12f;
+    public const float MAX_HP = 100f;
+    public const float SUPER_HP = 200f;
+    private const float INVULN_TIME = 12f;
 
     protected virtual void Start() {
         SetBaseHealth();
@@ -85,5 +85,13 @@ public class UFPlayerLife : MonoBehaviour {
 
     public enum DamageType {
         Melee, Bullet, ArmorPiercing, Explosive, Fire, Energy, Electrical, Acid, Scalding
+    }
+
+    public float GetHealth() {
+        return health;
+    }
+
+    public float GetArmor() {
+        return armor;
     }
 }
