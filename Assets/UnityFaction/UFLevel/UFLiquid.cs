@@ -33,8 +33,18 @@ public class UFLiquid : MonoBehaviour {
     }
 
     private void Update() {
-        if(player != null)
-            player.SwimState();
+        if(player == null)
+            return;
+
+        /*
+        Room playerRoom;
+        UFLevel.playerInfo.GetRoom(player.transform.position, out playerRoom);
+        if(!playerRoom.hasLiquid)
+            return;
+        */
+
+        player.SwimState();
+        ApplyDPS(player.GetComponent<UFPlayerLife>(), type);
     }
 
     private void OnTriggerEnter(Collider other) {
@@ -48,5 +58,18 @@ public class UFLiquid : MonoBehaviour {
         UFPlayerMovement player = other.GetComponent<UFPlayerMovement>();
         if(player != null)
             this.player = null;
+    }
+
+    private static void ApplyDPS(UFPlayerLife player, Room.LiquidProperties.LiquidType type) {
+        switch(type) {
+
+        case Room.LiquidProperties.LiquidType.Lava:
+        player.TakeDamage(10f * Time.deltaTime, UFPlayerLife.DamageType.Fire, true);
+        break;
+
+        case Room.LiquidProperties.LiquidType.Acid:
+        player.TakeDamage(5f * Time.deltaTime, UFPlayerLife.DamageType.Acid, true);
+        break;
+        }
     }
 }

@@ -66,9 +66,9 @@ public class UFPlayerInfo : MonoBehaviour {
                 realRoom = false;
             }
 
-            realRoom &= roomExtents.x > 3f;
-            realRoom &= roomExtents.z > 3f;
-            realRoom &= roomExtents.y > 1.5f;
+            realRoom &= roomExtents.x > 1f;
+            realRoom &= roomExtents.z > 1f;
+            realRoom &= roomExtents.y > 1f;
 
             levelBox = UFUtils.Join(levelBox, room.aabb);
 
@@ -243,10 +243,10 @@ public class UFPlayerInfo : MonoBehaviour {
         Free, Bot, RedTeam, BlueTeam
     }
 
-    private bool GetRoom(Vector3 position, out Room room) {
-        foreach(Room r in rooms) {
-            if(r.aabb.IsInside(position)) {
-                room = r;
+    public bool GetRoom(Vector3 position, out Room room) {
+        for(int i = rooms.Length - 1; i >= 0; i--) {
+            if(rooms[i].aabb.IsInside(position)) {
+                room = rooms[i];
                 return true;
             }
         }
