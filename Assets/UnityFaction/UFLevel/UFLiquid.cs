@@ -9,6 +9,7 @@ public class UFLiquid : MonoBehaviour {
     public float visibility;
     public float alpha;
     public Color color;
+    public bool onlyApplyInLiquidRooms;
 
     private UFPlayerMovement player;
 
@@ -36,13 +37,15 @@ public class UFLiquid : MonoBehaviour {
         if(player == null)
             return;
 
-        /*
-        Room playerRoom;
-        UFLevel.playerInfo.GetRoom(player.transform.position, out playerRoom);
-        if(!playerRoom.hasLiquid)
-            return;
-        */
+        if(onlyApplyInLiquidRooms) {
+            Room playerRoom;
+            UFLevel.playerInfo.GetRoom(player.transform.position, out playerRoom);
+            if(!playerRoom.hasLiquid)
+                return;
+        }
 
+        
+        
         player.SwimState();
         ApplyDPS(player.GetComponent<UFPlayerLife>(), type);
     }
