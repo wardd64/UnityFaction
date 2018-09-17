@@ -149,6 +149,10 @@ public class UFPlayerMovement : MonoBehaviour {
 
     private void MouseUpdate() {
         MouseRotate();
+        if(IgnoreInput())
+            Cursor.lockState = CursorLockMode.None;
+        else
+            Cursor.lockState = CursorLockMode.Locked;
 
         transform.localEulerAngles = new Vector3(0, rotationX, 0);
         playerCamera.transform.localRotation = Quaternion.Euler(-rotationY, 0, 0);
@@ -432,8 +436,8 @@ public class UFPlayerMovement : MonoBehaviour {
         RaycastHit[] hits;
         RaycastHit hit = new RaycastHit();
 
-        float dist = standingHeight - crouchingHeight + cc.skinWidth;
-        float headHeight = (cc.height / 2) - standingRadius - cc.skinWidth;
+        float dist = standingHeight - crouchingHeight - standingRadius + crouchingRadius;
+        float headHeight = (cc.height / 2) - crouchingRadius;
         Vector3 headPos = this.transform.position + cc.center;
         headPos += this.transform.up * headHeight;
 
@@ -559,19 +563,12 @@ public class UFPlayerMovement : MonoBehaviour {
         foreach(RaycastHit hit in hits) {
             actualHit = hit;
 
-            int layer = hit.collider.gameObject.layer;
-            bool terrainLayer = layer == 0;
-
-            //in ignored mask
-            if(!terrainLayer)
-                continue;
-
             //triggers
             if(hit.collider.isTrigger)
                 continue;
 
-            //characters (including player)
-            if(hit.collider.GetComponent<CharacterController>())
+            //part of the player
+            if(hit.collider.GetComponentInParent<CharacterController>())
                 continue;
 
             //non kinematic rigid bodies
@@ -606,9 +603,10 @@ public class UFPlayerMovement : MonoBehaviour {
     public void SetVelocity(Vector3 velocity) {
         this.velocity = velocity;
         bool onGround = motionState == MotionState.ground || motionState == MotionState.crouch;
-        if(vertVel > 0f && onGround)
+        if(vertVel > 0f && onGround) {
             motionState = MotionState.air;
-        platform = null;
+            platform = null;
+        }
     }
 
     public void ShiftVelocity(Vector3 velocity) {
