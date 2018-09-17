@@ -196,9 +196,9 @@ public class UFPlayerInfo : MonoBehaviour {
     }
 
     private void Update() {
-        playerMissingCount++;
-        if(playerMissingCount % 5 == 4)
-            UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(250f * Time.deltaTime, 0, true);
+        playerMissingTime += Time.deltaTime;
+        if(playerMissingTime > Time.fixedDeltaTime * 5f)
+            UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(500f * Time.deltaTime, 0, true);
     }
 
     /// <summary>
@@ -227,12 +227,12 @@ public class UFPlayerInfo : MonoBehaviour {
         return UFUtils.GetRandom(candidates).transform.posRot;
     }
 
-    private int playerMissingCount;
+    private float playerMissingTime;
 
     private void OnTriggerStay(Collider other) {
         UFPlayerLife player = other.GetComponent<UFPlayerLife>();
         if(player != null)
-            playerMissingCount = 0;
+            playerMissingTime = 0f;
     }
 
     public string GetLevelInfo() {

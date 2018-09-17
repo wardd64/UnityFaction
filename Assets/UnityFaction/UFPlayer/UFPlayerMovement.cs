@@ -149,10 +149,7 @@ public class UFPlayerMovement : MonoBehaviour {
 
     private void MouseUpdate() {
         MouseRotate();
-        if(IgnoreInput())
-            Cursor.lockState = CursorLockMode.None;
-        else
-            Cursor.lockState = CursorLockMode.Locked;
+        UFUtils.SetFPSCursor(!IgnoreInput());
 
         transform.localEulerAngles = new Vector3(0, rotationX, 0);
         playerCamera.transform.localRotation = Quaternion.Euler(-rotationY, 0, 0);
