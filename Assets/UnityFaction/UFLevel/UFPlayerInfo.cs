@@ -197,7 +197,8 @@ public class UFPlayerInfo : MonoBehaviour {
 
     private void Update() {
         playerMissingTime += Time.deltaTime;
-        if(playerMissingTime > Time.fixedDeltaTime * 5f)
+        playerMissingFrames++;
+        if(playerMissingTime > 1f && playerMissingFrames > 10)
             UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(500f * Time.deltaTime, 0, true);
     }
 
@@ -228,11 +229,13 @@ public class UFPlayerInfo : MonoBehaviour {
     }
 
     private float playerMissingTime;
+    private int playerMissingFrames;
 
     private void OnTriggerStay(Collider other) {
-        UFPlayerLife player = other.GetComponent<UFPlayerLife>();
-        if(player != null)
+        if(other.GetComponent<UFTriggerSensor>()) {
             playerMissingTime = 0f;
+            playerMissingFrames = 0;
+        }
     }
 
     public string GetLevelInfo() {

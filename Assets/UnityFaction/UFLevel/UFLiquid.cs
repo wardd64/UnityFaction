@@ -12,6 +12,7 @@ public class UFLiquid : MonoBehaviour {
     public bool onlyApplyInLiquidRooms;
 
     private UFPlayerMovement player;
+    private int nbCols;
 
     public void Set(Room room) {
         Vector3 center = (room.aabb.min + room.aabb.max) / 2f;
@@ -51,16 +52,22 @@ public class UFLiquid : MonoBehaviour {
     }
 
     private void OnTriggerEnter(Collider other) {
-        UFPlayerMovement player = other.GetComponent<UFPlayerMovement>();
-        if(player != null)
-            this.player = player;
+        if(other.GetComponent<UFTriggerSensor>() && nbCols++ == 0)
+            EnterLiquid();
+    }
 
+    private void EnterLiquid() {
+        this.player = UFLevel.GetPlayer<UFPlayerMovement>();
     }
 
     private void OnTriggerExit(Collider other) {
-        UFPlayerMovement player = other.GetComponent<UFPlayerMovement>();
-        if(player != null)
-            this.player = null;
+        if(other.GetComponent<UFTriggerSensor>() && --nbCols == 0)
+            ExitLiquid();
+    }
+
+    private void ExitLiquid() {
+        this.player.JumpOutLiquid();
+        this.player = null;
     }
 
     private static void ApplyDPS(UFPlayerLife player, Room.LiquidProperties.LiquidType type) {

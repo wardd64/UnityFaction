@@ -54,6 +54,7 @@ public class UFPlayerMovement : MonoBehaviour {
     public float antJmpGMulplr = 4f; //maximum gravity multiplier used to cut jump short
     public float sharpEdgeTrshold = 2.5f; //speed above which sharp edge correction activates
     public float moverHitForce = 1f; //factor by which mover collissions are multiplied
+    public float liquidJumpMultiplier = 2f; //factor for vert speed when exiting liquids
 
     /// <summary>
     /// Unit vector pointing horizontally in the direction the player is turned towards
@@ -604,6 +605,13 @@ public class UFPlayerMovement : MonoBehaviour {
             motionState = MotionState.air;
             platform = null;
         }
+    }
+
+    public void JumpOutLiquid() {
+        if(this.vertVel <= 0f)
+            return;
+
+        this.vertVel *= liquidJumpMultiplier;
     }
 
     public void ShiftVelocity(Vector3 velocity) {
