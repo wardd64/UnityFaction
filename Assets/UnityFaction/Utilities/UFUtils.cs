@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using UnityEngine;
 using System;
 using UFLevelStructure;
@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Globalization;
 using System.Threading;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 
 public class UFUtils {
 
@@ -603,5 +605,93 @@ public class UFUtils {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
+    }
+
+    /// <summary>
+    /// Returns string representing the given number of seconds in an 
+    /// hours:minutes:seconds.frac format where frac is a fractional value
+    /// consisting of prec amount of digits.
+    /// </summary>
+    public static string GetTimeString(float seconds, int prec) {
+        return GetTimeString(seconds, prec, seconds);
+    }
+
+    /// <summary>
+    /// Returns string representing the given number of seconds in an 
+    /// hours:minutes:seconds.frac format where frac is a fractional value
+    /// consisting of prec amount of digits. The format will be the same as 
+    /// it would be for the value refSeconds.
+    /// </summary>
+    public static string GetTimeString(float seconds, int prec, float refSeconds) {
+        int secInt = Mathf.FloorToInt(seconds);
+        int refSecInt = Mathf.FloorToInt(refSeconds);
+
+        float frac = seconds % 1f;
+        string fracString = frac.ToString("F" + prec);
+        if(fracString.Length <= 2)
+            fracString = ".".PadRight(prec + 1, '0');
+        else
+            fracString = fracString.Substring(1).PadRight(prec + 1, '0');
+        return GetTimeString(secInt, refSecInt) + fracString;
+    }
+
+    /// <summary>
+    /// Returns string representing the given number of seconds in an 
+    /// hours:minutes:seconds format
+    /// </summary>
+    public static string GetTimeString(int seconds) {
+        return GetTimeString(seconds, seconds);
+    }
+
+    /// <summary>
+    /// Returns string representing the given number of seconds in an 
+    /// hours:minutes:seconds format, making sure the format is the same 
+    /// as that of refSeconds
+    /// </summary>
+    public static string GetTimeString(int seconds, int refSeconds) {
+        if(refSeconds < 60)
+            return seconds.ToString();
+        int minutes = seconds / 60;
+        seconds = seconds % 60;
+        if(refSeconds < 3600)
+            return minutes + ":" + seconds.ToString().PadLeft(2, '0');
+        int hours = minutes / 60;
+        minutes = minutes % 60;
+        return hours + ":" + minutes.ToString().PadLeft(2, '0') + ":" + seconds.ToString().PadLeft(2, '0');
+    }
+
+    /// <summary>
+    /// Write given object to the given file path (uncompressed).
+    /// </summary>
+    public static void Save(string path, object obj) {
+        if(string.IsNullOrEmpty(path))
+            throw new System.ArgumentException("Trying to save to undefined path");
+        else if(obj == null)
+            throw new System.ArgumentNullException("Trying to save null object to " + path);
+
+        BinaryFormatter bf = new BinaryFormatter();
+        FileStream file = File.Create(path);
+        bf.Serialize(file, obj);
+        file.Close();
+    }
+
+    /// <summary>
+    /// Reads (uncompressed) object at the given file path and returns it.
+    /// Returns null if file could not be loaded for whatever reason.
+    /// </summary>
+    public static object Load(string path) {
+        FileStream file = null;
+        object toReturn = null;
+        try {
+            BinaryFormatter bf = new BinaryFormatter();
+            file = File.Open(path, FileMode.Open);
+            toReturn = bf.Deserialize(file);
+        }
+        catch(System.Exception) { }
+
+        if(file != null)
+            file.Close();
+        return toReturn;
+
     }
 }
