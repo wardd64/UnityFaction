@@ -25,6 +25,15 @@ public class UFUtils {
         return "Assets" + path.Substring(Application.dataPath.Length);
     }
 
+    /// <summary>
+    /// Converts given relative path (inside assets folder) to an absolute path
+    /// </summary>
+    public static string GetAbsoluteUnityPath(string path) {
+        if(path.StartsWith("Assets"))
+            return Application.dataPath + path.Substring(6);
+        return Application.dataPath + "/" + path;
+    }
+
     /* -----------------------------------------------------------------------------------------------
      * -------------------------------------- BINARY READING -----------------------------------------
      * -----------------------------------------------------------------------------------------------

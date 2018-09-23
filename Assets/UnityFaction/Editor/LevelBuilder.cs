@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.IO;
 using System;
 using System.Text;
@@ -72,7 +72,7 @@ public class LevelBuilder : EditorWindow {
 
             //make good guess for current level
             if(UFLevel.singleton != null) {
-                string rflPath = UFLevel.playerInfo.levelRFLPath;
+                string rflPath = UFUtils.GetAbsoluteUnityPath(UFLevel.playerInfo.levelRFLPath);
                 string levelName = Path.GetFileNameWithoutExtension(rflPath);
                 
                 if(GUILayout.Button("Try load RFL file: " + levelName, largeButton)) {
@@ -853,7 +853,7 @@ public class LevelBuilder : EditorWindow {
             Material mat = new Material(Shader.Find(shader));
             
             mat.mainTexture = tex;
-            AssetDatabase.CreateAsset(mat, assetPath + materialName);
+            AssetDatabase.CreateAsset(mat, assetPath +  materialName);
             
             return mat;
         }
