@@ -40,7 +40,6 @@ public class UFPlayerMoveSounds : MonoBehaviour {
 
     public void Die() {
         PlayOneShot(playerSound, dieClip);
-        Debug.Log(dieClip);
     }
 
     /// <summary>

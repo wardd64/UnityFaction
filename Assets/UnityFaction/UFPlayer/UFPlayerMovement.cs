@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System;
 
@@ -31,6 +31,7 @@ public class UFPlayerMovement : MonoBehaviour {
     private Vector3 climbDir;
     private Transform platform;
     private Vector3 lastPlatformPosition;
+    private UFLiquid liquid;
 
     //movement constants
     public float walkSpeed = 8f; //movement speed in m/s
@@ -222,6 +223,21 @@ public class UFPlayerMovement : MonoBehaviour {
             cc.Move(platformDelta);
             if(this.platform != null)
                 this.lastPlatformPosition = this.platform.position;
+        }
+
+        //liquid vision
+        bool liqVision = false;
+        if(liquid != null) {
+            liqVision = playerCamera.transform.position.y < liquid.absoluteY;
+            if(liqVision) {
+                liquid.SetLiquidVision();
+                GetComponent<UFPlayerWeapons>().SetLiquidVision(true, liquid.color);
+            }
+            liquid = null;
+        }
+        if(!liqVision) { 
+            UFLevel.playerInfo.ResetVision();
+            GetComponent<UFPlayerWeapons>().SetLiquidVision(false, Color.clear);
         }
 
         //seperate motion updates
@@ -624,9 +640,11 @@ public class UFPlayerMovement : MonoBehaviour {
         this.platform = null;
     }
 
-    public void SwimState() {
+    public void SwimState(UFLiquid liquid) {
         if(motionState == MotionState.climb)
             return;
+
+        this.liquid = liquid;
         motionState = MotionState.swim;
         this.platform = null;
     }

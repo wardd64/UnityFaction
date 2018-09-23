@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UFLevelStructure;
@@ -13,6 +13,11 @@ public class UFLiquid : MonoBehaviour {
 
     private UFPlayerMovement player;
     private int nbCols;
+
+    public float absoluteY { get {
+            BoxCollider bc = this.GetComponent<BoxCollider>();
+            return transform.position.y + bc.center.y + (bc.size.y / 2f);
+        } }
 
     public void Set(Room room) {
         Vector3 center = (room.aabb.min + room.aabb.max) / 2f;
@@ -45,9 +50,7 @@ public class UFLiquid : MonoBehaviour {
                 return;
         }
 
-        
-        
-        player.SwimState();
+        player.SwimState(this);
         ApplyDPS(player.GetComponent<UFPlayerLife>(), type);
     }
 
@@ -81,5 +84,13 @@ public class UFLiquid : MonoBehaviour {
         player.TakeDamage(5f * Time.deltaTime, UFPlayerLife.DamageType.Acid, true);
         break;
         }
+    }
+
+    public void SetLiquidVision() {
+        RenderSettings.fog = true;
+        RenderSettings.fogColor = color;
+        RenderSettings.fogStartDistance = 0f;
+        RenderSettings.fogEndDistance = visibility;
+        RenderSettings.ambientLight = color;
     }
 }

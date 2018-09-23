@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UFLevelStructure;
 using UnityEngine;
@@ -100,6 +100,8 @@ public class UFPlayerInfo : MonoBehaviour {
             skyCamera.farClipPlane = skyDiagonal.magnitude / 2f;
             skyCamera.cullingMask = skyMask;
         }
+
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
     }
 
     private void MakeEAX(Room.EAXEffectType eax, Vector3 roomCenter, float roomRadius) {
@@ -150,10 +152,22 @@ public class UFPlayerInfo : MonoBehaviour {
         RenderSettings.fogEndDistance = fogEnd;
     }
 
+    public void ResetVision() {
+        RenderSettings.ambientLight = defaultAmbient;
+        RenderSettings.fog = fogStart > 0f;
+        RenderSettings.fogColor = fogColor;
+        RenderSettings.fogStartDistance = fogStart;
+        RenderSettings.fogEndDistance = fogEnd;
+    }
+
     private void SetRenderSettings() {
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
         RenderSettings.ambientLight = defaultAmbient;
         SetFog();
+
+        bool ambientIsCorrect = RenderSettings.ambientMode == UnityEngine.Rendering.AmbientMode.Flat;
+        if(!ambientIsCorrect)
+            Debug.LogError("Ambient light settings should be set to flat color!");
     }
 
     public void ApplyCameraSettings(Camera playerCamera) {
