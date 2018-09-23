@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UFLevelStructure;
@@ -150,12 +150,14 @@ public class UFItem : MonoBehaviour {
 
     private bool PickUp() {
         UFPlayerLife life = UFLevel.GetPlayer<UFPlayerLife>();
+        UFPlayerMoveSounds sound = life.GetComponentInChildren<UFPlayerMoveSounds>();
 
         switch(type) {
 
         case ItemType.Health:
         if(life.CanPickUpHealth()) {
             life.GainHealth(count);
+            sound.PickUpPowerup();
             return true;
         }
         return false;
@@ -163,32 +165,44 @@ public class UFItem : MonoBehaviour {
         case ItemType.Armor:
         if(life.CanPickUpArmor()) {
             life.GainArmor(count);
+            sound.PickUpPowerup();
             return true;
         }
         return false;
 
         case ItemType.SuperHealth:
-        life.SuperHealth(); return true;
+        sound.PickUpPowerup();
+        life.SuperHealth();
+        return true;
 
         case ItemType.SuperArmor:
-        life.SuperArmor(); return true;
+        sound.PickUpPowerup();
+        life.SuperArmor();
+        return true;
 
         case ItemType.Invulnerability:
-        life.Invulnerability(); return true;
-
-        //TODO weapons, invulnerability and stuff
+        sound.PickUpInvuln();
+        life.Invulnerability();
+        return true;
 
         case ItemType.Explosive:
         case ItemType.Gun:
         case ItemType.SpecialWeapon:
-        return UFLevel.GetPlayer<UFPlayerWeapons>().PickupWeapon(this);
+        bool weapon = UFLevel.GetPlayer<UFPlayerWeapons>().PickupWeapon(this);
+        if(weapon)
+            sound.PickUpWeapon();
+        return weapon;
 
         case ItemType.ExplosiveAmmo:
         case ItemType.GunAmmo:
-        return UFLevel.GetPlayer<UFPlayerWeapons>().PickupAmmo(this);
+            bool ammo = UFLevel.GetPlayer<UFPlayerWeapons>().PickupAmmo(this);
+        if(ammo)
+            sound.PickUpWeapon();
+        return ammo;
 
         case ItemType.DamageAmp:
         UFLevel.GetPlayer<UFPlayerWeapons>().DamageAmp();
+        sound.PickUpDamageAmp();
         return true;
 
         default:

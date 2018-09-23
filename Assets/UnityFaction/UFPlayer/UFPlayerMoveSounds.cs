@@ -6,6 +6,10 @@ public class UFPlayerMoveSounds : MonoBehaviour {
 
     private UFPlayerMovement move;
 
+    public AudioClip weaponClip, powerupClip, invulnClip, damAmpClip;
+    public AudioClip dieClip;
+
+    public AudioSource playerSound, itemSound;
     public AudioSource leftFootSound, rightFootSound;
     public AudioClip[] footstepClips_solid, footstepClips_metal,
         footstepClips_water, footstepClips_ice, footstepClips_gravel, 
@@ -16,6 +20,27 @@ public class UFPlayerMoveSounds : MonoBehaviour {
     private void Awake() {
         move = transform.GetComponentInParent<UFPlayerMovement>();
         footstepContext = FootstepContext.Type.gravel;
+    }
+
+    public void PickUpDamageAmp() {
+        PlayOneShot(itemSound, damAmpClip);
+    }
+
+    public void PickUpInvuln() {
+        PlayOneShot(itemSound, invulnClip);
+    }
+
+    public void PickUpWeapon() {
+        PlayOneShot(itemSound, weaponClip);
+    }
+
+    public void PickUpPowerup() {
+        PlayOneShot(itemSound, powerupClip);
+    }
+
+    public void Die() {
+        PlayOneShot(playerSound, dieClip);
+        Debug.Log(dieClip);
     }
 
     /// <summary>

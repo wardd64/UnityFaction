@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -68,6 +68,7 @@ public class UFPlayerLife : MonoBehaviour {
 
     protected virtual void Die() {
         GetComponent<UFPlayerMovement>().Spawn();
+        GetComponentInChildren<UFPlayerMoveSounds>().Die();
         SetBaseHealth();
     }
 
