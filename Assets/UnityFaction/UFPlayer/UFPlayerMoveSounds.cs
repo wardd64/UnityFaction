@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,14 +7,15 @@ public class UFPlayerMoveSounds : MonoBehaviour {
     private UFPlayerMovement move;
 
     public AudioSource leftFootSound, rightFootSound;
-    public AudioClip[] footstepClips_stone, footstepClips_metal,
-        footstepClips_concrete, footstepClips_wood, footstepClips_gravel, footstepClips_pane;
+    public AudioClip[] footstepClips_solid, footstepClips_metal,
+        footstepClips_water, footstepClips_ice, footstepClips_gravel, 
+        footstepClips_glass, footstepClips_brokenGlass;
 
     private FootstepContext.Type footstepContext;
 
     private void Awake() {
         move = transform.GetComponentInParent<UFPlayerMovement>();
-        footstepContext = FootstepContext.Type.stone;
+        footstepContext = FootstepContext.Type.gravel;
     }
 
     /// <summary>
@@ -26,8 +27,13 @@ public class UFPlayerMoveSounds : MonoBehaviour {
         FootstepContext c = collider.transform.GetComponentInParent<FootstepContext>();
         if(c != null)
             footstepContext = c.type;
-        else
-            footstepContext = FootstepContext.Type.stone;
+        else {
+            string colName = collider.name.ToLower();
+            if(colName.Contains("ice") || colName.Contains("icy"))
+                footstepContext = FootstepContext.Type.ice;
+            else
+                footstepContext = FootstepContext.Type.gravel;
+        }
     }
 
     public void FootstepL() {
@@ -39,30 +45,7 @@ public class UFPlayerMoveSounds : MonoBehaviour {
     }
 
     private void PlayFootStep(bool right, bool maxForce = false) {
-        AudioClip[] clips;
-        switch(footstepContext) {
-        case FootstepContext.Type.stone:
-        clips = footstepClips_stone;
-        break;
-        case FootstepContext.Type.metal:
-        clips = footstepClips_metal;
-        break;
-        case FootstepContext.Type.wood:
-        clips = footstepClips_wood;
-        break;
-        case FootstepContext.Type.concrete:
-        clips = footstepClips_concrete;
-        break;
-        case FootstepContext.Type.gravel:
-        clips = footstepClips_gravel;
-        break;
-        case FootstepContext.Type.pane:
-        clips = footstepClips_pane;
-        break;
-        default:
-        Debug.LogError("Encountered unknown footstep context: " + footstepContext);
-        return;
-        }
+        AudioClip[] clips = GetClipPool(footstepContext);
 
         if(clips == null || clips.Length <= 0)
             return;
@@ -81,6 +64,22 @@ public class UFPlayerMoveSounds : MonoBehaviour {
             sound.volume = 0.3f + 0.7f * Mathf.Clamp01(move.speed / 5f);
         sound.clip = clips[index];
         sound.Play();
+    }
+
+    private AudioClip[] GetClipPool(FootstepContext.Type type) {
+        switch(type) {
+        case FootstepContext.Type.solid: return footstepClips_solid;
+        case FootstepContext.Type.metal: return footstepClips_metal;
+        case FootstepContext.Type.water: return footstepClips_water;
+        case FootstepContext.Type.ice: return footstepClips_ice;
+        case FootstepContext.Type.gravel: return footstepClips_gravel;
+        case FootstepContext.Type.glass: return footstepClips_glass;
+        case FootstepContext.Type.brokenGlass: return footstepClips_brokenGlass;
+
+        default:
+        Debug.LogError("Encountered unknown footstep context: " + type);
+        return null;
+        }
     }
 
     public void Jump() {
