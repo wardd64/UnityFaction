@@ -63,20 +63,26 @@ public class UFPlayerInfo : MonoBehaviour {
             Vector3 roomExtents = room.aabb.max - room.aabb.min;
             Vector3 roomCenter = (room.aabb.max + room.aabb.min)/2f;
 
+            levelBox = UFUtils.Join(levelBox, room.aabb);
+
             bool realRoom = true;
             if(room.isSkyRoom) {
                 foundSkyRoom = true;
                 skyRoom = room;
-                realRoom = false;
+                continue;
             }
 
-            realRoom &= roomExtents.x > 1f;
-            realRoom &= roomExtents.z > 1f;
-            realRoom &= roomExtents.y > 1f;
+            //check if this room is worth keeping
+            realRoom &= roomExtents.x > 3f;
+            realRoom &= roomExtents.z > 3f;
+            realRoom &= roomExtents.y > 1.1f;
 
-            levelBox = UFUtils.Join(levelBox, room.aabb);
+            realRoom |= room.hasAmbientLight;
+            realRoom |= room.hasLiquid;
+            realRoom |= room.isAirlock;
 
-            //TODO use life value of rooms
+            //TODO implement something with room life
+
             if(!realRoom)
                 continue;
             
