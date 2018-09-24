@@ -27,6 +27,10 @@ public class UFPlayerInfo : MonoBehaviour {
 
     public LayerMask playerMask { get { return LayerMask.GetMask(LayerMask.LayerToName(playerLayer)); } }
 
+    private Color targetAmbient;
+    private float playerMissingTime;
+    private int playerMissingFrames;
+
     public void Set(LevelData level, int levelLayer, int playerLayer, int skyLayer, string rflPath) {
         this.levelRFLPath = rflPath;
 
@@ -153,7 +157,7 @@ public class UFPlayerInfo : MonoBehaviour {
     }
 
     public void ResetVision() {
-        RenderSettings.ambientLight = defaultAmbient;
+        RenderSettings.ambientLight = targetAmbient;
         RenderSettings.fog = fogStart > 0f;
         RenderSettings.fogColor = fogColor;
         RenderSettings.fogStartDistance = fogStart;
@@ -174,7 +178,7 @@ public class UFPlayerInfo : MonoBehaviour {
         if(skyCamera != null)
             //rely on sky camera to render sky room
             playerCamera.clearFlags = CameraClearFlags.Depth;
-        else if(fogStart > 0f){
+        else if(fogEnd > 0f){
             //aply solid color to represent thick fog
             playerCamera.clearFlags = CameraClearFlags.SolidColor;
             playerCamera.backgroundColor = fogColor;
@@ -189,19 +193,19 @@ public class UFPlayerInfo : MonoBehaviour {
     }
 
     public void UpdateCamera(Camera playerCamera) {
-        Color targetAmb = defaultAmbient;
+        targetAmbient = defaultAmbient;
         
         Room room;
         if(GetRoom(playerCamera.transform.position, out room)) {
             if(room.hasAmbientLight)
-                targetAmb = room.ambientLightColor;
+                targetAmbient = room.ambientLightColor;
 
             //TODO apply remaining room effects
         }
 
         Color currentAmb = RenderSettings.ambientLight;
         float r = Time.deltaTime / ambChangeTime;
-        RenderSettings.ambientLight = UFUtils.MoveTowards(currentAmb, targetAmb, r);
+        RenderSettings.ambientLight = UFUtils.MoveTowards(currentAmb, targetAmbient, r);
 
         if(skyCamera != null) {
             skyCamera.transform.rotation = playerCamera.transform.rotation;
@@ -241,9 +245,6 @@ public class UFPlayerInfo : MonoBehaviour {
 
         return UFUtils.GetRandom(candidates).transform.posRot;
     }
-
-    private float playerMissingTime;
-    private int playerMissingFrames;
 
     private void OnTriggerStay(Collider other) {
         if(other.GetComponent<UFTriggerSensor>()) {

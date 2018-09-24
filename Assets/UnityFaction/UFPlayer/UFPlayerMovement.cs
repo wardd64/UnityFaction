@@ -32,6 +32,7 @@ public class UFPlayerMovement : MonoBehaviour {
     private Transform platform;
     private Vector3 lastPlatformPosition;
     private UFLiquid liquid;
+    private bool liquidNeedsReset;
 
     //movement constants
     public float walkSpeed = 8f; //movement speed in m/s
@@ -106,6 +107,8 @@ public class UFPlayerMovement : MonoBehaviour {
         if(UFLevel.playerInfo != null)
             UFLevel.playerInfo.ApplyCameraSettings(playerCamera);
         SetRotSmoothing(rotSmoothing);
+        UFLevel.playerInfo.ResetVision();
+        GetComponent<UFPlayerWeapons>().SetLiquidVision(false, Color.clear);
         Spawn();
     }
 
@@ -232,10 +235,12 @@ public class UFPlayerMovement : MonoBehaviour {
             if(liqVision) {
                 liquid.SetLiquidVision();
                 GetComponent<UFPlayerWeapons>().SetLiquidVision(true, liquid.color);
+                liquidNeedsReset = true;
             }
             liquid = null;
         }
-        if(!liqVision) { 
+        if(!liqVision && liquidNeedsReset) {
+            liquidNeedsReset = false;
             UFLevel.playerInfo.ResetVision();
             GetComponent<UFPlayerWeapons>().SetLiquidVision(false, Color.clear);
         }
