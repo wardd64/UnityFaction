@@ -1244,7 +1244,8 @@ public class LevelBuilder : EditorWindow {
         foreach(string result in results) {
             string resultPath = AssetDatabase.GUIDToAssetPath(result);
             string resultName = Path.GetFileName(resultPath);
-            if(string.Equals(resultName, clip, StringComparison.OrdinalIgnoreCase)) {
+            string matchName = Path.GetFileNameWithoutExtension(resultPath);
+            if(string.Equals(matchName, clipName, StringComparison.OrdinalIgnoreCase)) {
                 AudioClip toReturn = (AudioClip)AssetDatabase.LoadAssetAtPath(resultPath, typeof(AudioClip));
                 if(toReturn == null)
                     Debug.LogWarning("Failed to load AudioClip " + resultName +
