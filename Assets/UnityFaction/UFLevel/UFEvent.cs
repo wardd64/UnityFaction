@@ -265,7 +265,7 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.Switch:
         return EventTypeClass.Signal;
 
-        case UFLevelStructure.Event.EventType.Bolt_state:
+        case UFLevelStructure.Event.EventType.Bolt_State:
         case UFLevelStructure.Event.EventType.Explode:
         case UFLevelStructure.Event.EventType.Heal:
         case UFLevelStructure.Event.EventType.Message:
