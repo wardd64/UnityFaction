@@ -54,7 +54,7 @@
 
 			fixed4 frag(v2f i) : SV_Target{
 				fixed varX = i.uv.x + _ScrollXSpeed * _Time[1];
-				fixed varY = i.uv.y + _ScrollYSpeed * _Time[1];
+				fixed varY = i.uv.y - _ScrollYSpeed * _Time[1];
 				return tex2D(_MainTex, fixed2(varX, varY)) * _Color;
 			}
 
