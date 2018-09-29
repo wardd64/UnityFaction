@@ -25,20 +25,26 @@ public class VPPUnpacker {
     const int BYTES_IN_STRING = 60; //Every string is allowed 60 characters
     const int BLOCK_SIZE = 0x0800; //vpp file is split in 2kB chunks
 
+    private static string lastVPPPath;
+
     [MenuItem("UnityFaction/Unpack VPP")]
     public static void UnpackVPP() {
 
+        if(string.IsNullOrEmpty(lastVPPPath))
+            lastVPPPath = "Assets";
+
         //let user select vpp folder he would like to unpack
         string fileSearchMessage = "Select vpp file you would like to unpack";
-        string vppPath = EditorUtility.OpenFilePanel(fileSearchMessage, "Assets", "vpp");
+        string vppPath = EditorUtility.OpenFilePanel(fileSearchMessage, lastVPPPath, "vpp");
         if(string.IsNullOrEmpty(vppPath))
             return;
 
         string vppName = Path.GetFileNameWithoutExtension(vppPath);
+        lastVPPPath = Path.GetDirectoryName(UFUtils.GetRelativeUnityPath(vppPath));
 
         //let user select folder to unpack the vpp to
         fileSearchMessage = "Select folder where you would like to unpack " + vppName + ".vpp";
-        string exportFolder = EditorUtility.OpenFolderPanel(fileSearchMessage, "Assets", vppName);
+        string exportFolder = EditorUtility.OpenFolderPanel(fileSearchMessage, lastVPPPath, vppName);
         if(string.IsNullOrEmpty(exportFolder))
             return;
 
@@ -46,7 +52,7 @@ public class VPPUnpacker {
 
         ReadFile(vppPath, exportFolder);
 
-        Debug.Log("All contents have been moved succesfully!");
+        Debug.Log("Content of " + Path.GetFileName(vppPath) + " has been unpacked succesfully!");
         AssetDatabase.Refresh();
     }
 
