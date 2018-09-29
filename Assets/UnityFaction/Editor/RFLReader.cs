@@ -38,7 +38,8 @@ public class RFLReader {
         CutscenePathNodes = 0x00005000,
         AmbientSounds = 0x00000500,
         Events = 0x00000600,
-        Unkown1 = 0x00006000,
+        Unknown1 = 0x00006000,
+        Unknown3 = 0x00004000,
         MPSpawnPoints = 0x00000700,
         Particlemitters = 0x00000A00,
         GasRegions = 0x00000B00,
@@ -147,7 +148,8 @@ public class RFLReader {
         case RFLSection.V3D:
         case RFLSection.VFX:
         case RFLSection.LightMaps:
-        case RFLSection.Unkown1:
+        case RFLSection.Unknown1:
+        case RFLSection.Unknown3:
         case RFLSection.CutsceneCameras:
         case RFLSection.CutscenePathNodes:
         case RFLSection.RoomEffects:
