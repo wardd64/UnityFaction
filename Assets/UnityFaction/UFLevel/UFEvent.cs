@@ -291,7 +291,7 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.When_Enter_Vehicle:
         case UFLevelStructure.Event.EventType.When_Try_Exit_Vehicle:
         case UFLevelStructure.Event.EventType.When_Cutscene_Over:
-        case UFLevelStructure.Event.EventType.When_Countdown_Reach:
+        case UFLevelStructure.Event.EventType.When_Countdown_Reaches:
         case UFLevelStructure.Event.EventType.When_Life_Reaches:
         case UFLevelStructure.Event.EventType.When_Armor_Reaches:
         case UFLevelStructure.Event.EventType.When_Hit:
