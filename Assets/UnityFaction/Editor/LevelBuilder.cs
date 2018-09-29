@@ -637,6 +637,7 @@ public class LevelBuilder : EditorWindow {
             sound.clip = GetClip(s.clip);
             sound.volume = s.volume;
 
+            sound.spatialBlend = 1f;
             sound.rolloffMode = AudioRolloffMode.Linear;
             sound.minDistance = s.minDist;
             sound.maxDistance = s.minDist + (10f * s.minDist * s.volume / s.roloff);
