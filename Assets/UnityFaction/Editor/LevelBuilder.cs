@@ -385,6 +385,7 @@ public class LevelBuilder : EditorWindow {
             GameObject mesh = MakeMeshObject(level.staticGeometry, scrollFaceInList, "ScrolFace_" + scrollID);
             mesh.transform.SetParent(scrol.transform);
             MeshRenderer mr = mesh.GetComponent<MeshRenderer>();
+            mesh.AddComponent<MeshCollider>();
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
             string tex = level.staticGeometry.textures[face.texture];
             mr.material = GetScrollingTexture(tex, scroll.scrollVelocity);

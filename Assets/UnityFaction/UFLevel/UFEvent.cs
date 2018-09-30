@@ -212,6 +212,10 @@ public class UFEvent : MonoBehaviour {
         //TODO
         return IDRef.Type.None;
 
+        case UFLevelStructure.Event.EventType.Skybox_State:
+        UFLevel.playerInfo.SetSkyboxRotation(string1, float1);
+        return IDRef.Type.None;
+
         default:
         Debug.LogError("Event type " + type + " not implemented");
         return IDRef.Type.None;
@@ -282,6 +286,7 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.Modify_Rotating_Mover:
         case UFLevelStructure.Event.EventType.Reverse_Mover:
         case UFLevelStructure.Event.EventType.Mover_Pause:
+        case UFLevelStructure.Event.EventType.Skybox_State:
         return EventTypeClass.Effect;
 
         case UFLevelStructure.Event.EventType.Continuous_Damage:
@@ -345,7 +350,6 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.Strip_Player_Weapons:
         case UFLevelStructure.Event.EventType.Fog_State:
         case UFLevelStructure.Event.EventType.Detach:
-        case UFLevelStructure.Event.EventType.Skybox_State:
         case UFLevelStructure.Event.EventType.Force_Monitor_Update:
         case UFLevelStructure.Event.EventType.Black_Out_Player:
         case UFLevelStructure.Event.EventType.Turn_Off_Physics:

@@ -30,6 +30,8 @@ public class UFPlayerInfo : MonoBehaviour {
     private Color targetAmbient;
     private float playerMissingTime;
     private int playerMissingFrames;
+    private Vector3 angularVelocity;
+    private Quaternion cameraRotation;
 
     public void Set(LevelData level, int levelLayer, int playerLayer, int skyLayer, string rflPath) {
         this.levelRFLPath = rflPath;
@@ -152,6 +154,9 @@ public class UFPlayerInfo : MonoBehaviour {
 
         if(this.GetComponent<Collider>() == null)
             Debug.LogWarning("Player Info has no bound collider, please rebuild the level");
+
+        cameraRotation = Quaternion.identity;
+        angularVelocity = Vector3.zero;
     }
 
     private void SetFog() {
@@ -214,7 +219,10 @@ public class UFPlayerInfo : MonoBehaviour {
         RenderSettings.ambientLight = UFUtils.MoveTowards(currentAmb, targetAmbient, r);
 
         if(skyCamera != null) {
-            skyCamera.transform.rotation = playerCamera.transform.rotation;
+            float rotAngle = -Time.deltaTime * angularVelocity.magnitude;
+            cameraRotation *= Quaternion.AngleAxis(rotAngle, angularVelocity);
+
+            skyCamera.transform.rotation = cameraRotation * playerCamera.transform.rotation;
             skyCamera.fieldOfView = playerCamera.fieldOfView;
         }
     }
@@ -276,6 +284,20 @@ public class UFPlayerInfo : MonoBehaviour {
         }
         room = default(Room);
         return false;
+    }
+
+    public void SetSkyboxRotation(string axis, float speed) {
+        switch(axis.ToLower()) {
+        case "x":
+        angularVelocity = speed * Vector3.right;
+        break;
+        case "y":
+        angularVelocity = speed * Vector3.up;
+        break;
+        case "z":
+        angularVelocity = speed * Vector3.forward;
+        break;
+        }
     }
 
 }
