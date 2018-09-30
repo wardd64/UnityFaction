@@ -114,9 +114,9 @@ public class UFBoltEmitter : MonoBehaviour {
 
     private void EmitUpdate() {
         timer += Time.deltaTime;
-        while(timer > nextSpawnDelay) {
+        if(timer > nextSpawnDelay) {
             FireNewBolt();
-            timer -= nextSpawnDelay;
+            timer -= Mathf.Max(Time.deltaTime, nextSpawnDelay);
             nextSpawnDelay = GetRandomTime(delay, delayRandomize);
         }
     }
