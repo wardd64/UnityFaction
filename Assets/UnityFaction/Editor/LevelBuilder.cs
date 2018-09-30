@@ -14,7 +14,7 @@ public class LevelBuilder : EditorWindow {
     private LevelData level;
 
     //GUI variables
-    private bool showContents, showGeneralContents, showGeometryContents, 
+    private bool showContents, showGeneralContents, showGeometryContents,
         showObjectContents, showMoverContents, showBuildOptions;
 
     //Build options
@@ -62,29 +62,8 @@ public class LevelBuilder : EditorWindow {
 
         //button for loading level if none is available yet
         if(level == null) {
-            GUIStyle largeButton = new GUIStyle("button");
-            largeButton.fontSize = 14;
-            largeButton.fontStyle = FontStyle.Bold;
-            largeButton.padding = new RectOffset(5, 5, 5, 5);
-
-            if(GUILayout.Button("Load RFL file", largeButton))
-                BuildLevel();
-
-            //make good guess for current level
-            if(UFLevel.singleton != null) {
-                string rflPath = UFUtils.GetAbsoluteUnityPath(UFLevel.playerInfo.levelRFLPath);
-                string levelName = Path.GetFileNameWithoutExtension(rflPath);
-                
-                if(GUILayout.Button("Try load RFL file: " + levelName, largeButton)) {
-                    if(File.Exists(rflPath) && Path.GetExtension(rflPath).ToLower() == ".rfl")
-                        LoadRFL(rflPath);
-                    else
-                        Debug.Log("Could not find rfl file at path: " + rflPath);
-                }
-                
-            }
-            else
-                GUILayout.Label("No UF level found in scene.");
+            AskNewRFL();
+            AskRefRFL();
             return;
         }
 
@@ -142,8 +121,10 @@ public class LevelBuilder : EditorWindow {
 
         //make root object to put the level under
         if(root == null) {
-            if(GUILayout.Button("Make root"))
+            if(GUILayout.Button("Make root", GetBigButtonGUIStyle()))
                 MakeRoot();
+            AskNewRFL();
+            AskRefRFL();
             return;
         }
 
@@ -198,6 +179,36 @@ public class LevelBuilder : EditorWindow {
 
             //TODO entities?
         }
+    }
+
+    private void AskRefRFL() {
+        if(UFLevel.singleton != null) {
+            string rflPath = UFUtils.GetAbsoluteUnityPath(UFLevel.playerInfo.levelRFLPath);
+            string levelName = Path.GetFileNameWithoutExtension(rflPath);
+
+            if(GUILayout.Button("Try load RFL file: " + levelName, GetBigButtonGUIStyle())) {
+                if(File.Exists(rflPath) && Path.GetExtension(rflPath).ToLower() == ".rfl")
+                    LoadRFL(rflPath);
+                else
+                    Debug.Log("Could not find rfl file at path: " + rflPath);
+            }
+        }
+        else
+            GUILayout.Label("No UF level found in scene.");
+
+    }
+
+    private void AskNewRFL() {
+        if(GUILayout.Button("Load RFL file", GetBigButtonGUIStyle()))
+            BuildLevel();
+    }
+
+    private static GUIStyle GetBigButtonGUIStyle(){
+        GUIStyle toReturn = new GUIStyle("button");
+        toReturn.fontSize = 14;
+        toReturn.fontStyle = FontStyle.Bold;
+        toReturn.padding = new RectOffset(5, 5, 5, 5);
+        return toReturn;
     }
 
     /* -----------------------------------------------------------------------------------------------
@@ -280,6 +291,7 @@ public class LevelBuilder : EditorWindow {
         visG.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
         visG.AddComponent<MeshCollider>();
         visG.layer = levelLayer;
+        CalculateLightMapUVs(visG);
 
         //static visible geometry; same as visible (difference depends on name)
         GameObject icyG = MakeMeshObject(level.staticGeometry, faceSplit[5], "StaticIcy");
@@ -288,6 +300,7 @@ public class LevelBuilder : EditorWindow {
         icyG.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
         icyG.AddComponent<MeshCollider>();
         icyG.layer = levelLayer;
+        CalculateLightMapUVs(icyG);
 
         //static invisible; disabled renderers, but still active colliders
         GameObject invisG = MakeMeshObject(level.staticGeometry, faceSplit[1], "StaticInvisible");
@@ -386,6 +399,7 @@ public class LevelBuilder : EditorWindow {
             mesh.transform.SetParent(scrol.transform);
             MeshRenderer mr = mesh.GetComponent<MeshRenderer>();
             mesh.AddComponent<MeshCollider>();
+            mesh.layer = levelLayer;
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
             string tex = level.staticGeometry.textures[face.texture];
             mr.material = GetScrollingTexture(tex, scroll.scrollVelocity);
@@ -1347,6 +1361,11 @@ public class LevelBuilder : EditorWindow {
         }
         else
             Debug.LogWarning("Could not snap decall " + t.name + " to any geometry.");
+    }
+
+    private static void CalculateLightMapUVs(GameObject meshObject) {
+        Mesh mesh = meshObject.GetComponent<MeshFilter>().sharedMesh;
+        Unwrapping.GenerateSecondaryUVSet(mesh);
     }
 }
 

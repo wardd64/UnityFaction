@@ -126,7 +126,7 @@ public class VBMReader {
                     }
                 }
                 else {
-                    int mipFactor = 4 ^ j;
+                    int mipFactor = Mathf.RoundToInt(Mathf.Pow(4, j));
                     int nboPixels = width * height / mipFactor;
                     pointer += nboPixels * 2;
                 }
