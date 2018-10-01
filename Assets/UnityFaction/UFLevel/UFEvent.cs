@@ -19,6 +19,7 @@ public class UFEvent : MonoBehaviour {
     public string string1, string2;
     public int[] links;
     public Color color;
+    public Object obj;
 
     public void Set(UFLevelStructure.Event e){
         type = e.type;
@@ -153,6 +154,10 @@ public class UFEvent : MonoBehaviour {
     /// other refs can simply be activated.
     /// </summary>
     private IDRef.Type DoEffect(bool positive) {
+
+        Transform playerTr = UFLevel.GetPlayer<Transform>();
+        UFPlayerLife playerLi = UFLevel.GetPlayer<UFPlayerLife>();
+
         switch(type) {
 
         case UFLevelStructure.Event.EventType.Teleport:
@@ -164,11 +169,11 @@ public class UFEvent : MonoBehaviour {
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Teleport_Player:
-        Transform player = UFLevel.GetPlayer<Transform>();
-        player.position = transform.position;
+        
+        playerTr.position = transform.position;
         float rot = transform.rotation.eulerAngles.y;
-        player.rotation = Quaternion.Euler(0f, rot, 0f);
-        player.GetComponent<CharacterController>().Move(Vector3.zero);
+        playerTr.rotation = Quaternion.Euler(0f, rot, 0f);
+        playerTr.GetComponent<CharacterController>().Move(Vector3.zero);
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Music_Start:
@@ -185,13 +190,13 @@ public class UFEvent : MonoBehaviour {
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Particle_State:
-        Debug.LogError("Implement me");
-        //TODO
+        foreach(UFParticleEmitter pem in GetLinksOfType<UFParticleEmitter>(IDRef.Type.Keyframe))
+            pem.Activate(positive);
         return IDRef.Type.ParticleEmitter;
 
         case UFLevelStructure.Event.EventType.Mover_Pause:
-        Debug.LogError("Implement me");
-        //TODO
+        foreach(UFMover mov in GetLinksOfType<UFMover>(IDRef.Type.Keyframe))
+            mov.Activate(!positive);
         return IDRef.Type.Keyframe;
 
         case UFLevelStructure.Event.EventType.Reverse_Mover:
@@ -208,13 +213,37 @@ public class UFEvent : MonoBehaviour {
         return IDRef.Type.Keyframe;
 
         case UFLevelStructure.Event.EventType.Explode:
-        Debug.LogError("Implement me");
-        //TODO
+        float radius = float1;
+        float damage = float2;
+        bool geo = bool1;
+        float dist = (playerTr.position - transform.position).magnitude;
+        if(dist < radius)
+            playerLi.TakeDamage(damage, UFPlayerLife.DamageType.Explosive, false);
+        if(geo)
+            Debug.LogWarning("Explosion " + name + " requested geo mod; this will not work as of now!");
+        GameObject explosionPrefab = obj as GameObject;
+        if(explosionPrefab != null) {
+            Vector3 explPos = transform.position;
+            Quaternion explRot = transform.rotation;
+            GameObject explosion = Instantiate(explosionPrefab, explPos, explRot, transform);
+            explosion.transform.localScale = radius * 2f * Vector3.one;
+        }
+        else
+            Debug.LogWarning("Explosion prefab for event " + name + " was not provided!");
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Skybox_State:
         UFLevel.playerInfo.SetSkyboxRotation(string1, float1);
         return IDRef.Type.None;
+
+        case UFLevelStructure.Event.EventType.Bolt_State:
+        foreach(UFBoltEmitter bem in GetLinksOfType<UFBoltEmitter>(IDRef.Type.Keyframe))
+            bem.Activate(positive);
+        return IDRef.Type.BoltEmitter;
+
+        case UFLevelStructure.Event.EventType.Push_Region_State:
+            
+        return IDRef.Type.PushRegion;
 
         default:
         Debug.LogError("Event type " + type + " not implemented");

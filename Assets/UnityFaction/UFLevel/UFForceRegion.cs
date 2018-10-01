@@ -154,6 +154,13 @@ public class UFForceRegion : MonoBehaviour {
         player = null;
     }
 
+    public void Activate(bool positive) {
+        foreach(Collider c in GetComponentsInChildren<Collider>())
+            c.enabled = positive;
+        if(!positive && player != null)
+            player = null;
+    }
+
     private UFPlayerMovement GetPlayer(Collider c) {
         if(noPlayer)
             return null;
