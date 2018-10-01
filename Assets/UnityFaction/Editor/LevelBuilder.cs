@@ -182,7 +182,7 @@ public class LevelBuilder : EditorWindow {
     }
 
     private void AskRefRFL() {
-        if(UFLevel.singleton != null) {
+        if(UFLevel.singleton != null && UFLevel.playerInfo != null) {
             string rflPath = UFUtils.GetAbsoluteUnityPath(UFLevel.playerInfo.levelRFLPath);
             string levelName = Path.GetFileNameWithoutExtension(rflPath);
 
@@ -671,6 +671,7 @@ public class LevelBuilder : EditorWindow {
     /// </summary>
     private void BuildDecals() {
         Transform p = MakeParent("Decals");
+        p.gameObject.isStatic = true;
         foreach(Decal d in level.decals) {
             string name = "Decall_" + GetIdString(d.cbTransform.transform);
             MeshFilter mf = MakeUFObject<MeshFilter>(name, p, d.cbTransform.transform);
@@ -678,6 +679,7 @@ public class LevelBuilder : EditorWindow {
             MeshRenderer mr = mf.gameObject.AddComponent<MeshRenderer>();
             mr.material = GetMaterial(d.texture, assetPath);
             SnapToGeometry(mf.transform, d.cbTransform.extents.z);
+            mf.gameObject.isStatic = true;
         }
     }
 
@@ -1364,8 +1366,11 @@ public class LevelBuilder : EditorWindow {
     }
 
     private static void CalculateLightMapUVs(GameObject meshObject) {
-        Mesh mesh = meshObject.GetComponent<MeshFilter>().sharedMesh;
-        Unwrapping.GenerateSecondaryUVSet(mesh);
+        try {
+            Mesh mesh = meshObject.GetComponent<MeshFilter>().sharedMesh;
+            Unwrapping.GenerateSecondaryUVSet(mesh);
+        }
+        catch(Exception) { }
     }
 }
 
