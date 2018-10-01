@@ -190,7 +190,7 @@ public class UFEvent : MonoBehaviour {
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Particle_State:
-        foreach(UFParticleEmitter pem in GetLinksOfType<UFParticleEmitter>(IDRef.Type.Keyframe))
+        foreach(UFParticleEmitter pem in GetLinksOfType<UFParticleEmitter>(IDRef.Type.ParticleEmitter))
             pem.Activate(positive);
         return IDRef.Type.ParticleEmitter;
 
@@ -237,12 +237,13 @@ public class UFEvent : MonoBehaviour {
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Bolt_State:
-        foreach(UFBoltEmitter bem in GetLinksOfType<UFBoltEmitter>(IDRef.Type.Keyframe))
+        foreach(UFBoltEmitter bem in GetLinksOfType<UFBoltEmitter>(IDRef.Type.BoltEmitter))
             bem.Activate(positive);
         return IDRef.Type.BoltEmitter;
 
         case UFLevelStructure.Event.EventType.Push_Region_State:
-            
+        foreach(UFForceRegion pr in GetLinksOfType<UFForceRegion>(IDRef.Type.PushRegion))
+            pr.Activate(positive);
         return IDRef.Type.PushRegion;
 
         default:
