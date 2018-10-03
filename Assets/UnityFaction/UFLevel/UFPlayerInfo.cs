@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class UFPlayerInfo : MonoBehaviour {
 
+    //general RF level settings
     public string levelRFLPath;
     public string levelName, author;
     public PosRot playerStart;
@@ -25,8 +26,10 @@ public class UFPlayerInfo : MonoBehaviour {
     public int playerLayer;
     public LayerMask skyMask;
 
+    //dynamic getters
     public LayerMask playerMask { get { return LayerMask.GetMask(LayerMask.LayerToName(playerLayer)); } }
 
+    //dynamic variables
     private Color targetAmbient;
     private float playerMissingTime;
     private int playerMissingFrames;
@@ -65,7 +68,7 @@ public class UFPlayerInfo : MonoBehaviour {
             Vector3 roomExtents = room.aabb.max - room.aabb.min;
             Vector3 roomCenter = (room.aabb.max + room.aabb.min)/2f;
 
-            levelBox = UFUtils.Join(levelBox, room.aabb);
+            levelBox = AxisAlignedBoundingBox.Join(levelBox, room.aabb);
 
             bool realRoom = true;
             if(room.isSkyRoom) {
@@ -150,13 +153,14 @@ public class UFPlayerInfo : MonoBehaviour {
     }
 
     private void Start() {
-        SetFog();
+        SetRenderSettings();
 
         if(this.GetComponent<Collider>() == null)
             Debug.LogWarning("Player Info has no bound collider, please rebuild the level");
 
         cameraRotation = Quaternion.identity;
         angularVelocity = Vector3.zero;
+
     }
 
     private void SetFog() {
@@ -176,13 +180,13 @@ public class UFPlayerInfo : MonoBehaviour {
     }
 
     private void SetRenderSettings() {
-        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-        RenderSettings.ambientLight = defaultAmbient;
-        SetFog();
-
         bool ambientIsCorrect = RenderSettings.ambientMode == UnityEngine.Rendering.AmbientMode.Flat;
         if(!ambientIsCorrect)
-            Debug.LogError("Ambient light settings should be set to flat color!");
+            Debug.LogError("Ambient light settings should be set to a flat color!");
+
+        RenderSettings.ambientLight = defaultAmbient;
+        targetAmbient = defaultAmbient;
+        SetFog();
     }
 
     public void ApplyCameraSettings(Camera playerCamera) {

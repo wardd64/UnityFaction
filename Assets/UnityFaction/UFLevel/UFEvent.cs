@@ -151,13 +151,17 @@ public class UFEvent : MonoBehaviour {
     /// <summary>
     /// Perform effects of this event. 
     /// Returns the type of IDRef that is used up when performing the event,
-    /// other refs can simply be activated.
+    /// these references do not get activated in the usual sense by this 
+    /// event type.
     /// </summary>
     private IDRef.Type DoEffect(bool positive) {
 
+        //preperatory variables
         Transform playerTr = UFLevel.GetPlayer<Transform>();
         UFPlayerLife playerLi = UFLevel.GetPlayer<UFPlayerLife>();
+        AudioSource sound = this.GetComponent<AudioSource>();
 
+        //find effect type and do its effects. Return IDRefts that were used up.
         switch(type) {
 
         case UFLevelStructure.Event.EventType.Teleport:
@@ -169,7 +173,6 @@ public class UFEvent : MonoBehaviour {
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Teleport_Player:
-        
         playerTr.position = transform.position;
         float rot = transform.rotation.eulerAngles.y;
         playerTr.rotation = Quaternion.Euler(0f, rot, 0f);
@@ -177,10 +180,26 @@ public class UFEvent : MonoBehaviour {
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Music_Start:
-        AudioSource sound = this.GetComponent<AudioSource>();
         if(sound.clip == null)
             Debug.LogWarning("Music event has no audio clip assigned: " + name);
-        sound.volume = 1f; sound.Play();
+        sound.Play();
+        return IDRef.Type.None;
+
+        case UFLevelStructure.Event.EventType.Play_Sound:
+        sound.rolloffMode = AudioRolloffMode.Linear;
+        if(float1 >= 0f) {
+            sound.minDistance = float1;
+            sound.maxDistance = float1 * 2f;
+            sound.spatialBlend = 1f;
+        }
+        else
+            sound.spatialBlend = 0f;
+        if(sound.clip == null)
+            Debug.LogWarning("Play sound event has no audio clip assigned: " + name);
+        sound.loop = bool1;
+        sound.Play();
+        if(float2 > 0f && !bool1)
+            sound.SetScheduledEndTime(float2);
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Music_Stop:

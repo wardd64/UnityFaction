@@ -260,24 +260,21 @@ public class LevelBuilder : EditorWindow {
             if(excludedFace)
                 continue;
 
+            int texIdx = Mathf.Max(0, face.texture);
+            string nextTex = level.staticGeometry.textures[texIdx].ToLower();
+
             int sort = 0;
+            if(nextTex.Contains("invis"))
+                sort = 1;
             if(FaceIsContainedInLiquidSurface(level.staticGeometry, liquids, face))
                 sort = 2;
             else if(hasSkyRoom && FaceIsInRoom(level.staticGeometry, skyRoom, face))
                 sort = 4;
             else if(scrollers.Contains(face.id))
                 sort = 3;
-            else {
-                int texIdx = Mathf.Max(0, face.texture);
-                string nextTex = level.staticGeometry.textures[texIdx];
-                bool invis = nextTex.ToLower().Contains("invis");
-                bool icy = nextTex.ToLower().Contains("ice") || nextTex.ToLower().Contains("icy");
-                if(invis)
-                    sort = 1;
-                else if(icy)
-                    sort = 5;
-            }
-
+            else if(nextTex.Contains("ice") || nextTex.Contains("icy"))
+                sort = 5;
+                
             faceSplit[sort].Add(face);
         }
 
@@ -329,24 +326,19 @@ public class LevelBuilder : EditorWindow {
         //portal geometry: sometimes needed sometimes not
         GameObject portalG = new GameObject("PortalGeometry");
         portalG.transform.SetParent(p);
-        brushes = GetExceptedBrushes();
+        brushes = GetPortalBrushes();
         foreach(Brush b in brushes) {
-            if(!b.isAir) {
-                //solid portal brushes can be safely ignored
-                continue;
-            }
-
-            /*
-             * Air portals lead to faulty geometry: 
-             * build them and warn the player about their presence.
-             */
-
-            foundAirPortals = true;
             string name = "Brush_" + GetIdString(b.transform);
+
+            if(b.isAir) {
+                foundAirPortals = true;
+                name = "_AIR_" + name;
+            }
+            
             Transform brush = (MakeMeshObject(b.geometry, name)).transform;
             brush.SetParent(portalG.transform);
             UFUtils.SetTransform(brush, b.transform);
-            brush.gameObject.SetActive(false);
+            brush.gameObject.SetActive(b.isAir);
             
         }
         if(foundAirPortals)
@@ -401,8 +393,10 @@ public class LevelBuilder : EditorWindow {
             mesh.AddComponent<MeshCollider>();
             mesh.layer = levelLayer;
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
-            string tex = level.staticGeometry.textures[face.texture];
-            mr.material = GetScrollingTexture(tex, scroll.scrollVelocity);
+            if(face.texture >= 0) {
+                string tex = level.staticGeometry.textures[face.texture];
+                mr.material = GetScrollingTexture(tex, scroll.scrollVelocity);
+            }
         }
 
         GameObject sky = MakeMeshObject(level.staticGeometry, faceSplit[4], "SkyRoom");
@@ -793,7 +787,7 @@ public class LevelBuilder : EditorWindow {
         foreach(Face face in faces) {
             int texIdx = Mathf.Max(0, face.texture);
             string nextTex = geometry.textures[texIdx];
-            if(!usedTextures.Contains(nextTex)) {
+            if(!usedTextures.Contains(nextTex) && face.texture >= 0) {
                 texMap[face.texture] = usedTextures.Count;
                 usedTextures.Add(nextTex);
             }
@@ -974,11 +968,12 @@ public class LevelBuilder : EditorWindow {
 
     /// <summary>
     /// Brushes that do not need to appear in the standard static geometry
+    /// This includes destructibles and portals
     /// </summary>
     private List<Brush> GetSpecialBrushes() {
         List<Brush> toReturn = new List<Brush>();
         toReturn.AddRange(GetDestructibleBrushes());
-        toReturn.AddRange(GetExceptedBrushes());
+        toReturn.AddRange(GetPortalBrushes());
         return toReturn;
     }
 
@@ -999,9 +994,9 @@ public class LevelBuilder : EditorWindow {
     }
 
     /// <summary>
-    /// Solid, portal brushes; these divide up rooms only, no renderer or collider needed
+    /// portal brushes; these divide up rooms only, no renderer or collider needed
     /// </summary>
-    private List<Brush> GetExceptedBrushes() {
+    private List<Brush> GetPortalBrushes() {
         List<Brush> toReturn = new List<Brush>();
 
         foreach(Brush b in level.brushes) {
@@ -1024,21 +1019,63 @@ public class LevelBuilder : EditorWindow {
         return false;
     }
 
+    //stash variables for performance boost
+    private static List<Brush> lastContainList;
+    private static AxisAlignedBoundingBox[] brushContainers;
+
     /// <summary>
     /// Returns true if the given face is embedded in one of the given brushes.
     /// </summary>
     private static bool FaceIsContainedInBrushes(Geometry geometry, Face face, List<Brush> brushes) {
-        foreach(Brush b in brushes) {
-            if(FaceIsContainedIn(geometry, face, b))
+        if(lastContainList != brushes)
+            CalculateContainers(brushes);
+
+        for(int i = 0; i < brushes.Count; i++) {
+            if(!FaceIsNearBrush(geometry, face, brushContainers[i]))
+                continue;
+            if(FaceIsContainedIn(geometry, face, brushes[i]))
                 return true;
         }
         return false;
+    }
+
+    private static void CalculateContainers(List<Brush> brushes) {
+        lastContainList = brushes;
+        int nboBrushes = brushes.Count;
+        brushContainers = new AxisAlignedBoundingBox[nboBrushes];
+
+        for(int i = 0; i < nboBrushes; i++) {
+            Vector3 bPos = brushes[i].transform.posRot.position;
+            Quaternion bRot = brushes[i].transform.posRot.rotation;
+            brushContainers[i] = new AxisAlignedBoundingBox(bPos);
+
+            for(int j = 0; j < brushes[i].geometry.vertices.Length; j++) {
+                Vector3 pos = brushes[i].geometry.vertices[j];
+                pos = bPos + bRot * pos;
+                brushContainers[i].Join(pos);
+            }
+
+            brushContainers[i].Expand(GEOM_DELTA);
+        }
+    }
+
+    private static bool FaceIsNearBrush(Geometry geometry, Face face, AxisAlignedBoundingBox container) {
+        for(int i = 0; i < face.vertices.Length; i++) {
+            Vector3 v = geometry.vertices[face.vertices[i].vertexRef];
+            if(!container.IsInside(v))
+                return false;
+        }
+        return true;
     }
 
     /// <summary>
     /// True if every vertex of the given face lies in one of the faces of the given brush
     /// </summary>
     private static bool FaceIsContainedIn(Geometry geometry, Face face, Brush brush) {
+        Vector3 bPos = brush.transform.posRot.position;
+        Quaternion bRot = brush.transform.posRot.rotation;
+        Vector3[] bGeom = brush.geometry.vertices;
+
         foreach(FaceVertex v in face.vertices) {
             Vector3 vertex = geometry.vertices[v.vertexRef];
             bool foundMatch = false;
@@ -1046,9 +1083,6 @@ public class LevelBuilder : EditorWindow {
             foreach(Face f in brush.geometry.faces) {
                 int nboPoints = f.vertices.Length;
                 Vector3[] faceVertices = new Vector3[nboPoints];
-                Vector3 bPos = brush.transform.posRot.position;
-                Quaternion bRot = brush.transform.posRot.rotation;
-                Vector3[] bGeom = brush.geometry.vertices;
                 for(int i = 0; i < nboPoints; i++) 
                     faceVertices[i] = bPos + bRot * bGeom[f.vertices[i].vertexRef];
 
@@ -1063,6 +1097,9 @@ public class LevelBuilder : EditorWindow {
                     if(foundMatch)
                         break;
                 }
+
+                if(foundMatch)
+                    break;
             }
 
             if(!foundMatch)
@@ -1289,6 +1326,8 @@ public class LevelBuilder : EditorWindow {
     private static Mesh MakeMesh(Geometry geometry, List<Face> faces, int[] texMap, int texCount) {
         Mesh mesh = new Mesh();
 
+        texCount = Mathf.Max(1, texCount);
+
         //mesh
         List<Vector3> vertices = new List<Vector3>();
         List<Vector2> uvs = new List<Vector2>();
@@ -1322,7 +1361,8 @@ public class LevelBuilder : EditorWindow {
 
             int texRef = Mathf.Max(0, face.texture);
             texRef = texMap[texRef];
-
+            if(texRef < 0 || texRef >= triangles.Length)
+                Debug.Log(texRef);
             triangles[texRef].AddRange(faceTriangles);
         }
 

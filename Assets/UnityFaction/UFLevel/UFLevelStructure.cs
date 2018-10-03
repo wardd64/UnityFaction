@@ -79,27 +79,66 @@ namespace UFLevelStructure {
     public struct AxisAlignedBoundingBox {
         public Vector3 min, max;
 
-        public AxisAlignedBoundingBox(Vector3 point1, Vector3 point2) {
-            float xMin = Mathf.Min(point1.x, point2.x);
-            float xMax = Mathf.Max(point1.x, point2.x);
-            float yMin = Mathf.Min(point1.y, point2.y);
-            float yMax = Mathf.Max(point1.y, point2.y);
-            float zMin = Mathf.Min(point1.z, point2.z);
-            float zMax = Mathf.Max(point1.z, point2.z);
+        public AxisAlignedBoundingBox(Vector3 point) {
+            min = point;
+            max = point;
+        }
 
-            min = new Vector3(xMin, yMin, zMin);
-            max = new Vector3(xMax, yMax, zMax);
+        public AxisAlignedBoundingBox(Vector3 point1, Vector3 point2) {
+            min = Vector3.zero;
+            max = Vector3.zero;
+            for(int i = 0; i < 3; i++) {
+                min[i] = Mathf.Min(point1[i], point2[i]);
+                max[i] = Mathf.Max(point1[i], point2[i]);
+            }
         }
 
         public bool IsInside(Vector3 point) {
-            bool toReturn = true;
-            toReturn &= point.x > min.x;
-            toReturn &= point.y > min.y;
-            toReturn &= point.z > min.z;
-            toReturn &= point.x < max.x;
-            toReturn &= point.y < max.y;
-            toReturn &= point.z < max.z;
-            return toReturn;
+            for(int i = 0; i < 3; i++) {
+                if(point[i] < min[i] || point[i] > max[i])
+                    return false;
+            }
+            return true;
+        }
+
+        public bool IsStrictlyInside(Vector3 point) {
+            for(int i = 0; i < 3; i++) {
+                if(point[i] <= min[i] || point[i] >= max[i])
+                    return false;
+            }
+            return true;
+        }
+
+        public void Join(AxisAlignedBoundingBox other) {
+            for(int i = 0; i < 3; i++) {
+                this.min[i] = Mathf.Min(this.min[i], other.min[i]);
+                this.max[i] = Mathf.Max(this.max[i], other.max[i]);
+            }
+        }
+
+        public void Join(Vector3 point) {
+            for(int i = 0; i < 3; i++) {
+                this.min[i] = Mathf.Min(this.min[i], point[i]);
+                this.max[i] = Mathf.Max(this.max[i], point[i]);
+            }
+        }
+
+        public void Expand(float amount) {
+            Expand(amount * Vector3.one);
+        }
+
+        public void Expand(Vector3 amount) {
+            this.min -= amount;
+            this.max += amount;
+        }
+
+        public static AxisAlignedBoundingBox Join(AxisAlignedBoundingBox box1, AxisAlignedBoundingBox box2) {
+            Vector3 newMin = Vector3.zero, newMax = Vector3.zero;
+            for(int i = 0; i < 3; i++) {
+                newMin[i] = Mathf.Min(box1.min[i], box2.min[i]);
+                newMax[i] = Mathf.Max(box1.max[i], box2.max[i]);
+            }
+            return new AxisAlignedBoundingBox(newMin, newMax);
         }
     }
 
