@@ -121,7 +121,7 @@ public class UFPlayerMovement : MonoBehaviour {
 
         this.transform.position = pr.position;
         this.transform.rotation = Quaternion.Euler(0f, pr.rotation.eulerAngles.y, 0f);
-        playerCamera.transform.rotation = Quaternion.Euler(pr.rotation.x, 0f, 0f);
+        SetRotation(pr.rotation);
 
         GetComponent<UFPlayerWeapons>().Reset();
     }
@@ -199,6 +199,20 @@ public class UFPlayerMovement : MonoBehaviour {
             prevRotX[i] = rotationX;
     }
 
+    public void SetRotation(float rotX, float rotY) {
+        rotationX = rotX;
+        rotationY = rotY;
+        for(int i = 0; i < rotSmoothing; i++) {
+            prevRotX[i] = rotX;
+            prevRotY[i] = rotY;
+        }
+    }
+
+    public void SetRotation(Quaternion rot) {
+        rotationX = rot.eulerAngles.y;
+        rotationY = rot.eulerAngles.x;
+        SetRotation(rotationX, rotationY);
+    }
 
     private void MoveUpdate() {
 
