@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -159,6 +159,7 @@ public class UFEvent : MonoBehaviour {
         //preperatory variables
         Transform playerTr = UFLevel.GetPlayer<Transform>();
         UFPlayerLife playerLi = UFLevel.GetPlayer<UFPlayerLife>();
+        UFPlayerMovement playerMo = UFLevel.GetPlayer<UFPlayerMovement>();
         AudioSource sound = this.GetComponent<AudioSource>();
 
         //find effect type and do its effects. Return IDRefts that were used up.
@@ -174,9 +175,8 @@ public class UFEvent : MonoBehaviour {
 
         case UFLevelStructure.Event.EventType.Teleport_Player:
         playerTr.position = transform.position;
-        float rot = transform.rotation.eulerAngles.y;
-        playerTr.rotation = Quaternion.Euler(0f, rot, 0f);
         playerTr.GetComponent<CharacterController>().Move(Vector3.zero);
+        playerMo.SetRotation(transform.rotation);
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Music_Start:

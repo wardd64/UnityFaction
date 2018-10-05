@@ -208,6 +208,10 @@ public class UFPlayerMovement : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// Sets camera and yaw rotation as well as possible according to the given quaternion
+    /// (roll rotation is ignored)
+    /// </summary>
     public void SetRotation(Quaternion rot) {
         rotationX = rot.eulerAngles.y;
         rotationY = rot.eulerAngles.x;
