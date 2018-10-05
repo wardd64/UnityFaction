@@ -706,4 +706,13 @@ public class UFUtils {
 
         return new Vector2(width, height);
     }
+
+    /// <summary>
+    /// Sets given object and all of its chilrden to be static or not.
+    /// </summary>
+    public static void SetStaticRecursively(GameObject g, bool value) {
+        for(int i = 0; i < g.transform.childCount; i++)
+            SetStaticRecursively(g.transform.GetChild(i).gameObject, value);
+        g.isStatic = value;
+    }
 }

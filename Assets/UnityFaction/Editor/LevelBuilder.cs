@@ -283,25 +283,29 @@ public class LevelBuilder : EditorWindow {
 
         //static visible geometry; all standard stuff
         GameObject visG = MakeMeshObject(level.staticGeometry, faceSplit[0], "StaticVisible");
-        visG.isStatic = true;
+        UFUtils.SetStaticRecursively(visG, true);
         visG.transform.SetParent(p);
-        visG.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
-        visG.AddComponent<MeshCollider>();
+        foreach(MeshRenderer mr in visG.GetComponentsInChildren<MeshRenderer>()) {
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+            mr.gameObject.AddComponent<MeshCollider>();
+        }
         visG.layer = levelLayer;
         CalculateLightMapUVs(visG);
 
         //static visible geometry; same as visible (difference depends on name)
         GameObject icyG = MakeMeshObject(level.staticGeometry, faceSplit[5], "StaticIcy");
-        icyG.isStatic = true;
+        UFUtils.SetStaticRecursively(icyG, true);
         icyG.transform.SetParent(p);
-        icyG.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
-        icyG.AddComponent<MeshCollider>();
+        foreach(MeshRenderer mr in icyG.GetComponentsInChildren<MeshRenderer>()) {
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+            mr.gameObject.AddComponent<MeshCollider>();
+        }
         icyG.layer = levelLayer;
         CalculateLightMapUVs(icyG);
 
         //static invisible; disabled renderers, but still active colliders
         GameObject invisG = MakeMeshObject(level.staticGeometry, faceSplit[1], "StaticInvisible");
-        invisG.isStatic = true;
+        UFUtils.SetStaticRecursively(invisG, true);
         invisG.transform.SetParent(p);
         invisG.GetComponent<MeshRenderer>().enabled = false;
         invisG.AddComponent<MeshCollider>();
@@ -772,6 +776,9 @@ public class LevelBuilder : EditorWindow {
         return MakeMeshObject(geometry, faces, name);
     }
 
+    const int MAX_TEXTURES = 16;
+    const string FLAG_TEXTURE = "USERBMAP";
+
     /// <summary>
     /// Makes a single object containing mesh data (and renderer) of the given faces.
     /// This only works correctly when all given faces are part of the given geometry.
@@ -787,28 +794,94 @@ public class LevelBuilder : EditorWindow {
         foreach(Face face in faces) {
             int texIdx = Mathf.Max(0, face.texture);
             string nextTex = geometry.textures[texIdx];
+            nextTex = CheckFlagTexture(geometry, nextTex);
+
             if(!usedTextures.Contains(nextTex) && face.texture >= 0) {
                 texMap[face.texture] = usedTextures.Count;
                 usedTextures.Add(nextTex);
             }
         }
 
-        //mesh
-        Mesh mesh = MakeMesh(geometry, faces, texMap, usedTextures.Count);
+        int texCount = usedTextures.Count;
+        if(texCount > MAX_TEXTURES) {
+            Debug.LogWarning("Mesh object " + name + " had too many textures and had to be split into multiple objects");
+
+            int nboSplits = (texCount / MAX_TEXTURES) + 1;
+            List<Face>[] faceSplit = new List<Face>[nboSplits];
+
+            for(int i = 0; i < nboSplits; i++)
+                faceSplit[i] = new List<Face>();
+
+            foreach(Face face in faces) {
+                if(face.texture < 0)
+                    continue;
+
+                int geomTexIdx = Mathf.Max(0, face.texture);
+                string nextTex = geometry.textures[geomTexIdx];
+                int usedTexIdx = usedTextures.IndexOf(nextTex);
+                int split = usedTexIdx / MAX_TEXTURES;
+                if(split < 0 || split >= nboSplits)
+                    Debug.Log(split + " " + nboSplits + " " + usedTexIdx);
+                faceSplit[split].Add(face);
+            }
+
+            for(int i = 0; i < nboSplits; i++) {
+
+                List<String> texSplit = new List<string>();
+                int subTexCount = Mathf.Min(MAX_TEXTURES, texCount - MAX_TEXTURES * i);
+                for(int j = i * MAX_TEXTURES; j < i * MAX_TEXTURES + subTexCount; j++)
+                    texSplit.Add(usedTextures[j]);
+
+                int[] subTexMap = new int[texMap.Length];
+                for(int j = 0; j < subTexMap.Length; j++)
+                    subTexMap[j] = texMap[j] - i * MAX_TEXTURES;
+
+                int digits = Mathf.FloorToInt(Mathf.Log10(nboSplits)) + 1;
+                string digitExt = "_" + i.ToString().PadLeft(digits, '0');
+                string giName = name + digitExt;
+
+                GameObject gi = new GameObject(giName);
+                MakeMeshObject(gi, geometry, giName, faceSplit[i], 
+                    texSplit, subTexMap, subTexCount);
+                gi.transform.SetParent(g.transform);
+            }
+        }
+        else 
+            MakeMeshObject(g, geometry, name, faces, usedTextures, texMap, texCount);
+
+        return g;
+    }
+
+    private static void MakeMeshObject(GameObject g, Geometry geometry, string name, 
+        List<Face> faces, List<String> textures, int[] texMap, int texCount) {
+
+        Mesh mesh = MakeMesh(geometry, faces, texMap, texCount);
         mesh.name = name;
         MeshFilter mf = g.AddComponent<MeshFilter>();
         mf.sharedMesh = mesh;
 
         MeshRenderer mr = g.AddComponent<MeshRenderer>();
-        mr.materials = GetMaterials(usedTextures, assetPath);
+        mr.materials = GetMaterials(textures, assetPath);
 
         bool fullyInvis = true;
-        foreach(String tex in usedTextures)
+        foreach(String tex in textures)
             fullyInvis &= tex.ToLower().Contains("invis");
 
         mr.enabled = !fullyInvis;
+    }
 
-        return g;
+    /// <summary>
+    /// Checks if the given texture name matches a texture that is flagged for special properties.
+    /// If so, a new texture name will be returned that handles this feature appropriately.
+    /// </summary>
+    private static string CheckFlagTexture(Geometry geometry, string texture) {
+        if(texture == FLAG_TEXTURE) {
+            for(int i = 0; i < geometry.textures.Length; i++) {
+                if(geometry.textures[i] != FLAG_TEXTURE)
+                    return geometry.textures[i];
+            }
+        }
+        return texture;
     }
 
     /// <summary>
@@ -1406,11 +1479,16 @@ public class LevelBuilder : EditorWindow {
     }
 
     private static void CalculateLightMapUVs(GameObject meshObject) {
-        try {
-            Mesh mesh = meshObject.GetComponent<MeshFilter>().sharedMesh;
-            Unwrapping.GenerateSecondaryUVSet(mesh);
+        
+            foreach(MeshFilter mf in meshObject.GetComponentsInChildren<MeshFilter>()) {
+            try {
+                Unwrapping.GenerateSecondaryUVSet(mf.sharedMesh);
+            }
+            catch(Exception e) {
+                Debug.LogWarning("Light map uv calculation was unsucessful on mesh " 
+                    + mf.name + " because of " + e);
+            }
         }
-        catch(Exception) { }
     }
 }
 
