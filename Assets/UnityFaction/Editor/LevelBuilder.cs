@@ -535,8 +535,15 @@ public class LevelBuilder : EditorWindow {
                 continue;
             GameObject g = GameObject.Instantiate(prefab, p);
             g.name = "Clutter_" + GetIdString(clutter.transform) + "_" + clutter.name;
-            UFClutter c = g.AddComponent<UFClutter>();
+            UFClutter c = g.GetComponent<UFClutter>();
+            if(c == null)
+                c = g.AddComponent<UFClutter>();
             c.Set(clutter);
+            if(c.isSwitch) {
+                AudioSource switchSound = g.AddComponent<AudioSource>();
+                switchSound.spatialBlend = 1f;
+                switchSound.clip = GetClip("Switch_01");
+            }
             UFLevel.SetObject(clutter.transform.id, g);
             UFUtils.SetTransform(g.transform, clutter.transform);
         }
