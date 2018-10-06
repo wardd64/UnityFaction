@@ -276,7 +276,7 @@ public class UFMover : MonoBehaviour {
             baseRot = rb.rotation;
 
             paused = moving && keys[lastKey].pauseTime > 0f;
-            if(moving && !paused)
+            if(moving && !paused && time > 0f)
                 RotateUpdate();
         }
     }
