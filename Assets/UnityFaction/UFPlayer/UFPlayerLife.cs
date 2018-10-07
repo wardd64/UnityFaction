@@ -56,6 +56,9 @@ public class UFPlayerLife : MonoBehaviour {
         if(health <= 0f)
             return;
 
+        if(GetComponent<UFPlayerMovement>().IsNoClipping())
+            return;
+
         float damage = Mathf.Min(amount, armor);
         armor -= damage; amount -= damage;
 

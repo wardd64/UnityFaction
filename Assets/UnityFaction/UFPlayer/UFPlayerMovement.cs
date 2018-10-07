@@ -10,7 +10,7 @@ public class UFPlayerMovement : MonoBehaviour {
 
     private MotionState motionState;
     public enum MotionState {
-        ground, air, crouch, climb, swim
+        ground, air, crouch, climb, swim, noClip
     }
     private bool crouching;
 
@@ -57,6 +57,7 @@ public class UFPlayerMovement : MonoBehaviour {
     public float sharpEdgeTrshold = 2.5f; //speed above which sharp edge correction activates
     public float moverHitForce = 1f; //factor by which mover collissions are multiplied
     public float liquidJumpMultiplier = 2f; //factor for vert speed when exiting liquids
+    public float noClipSpeed = 20f; //flying speed when noclipping
 
     /// <summary>
     /// Unit vector pointing horizontally in the direction the player is turned towards
@@ -280,6 +281,9 @@ public class UFPlayerMovement : MonoBehaviour {
         case MotionState.swim:
         SwimMove(movement, jump, crouch);
         break;
+        case MotionState.noClip:
+        NoClip(movement, jump, crouch);
+        break;
         default:
         Debug.LogError("Unexpected motion state: " + motionState);
         break;
@@ -414,6 +418,12 @@ public class UFPlayerMovement : MonoBehaviour {
         MoveCCFlying(acceleration);
     }
 
+    private void NoClip(Vector3 horMovemnt, bool up, bool down) {
+        float factor = noClipSpeed * Time.deltaTime;
+        Vector3 drift = GetDrift(horMovemnt, up, down, Vector3.up, factor);
+        transform.position += drift;
+    }
+
     private void ClimbMove(Vector3 horMovement, bool up, bool down) {
         DriftMove(horMovement, up, down, climbDir, climbSteering, climbDrag);
     }
@@ -423,6 +433,13 @@ public class UFPlayerMovement : MonoBehaviour {
     }
 
     private void DriftMove(Vector3 horMovement, bool up, bool down, Vector3 upDirection, float steering, float drag) {
+        Vector3 acceleration = GetDrift(horMovement, up, down, upDirection, steering);
+        Vector3 dragV = drag * velocity;
+        MoveCCFlying(acceleration - dragV);
+        motionState = MotionState.air;
+    }
+
+    private Vector3 GetDrift(Vector3 horMovement, bool up, bool down, Vector3 upDirection, float steering) {
         float vert = (up ? 1f : 0f) - (down ? 1f : 0f);
         Quaternion revRot = Quaternion.Euler(0f, -rotationX, 0f);
         Quaternion upRot = Quaternion.Euler(-rotationY, rotationX, 0f) * revRot;
@@ -431,10 +448,7 @@ public class UFPlayerMovement : MonoBehaviour {
         if(movement != Vector3.zero)
             movement = movement.normalized;
 
-        Vector3 acceleration = movement * steering;
-        Vector3 dragV = drag * velocity;
-        MoveCCFlying(acceleration - dragV);
-        motionState = MotionState.air;
+        return movement * steering;
     }
 
     /// <summary>
@@ -658,13 +672,16 @@ public class UFPlayerMovement : MonoBehaviour {
     }
 
     public void ClimbState(Vector3 climbDirection) {
+        if(motionState == MotionState.noClip)
+            return;
+
         motionState = MotionState.climb;
         this.climbDir = climbDirection;
         this.platform = null;
     }
 
     public void SwimState(UFLiquid liquid) {
-        if(motionState == MotionState.climb)
+        if(motionState == MotionState.climb || motionState == MotionState.noClip)
             return;
 
         this.liquid = liquid;
@@ -675,6 +692,18 @@ public class UFPlayerMovement : MonoBehaviour {
     public void Reset() {
         velocity = Vector3.zero;
         platform = null;
+    }
+
+    public void SetNoClip(bool value) {
+        if(value)
+            motionState = MotionState.noClip;
+        else if(motionState == MotionState.noClip)
+            motionState = MotionState.air;
+        cc.enabled = !value;
+    }
+
+    public bool IsNoClipping() {
+        return motionState == MotionState.noClip;
     }
 
     public virtual void InButtonRange(KeyCode useKey) { }

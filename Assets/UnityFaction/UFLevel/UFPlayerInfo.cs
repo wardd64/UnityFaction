@@ -187,6 +187,7 @@ public class UFPlayerInfo : MonoBehaviour {
         RenderSettings.ambientLight = defaultAmbient;
         targetAmbient = defaultAmbient;
         SetFog();
+        Application.targetFrameRate = 120;
     }
 
     public void ApplyCameraSettings(Camera playerCamera) {
