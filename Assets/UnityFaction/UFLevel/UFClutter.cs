@@ -6,6 +6,7 @@ using UFLevelStructure;
 public class UFClutter : MonoBehaviour {
 
     public bool isSwitch;
+    public bool noCollide;
 
     //destruction
     public float life;
@@ -23,9 +24,13 @@ public class UFClutter : MonoBehaviour {
 
     private void EnsureColliders() {
         bool hasPrefabColliders = GetComponentInChildren<Collider>() != null;
-        if(!hasPrefabColliders) {
+        if(!hasPrefabColliders && !noCollide) {
             foreach(MeshFilter mf in GetComponentsInChildren<MeshFilter>())
                 mf.gameObject.AddComponent<MeshCollider>();
+        }
+        else if(hasPrefabColliders && noCollide) {
+            foreach(Collider c in GetComponentsInChildren<Collider>())
+                c.enabled = false;
         }
     }
 
