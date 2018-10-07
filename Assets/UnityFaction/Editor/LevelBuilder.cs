@@ -533,8 +533,9 @@ public class LevelBuilder : EditorWindow {
             GameObject prefab = GetPrefab(modelName);
             if(prefab == null)
                 continue;
-            GameObject g = GameObject.Instantiate(prefab, p);
-            g.name = "Clutter_" + GetIdString(clutter.transform) + "_" + clutter.name;
+            GameObject g = Instantiate(prefab, p);
+            string nameExt = "_" + clutter.name + "_(" + modelName + ")";
+            g.name = "Clutter_" + GetIdString(clutter.transform) + nameExt;
             UFClutter c = g.GetComponent<UFClutter>();
             if(c == null)
                 c = g.AddComponent<UFClutter>();

@@ -46,7 +46,7 @@ public class TableReader{
             string line = table[i];
             bool header = line.Contains("Class Name:") && line.Contains(name);
             if(header) {
-                while(!line.StartsWith(property))
+                while(!line.Contains(property))
                     line = table[++i];
                 string quotedFileName = Regex.Match(line, "\"([^\"]*)\"").Value;
                 int qfnLength = quotedFileName.Length;
