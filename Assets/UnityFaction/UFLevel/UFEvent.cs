@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
 public class UFEvent : MonoBehaviour {
 
@@ -40,7 +41,7 @@ public class UFEvent : MonoBehaviour {
             Debug.LogWarning("Event " + name + " will have no effects since it is of unknown type: " + type);
     }
 
-    public void SetAudio(AudioClip clip) {
+    public void SetAudio(AudioClip clip, AudioMixerGroup musicChannel, AudioMixerGroup effectsChannel) {
         AudioSource sound = gameObject.AddComponent<AudioSource>();
         sound.volume = 1f;
         sound.clip = clip;
@@ -50,12 +51,14 @@ public class UFEvent : MonoBehaviour {
 
         case UFLevelStructure.Event.EventType.Music_Start:
         sound.loop = bool1;
-        //bool useEffectsVolume = bool2;
-        //TODO set appropriate mixer channel
+        if(bool2)
+            sound.outputAudioMixerGroup = effectsChannel;
+        else
+            sound.outputAudioMixerGroup = musicChannel;
         break;
 
         case UFLevelStructure.Event.EventType.Play_Sound:
-        //TODO set appropriate mixer channel
+        sound.outputAudioMixerGroup = effectsChannel;
         break;
 
         }

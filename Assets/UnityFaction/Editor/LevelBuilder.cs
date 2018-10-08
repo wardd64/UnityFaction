@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UFLevelStructure;
 using UnityEditorInternal;
 using UnityEditor.SceneManagement;
+using UnityEngine.Audio;
 
 public class LevelBuilder : EditorWindow {
 
@@ -20,6 +21,7 @@ public class LevelBuilder : EditorWindow {
     //Build options
     public int levelLayer, playerLayer, skyLayer;
     public bool convexMovers;
+    public AudioMixerGroup musicChannel, ambientChannel, effectsChannel;
 
     /// <summary>
     /// Read RFL file and build its contents into the current Unity scene.
@@ -167,6 +169,10 @@ public class LevelBuilder : EditorWindow {
             if(GUILayout.Button("Build player info")) BuildPlayerInfo();
             if(GUILayout.Button("Build geomodder")) BuildGeoModder();
             convexMovers = EditorGUILayout.Toggle("Mke mesh clldrs convex", convexMovers);
+            musicChannel = (AudioMixerGroup)EditorGUILayout.ObjectField("Music channel",
+                musicChannel, typeof(AudioMixerGroup), false);
+            effectsChannel = (AudioMixerGroup)EditorGUILayout.ObjectField("Effects channel",
+                effectsChannel, typeof(AudioMixerGroup), false);
             if(GUILayout.Button("Build movers")) BuildMovers();
             if(GUILayout.Button("Build clutter")) BuildClutter();
             if(GUILayout.Button("Build items")) BuildItems();
@@ -174,6 +180,8 @@ public class LevelBuilder : EditorWindow {
             if(GUILayout.Button("Build force regions")) BuildForceRegions();
             if(GUILayout.Button("Build events")) BuildEvents();
             if(GUILayout.Button("Build emitters")) BuildEmitters();
+            ambientChannel = (AudioMixerGroup)EditorGUILayout.ObjectField("Ambient channel",
+                ambientChannel, typeof(AudioMixerGroup), false);
             if(GUILayout.Button("Build ambient sounds")) BuildAmbSounds();
             if(GUILayout.Button("Build decals")) BuildDecals();
 
@@ -497,7 +505,7 @@ public class LevelBuilder : EditorWindow {
             mov.closeClip = GetClip(group.closeClip);
             mov.stopClip = GetClip(group.stopClip);
 
-            mov.AddAudio();
+            mov.AddAudio(effectsChannel);
 
             if(mov.noPlayerCollide)
                 ghostMovers.AddRange(mov.links);
@@ -544,6 +552,7 @@ public class LevelBuilder : EditorWindow {
                 AudioSource switchSound = g.AddComponent<AudioSource>();
                 switchSound.spatialBlend = 1f;
                 switchSound.clip = GetClip("Switch_01");
+                switchSound.outputAudioMixerGroup = effectsChannel;
             }
             UFLevel.SetObject(clutter.transform.id, g);
             UFUtils.SetTransform(g.transform, clutter.transform);
@@ -611,7 +620,7 @@ public class LevelBuilder : EditorWindow {
             UFEvent ufe = MakeUFObject<UFEvent>(name, p, e.transform);
             ufe.Set(e);
             if(IsValidAudioClipName(e.string1))
-                ufe.SetAudio(GetClip(e.string1));
+                ufe.SetAudio(GetClip(e.string1), musicChannel, effectsChannel);
         }
     }
 
@@ -655,6 +664,7 @@ public class LevelBuilder : EditorWindow {
         foreach(AmbSound s in level.ambSounds) {
             string name = "Ambient_" + GetIdString(s.transform);
             AudioSource sound = MakeUFObject<AudioSource>(name, p, s.transform);
+            sound.outputAudioMixerGroup = ambientChannel;
             sound.clip = GetClip(s.clip);
             sound.volume = s.volume;
 

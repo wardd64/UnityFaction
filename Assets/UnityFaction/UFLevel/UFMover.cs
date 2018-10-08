@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UFLevelStructure;
+using UnityEngine.Audio;
 
 public class UFMover : MonoBehaviour {
 
@@ -34,7 +35,6 @@ public class UFMover : MonoBehaviour {
             UFLevel.SetObject(key.transform.id, gameObject);
         links = group.contents;
 
-        //flags
         isDoor = group.isDoor;
         startsBackwards = group.startsBackwards;
         rotateInPlace = group.rotateInPlace;
@@ -53,10 +53,11 @@ public class UFMover : MonoBehaviour {
         rb.isKinematic = true;
     }
 
-    public void AddAudio() {
+    public void AddAudio(AudioMixerGroup channel) {
         if(startClip == null && loopClip == null && closeClip == null && stopClip == null)
             return;
         sound = gameObject.AddComponent<AudioSource>();
+        sound.outputAudioMixerGroup = channel;
         sound.spatialBlend = 1f;
         sound.playOnAwake = false;
     }
