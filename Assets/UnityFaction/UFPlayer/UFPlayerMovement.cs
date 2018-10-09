@@ -240,7 +240,7 @@ public class UFPlayerMovement : MonoBehaviour {
         movement = transform.rotation * movement;
 
         //move with platform
-        if(this.platform != null) {
+        if(this.platform != null && cc.enabled) {
             Vector3 platformDelta = this.platform.position - this.lastPlatformPosition;
             cc.Move(platformDelta);
             if(this.platform != null)
@@ -707,10 +707,13 @@ public class UFPlayerMovement : MonoBehaviour {
     }
 
     public virtual void InButtonRange(KeyCode useKey) { }
+    public virtual void SetCountDown(float value) { }
+    public virtual float GetCountDownValue() { return 0f; }
     protected virtual void SetAnimation(string name, bool boolValue = false, float floatValue = 0f) { }
     protected virtual bool AllowShortJump() { return false; }
     protected virtual bool IgnoreInput() { return false; }
     protected virtual bool AllowDoubleJump() { return false; }
     protected virtual bool StabilizeDoubleJump() { return false; }
     protected virtual float GetSensitivity() { return 10f; }
+    
 }

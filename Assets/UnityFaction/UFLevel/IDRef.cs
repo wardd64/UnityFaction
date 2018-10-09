@@ -21,7 +21,7 @@ public class IDRef{
     public Type type;
 
     public enum Type {
-        None, Decal, ClimbingRegion, Brush, Keyframe,
+        None, All, Decal, ClimbingRegion, Brush, Keyframe,
         Light, AmbSound, SpawnPoint, ParticleEmitter,
         GeoRegion, BoltEmitter, Item, Clutter, Event,
         Entity, Trigger, Target, PushRegion

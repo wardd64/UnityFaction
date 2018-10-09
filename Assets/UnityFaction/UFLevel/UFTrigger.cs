@@ -151,50 +151,64 @@ public class UFTrigger : MonoBehaviour {
     public static void Activate(int id, bool positive = true) {
 
         IDRef obj = TryGetObject(id);
-        if(obj == null)
+        if(obj == null) {
+            Debug.LogWarning("Could not activated id " + id + " since it does not exist!");
             return;
+        }
 
-        switch(obj.type) {
+        try {
+            switch(obj.type) {
 
-        case IDRef.Type.Trigger:
-        obj.objectRef.GetComponent<UFTrigger>().Trigger();
-        break;
+            case IDRef.Type.Trigger:
+            obj.objectRef.GetComponent<UFTrigger>().Trigger();
+            break;
 
-        case IDRef.Type.Keyframe:
-        obj.objectRef.GetComponentInParent<UFMover>().Activate(positive);
-        break;
+            case IDRef.Type.Keyframe:
+            obj.objectRef.GetComponentInParent<UFMover>().Activate(positive);
+            break;
 
-        case IDRef.Type.Event:
-        obj.objectRef.GetComponent<UFEvent>().Activate(positive);
-        break;
+            case IDRef.Type.Event:
+            obj.objectRef.GetComponent<UFEvent>().Activate(positive);
+            break;
 
-        case IDRef.Type.ParticleEmitter:
-        obj.objectRef.GetComponent<UFParticleEmitter>().Activate(positive);
-        break;
+            case IDRef.Type.ParticleEmitter:
+            obj.objectRef.GetComponent<UFParticleEmitter>().Activate(positive);
+            break;
 
-        case IDRef.Type.BoltEmitter:
-        obj.objectRef.GetComponent<UFBoltEmitter>().Activate(positive);
-        break;
+            case IDRef.Type.BoltEmitter:
+            obj.objectRef.GetComponent<UFBoltEmitter>().Activate(positive);
+            break;
 
-        case IDRef.Type.Clutter:
-        obj.objectRef.GetComponent<UFClutter>().Activate(positive);
-        break;
+            case IDRef.Type.Clutter:
+            obj.objectRef.GetComponent<UFClutter>().Activate(positive);
+            break;
 
-        case IDRef.Type.Light:
-        obj.objectRef.GetComponent<UnityEngine.Light>().enabled = positive;
-        break;
+            case IDRef.Type.Light:
+            obj.objectRef.GetComponent<UnityEngine.Light>().enabled = positive;
+            break;
 
-        case IDRef.Type.AmbSound:
-        AudioSource sound = obj.objectRef.GetComponent<AudioSource>();
-        if(positive)
-            sound.Play();
-        else
-            sound.Stop();
-        break;
+            case IDRef.Type.AmbSound:
+            AudioSource sound = obj.objectRef.GetComponent<AudioSource>();
+            if(positive)
+                sound.Play();
+            else
+                sound.Stop();
+            break;
 
-        default:
-        Debug.LogWarning("Tried activating object with unkown funcionality: " + obj + ", of type " + obj.type);
-        break;
+            case IDRef.Type.Brush:
+            obj.objectRef.GetComponent<UFMover>().Activate(positive);
+            break;
+
+            default:
+            Debug.LogWarning("Tried activating object with unkown funcionality: " 
+                + obj + ", of type " + obj.type);
+            break;
+            }
+
+        }
+        catch(System.NullReferenceException) {
+            Debug.LogError("Failed to activate id " + id + ", of type "
+                + obj.type + ", since it had an unexpected structure.");
         }
     }
 

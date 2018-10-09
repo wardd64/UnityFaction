@@ -88,6 +88,9 @@ public class UFLevel : MonoBehaviour {
     }
 
     public static T GetPlayer<T>() where T : Component{
+        UFPlayerMovement basePlayer = player;
+        if(player == null)
+            return null;
         return player.GetComponentInChildren<T>();
     }
 

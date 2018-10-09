@@ -96,6 +96,11 @@ public class UFBoltEmitter : MonoBehaviour {
         Destroy(boltTemplate);
 
         this.emitting = this.initOn;
+
+        if(UFLevel.GetByID(targetID) == null || UFLevel.GetByID(targetID).objectRef == null) {
+            Debug.LogWarning("Bolt emitter " + name + " has no valid target and will be deactivated");
+            this.gameObject.SetActive(false);
+        }
     }
 
     private void LateUpdate() {

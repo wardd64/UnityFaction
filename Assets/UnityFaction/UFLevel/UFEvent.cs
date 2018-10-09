@@ -65,11 +65,20 @@ public class UFEvent : MonoBehaviour {
     }
 
     private void Start() {
-        if(GetEventTypeClass(type) == EventTypeClass.StartTrigger)
+        EventTypeClass etc = GetEventTypeClass(type);
+        if(etc == EventTypeClass.StartTrigger)
             Trigger(true);
     }
 
     private void Update() {
+        if(GetEventTypeClass(type) == EventTypeClass.Detector) {
+            if(Detect())
+                Trigger(true);
+
+            timer = 0f;
+            return;
+        }
+
         if(timer > 0f)
             timer += Time.deltaTime;
 
@@ -109,9 +118,11 @@ public class UFEvent : MonoBehaviour {
             else if(etc == EventTypeClass.ContinuousEffect) {
                 DoContinuousEffect();
             }
+            else {
+                Trigger(positiveSignal);
+                timer = 0f;
+            }
         }
-           
-        
     }
 
     public void Activate(bool positive) {
@@ -144,11 +155,35 @@ public class UFEvent : MonoBehaviour {
     }
 
     private void Trigger(bool positive, IDRef.Type ignoredType = IDRef.Type.None) {
+        if(ignoredType == IDRef.Type.All)
+            return;
+
         foreach(int link in links) {
             if(UFLevel.GetByID(link).type != ignoredType)
                 UFTrigger.Activate(link, positive);
         }
             
+    }
+
+    /// <summary>
+    /// Checks if conditions for this detector event are met and returns true if so
+    /// </summary>
+    private bool Detect() {
+
+        //preperatory variables
+        float countDownValue = UFLevel.GetPlayer<UFPlayerMovement>().GetCountDownValue();
+
+        switch(type) {
+        case UFLevelStructure.Event.EventType.When_Countdown_Over:
+        return countDownValue - Time.deltaTime <= 0f && countDownValue > 0f;
+
+        case UFLevelStructure.Event.EventType.When_Countdown_Reaches:
+        return countDownValue - Time.deltaTime <= int1 && countDownValue > int1;
+
+        default:
+        Debug.LogError("Event type " + type + " not implemented");
+        return false;
+        }
     }
 
     /// <summary>
@@ -268,6 +303,24 @@ public class UFEvent : MonoBehaviour {
             pr.Activate(positive);
         return IDRef.Type.PushRegion;
 
+        case UFLevelStructure.Event.EventType.Countdown_Begin:
+        UFLevel.GetPlayer<UFPlayerMovement>().SetCountDown(int1);
+        return IDRef.Type.None;
+
+        case UFLevelStructure.Event.EventType.Countdown_End:
+        UFLevel.GetPlayer<UFPlayerMovement>().SetCountDown(0f);
+        return IDRef.Type.None;
+
+        case UFLevelStructure.Event.EventType.Remove_Object:
+        foreach(int link in links) {
+            GameObject g = UFLevel.GetByID(link).objectRef;
+            if(g == null)
+                Debug.LogWarning("Trying to remove ID ref that does not exist: " + link);
+            else
+                g.SetActive(false);
+        }
+        return IDRef.Type.All;
+
         default:
         Debug.LogError("Event type " + type + " not implemented");
         return IDRef.Type.None;
@@ -293,7 +346,7 @@ public class UFEvent : MonoBehaviour {
     private List<T> GetLinksOfType<T>(IDRef.Type type) where T : Component{
         List<T> toReturn = new List<T>();
         foreach(int link in links) {
-            if(UFLevel.GetByID(link).type == type)
+            if(UFLevel.GetByID(link).type == type || type == IDRef.Type.All)
                 toReturn.Add(UFLevel.GetByID(link).objectRef.GetComponent<T>());
         }
         return toReturn;
@@ -339,6 +392,8 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.Reverse_Mover:
         case UFLevelStructure.Event.EventType.Mover_Pause:
         case UFLevelStructure.Event.EventType.Skybox_State:
+        case UFLevelStructure.Event.EventType.Countdown_Begin:
+        case UFLevelStructure.Event.EventType.Countdown_End:
         return EventTypeClass.Effect;
 
         case UFLevelStructure.Event.EventType.Continuous_Damage:
@@ -412,8 +467,6 @@ public class UFEvent : MonoBehaviour {
         case UFLevelStructure.Event.EventType.Enable_Navpoint:
         case UFLevelStructure.Event.EventType.Play_Vclip:
         case UFLevelStructure.Event.EventType.Endgame:
-        case UFLevelStructure.Event.EventType.Countdown_begin:
-        case UFLevelStructure.Event.EventType.Countdown_End:
         */
 
         }
