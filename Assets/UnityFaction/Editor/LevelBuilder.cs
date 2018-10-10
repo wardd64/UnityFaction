@@ -130,32 +130,15 @@ public class LevelBuilder : EditorWindow {
             return;
         }
 
-        //reload the root script with ID references (usefull after recompiling)
-        if(GUILayout.Button("Refresh level")) {
-            GameObject.DestroyImmediate(root.GetComponent<UFLevel>());
-            UFLevel l = root.gameObject.AddComponent<UFLevel>();
-            l.Set(level);
-            l.Awake();
-        }
+        //reload the root script with ID references
+        if(GUILayout.Button("Refresh level"))
+            RefreshLevel();
 
         //Build all button, do everything at once
         GUIStyle bigButton = new GUIStyle("button");
         bigButton.fontSize = 26;
-        if(GUILayout.Button("Build all", bigButton)) {
-            BuildStaticGeometry();
-            BuildLights();
-            BuildPlayerInfo();
-            BuildGeoModder();
-            BuildMovers();
-            BuildClutter();
-            BuildItems();
-            BuildTriggers();
-            BuildForceRegions();
-            BuildEvents();
-            BuildEmitters();
-            BuildAmbSounds();
-            BuildDecals();
-        }
+        if(GUILayout.Button("Build all", bigButton))
+            BuildAll();
 
         //Build one class of objects seperately + options for building
         showBuildOptions = EditorGUILayout.Foldout(showBuildOptions, "Build options", contentFoldout);
@@ -189,21 +172,51 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    public void BuildAll() {
+        BuildStaticGeometry();
+        BuildLights();
+        BuildPlayerInfo();
+        BuildGeoModder();
+        BuildMovers();
+        BuildClutter();
+        BuildItems();
+        BuildTriggers();
+        BuildForceRegions();
+        BuildEvents();
+        BuildEmitters();
+        BuildAmbSounds();
+        BuildDecals();
+    }
+
+    public void RefreshLevel() {
+        GameObject.DestroyImmediate(root.GetComponent<UFLevel>());
+        UFLevel l = root.gameObject.AddComponent<UFLevel>();
+        l.Set(level);
+        l.Awake();
+    }
+
     private void AskRefRFL() {
         if(UFLevel.singleton != null && UFLevel.playerInfo != null) {
             string rflPath = UFUtils.GetAbsoluteUnityPath(UFLevel.playerInfo.levelRFLPath);
             string levelName = Path.GetFileNameWithoutExtension(rflPath);
 
             if(GUILayout.Button("Try load RFL file: " + levelName, GetBigButtonGUIStyle())) {
-                if(File.Exists(rflPath) && Path.GetExtension(rflPath).ToLower() == ".rfl")
-                    LoadRFL(rflPath);
-                else
+                if(!TryLoadRefRFL())
                     Debug.Log("Could not find rfl file at path: " + rflPath);
             }
         }
         else
             GUILayout.Label("No UF level found in scene.");
 
+    }
+
+    public bool TryLoadRefRFL() {
+        string rflPath = UFUtils.GetAbsoluteUnityPath(UFLevel.playerInfo.levelRFLPath);
+        if(File.Exists(rflPath) && Path.GetExtension(rflPath).ToLower() == ".rfl") {
+            LoadRFL(rflPath);
+            return true;
+        }
+        return false;
     }
 
     private void AskNewRFL() {
@@ -427,27 +440,50 @@ public class LevelBuilder : EditorWindow {
         foreach(UFLevelStructure.Light l in level.lights) {
             string name = l.type + "_" + GetIdString(l.transform);
             UnityEngine.Light light = MakeUFObject<UnityEngine.Light>(name, p, l.transform);
+            Transform lightHolder = light.transform;
 
-            if(l.type == UFLevelStructure.Light.LightType.spotlight)
-                light.type = LightType.Spot;
-            else
-                light.type = LightType.Point;
+            float effectiveIntesnity = 1.5f * l.intensity;
+            float effectiveRange = 1.5f * l.range;
 
-            if(l.dynamic) {
-                light.lightmapBakeType = LightmapBakeType.Realtime;
+            switch(l.type) {
+            case UFLevelStructure.Light.LightType.spotlight:
+            light.type = LightType.Spot;
+            break;
+
+            case UFLevelStructure.Light.LightType.pointLight:
+            light.type = LightType.Point;
+            break;
+
+            case UFLevelStructure.Light.LightType.tubeLight:
+            DestroyImmediate(light);
+            effectiveIntesnity *= .75f;
+            int subDivisions = Mathf.RoundToInt(l.tubeLength / l.range) + 1;
+            float spacing = l.tubeLength / subDivisions;
+            for(int i = 0; i < subDivisions; i++) {
+                int extLength = Mathf.CeilToInt(Mathf.Log10(subDivisions + 1));
+                string subName = "SubLight_" + i.ToString().PadLeft(extLength, '0');
+                GameObject subLightObject = new GameObject(subName);
+                UnityEngine.Light subLight = subLightObject.AddComponent<UnityEngine.Light>();
+                subLight.type = LightType.Point;
+                subLight.transform.SetParent(lightHolder);
+                float x = (i * spacing - .5f * l.tubeLength);
+                subLight.transform.position = lightHolder.position + x * lightHolder.right;
             }
-            else {
-                light.lightmapBakeType = LightmapBakeType.Baked;
-                light.gameObject.isStatic = true;
+            break;
             }
 
-            light.color = l.color;
-            light.areaSize = new Vector2(l.tubeLength, 0.1f);
-            light.enabled = l.enabled;
-            light.spotAngle = l.fov;
-            light.intensity = l.intensity;
-            light.range = l.range;
-            light.shadows = l.shadows ? LightShadows.Soft : LightShadows.None;
+            UFUtils.SetStaticRecursively(lightHolder.gameObject, !l.dynamic);
+            LightmapBakeType bakeType = l.dynamic ? LightmapBakeType.Realtime : LightmapBakeType.Baked;
+
+            foreach(UnityEngine.Light subLight in lightHolder.GetComponentsInChildren<UnityEngine.Light>()) {
+                subLight.lightmapBakeType = bakeType;
+                subLight.color = l.color;
+                subLight.enabled = l.enabled;
+                subLight.spotAngle = l.fov;
+                subLight.intensity = effectiveIntesnity;
+                subLight.range = effectiveRange;
+                subLight.shadows = l.shadows ? LightShadows.Soft : LightShadows.None;
+            }
         }
     }
 
