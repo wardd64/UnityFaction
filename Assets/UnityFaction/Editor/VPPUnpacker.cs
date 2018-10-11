@@ -179,6 +179,10 @@ public class VPPUnpacker {
         VBMReader texReader = new VBMReader(exportPath);
         texReader.MakeMaterialAtAssetPath();
         break;
+
+        case "wav":
+        new WavRepairer(exportPath);
+        break;
         }
     }
 

@@ -41,6 +41,9 @@ public class WavRepairer {
 
     public WavRepairer(string path) {
 
+        if(!UFUtils.IsAssetPath(path))
+            path = UFUtils.GetAbsoluteUnityPath(path);
+
         string encodingInfo = "";
         string backUpPath = path.Replace(".wav", "_backup.wav");
         string tempPath = path.Replace(".wav", "_temp.wav");
