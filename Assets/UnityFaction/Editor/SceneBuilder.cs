@@ -8,9 +8,6 @@ using UnityEngine.SceneManagement;
 
 public class SceneBuilder {
 
-    private static int sceneCount;
-    private static int nboScenes;
-
     /// <summary>
     /// Read RFL file and build its contents into the current Unity scene.
     /// </summary>
@@ -25,15 +22,34 @@ public class SceneBuilder {
             return;
 
         string[] files = Directory.GetFiles(sceneFolder);
-        nboScenes = files.Length;
-        sceneCount = 0;
+        List<string> sceneFiles = new List<string>();
 
         foreach(string file in files) {
-            if(Path.GetExtension(file).ToLower() == ".unity") {
-                TryBuildScene(file);
-                return;
-            }
+            if(Path.GetExtension(file).ToLower() == ".unity")
+                sceneFiles.Add(file);
         }
+
+        int nboScenes = sceneFiles.Count;
+        string timeEstimate = "";
+        int lowHour = Mathf.FloorToInt(nboScenes / 60f);
+        int highHour = Mathf.CeilToInt(nboScenes / 12f);
+
+        if(nboScenes < 30)
+            timeEstimate = nboScenes + " to " + (nboScenes * 5) + " minutes";
+        else if(nboScenes < 60)
+            timeEstimate = nboScenes + " minutes to " + highHour + " hours";
+        else
+            timeEstimate = lowHour + " to " + highHour + " hours";
+
+        if(!EditorUtility.DisplayDialog("Confirm Rebuild", 
+            "You are about to rebuild " + nboScenes + 
+            " scenes. Note that this process will take " + timeEstimate + 
+            ", and unity will freeze until it is completed.", 
+            "Continue", "Cancel"))
+            return;
+
+        foreach(string file in sceneFiles) 
+            TryBuildScene(file);
     }
 
     private static void TryBuildScene(string sceneFile) {
@@ -60,10 +76,6 @@ public class SceneBuilder {
 
         Scene scene = SceneManager.GetActiveScene();
         EditorSceneManager.SaveScene(scene);
-
-        sceneCount++;
-        Debug.Log("Done rebuilding scene: " + sceneName + 
-            " (" + sceneCount + "/" + nboScenes + ")");
     }
 
     private static void BakeLightMaps() {
