@@ -65,6 +65,8 @@ public class RFLReader {
         End = 0x00000000
     }
 
+    private string fileName;
+
     //RFL properties
     const uint RFL_SIGNATURE = 0xD4BADA55;
     const uint RFL_LAST_KNOWN_VERSION = 0x000000C8;
@@ -77,6 +79,7 @@ public class RFLReader {
     public RFLReader(string path) {
         byte[] bytes = File.ReadAllBytes(path);
         level = new LevelData();
+        fileName = Path.GetFileNameWithoutExtension(path);
         ReadRFL(bytes);
     }
 
@@ -97,7 +100,7 @@ public class RFLReader {
         if(end == 0 && bytes.Length == pointer) {
             //log success
             int fileSize = bytes.Length / 1024;
-            Debug.Log("RFL file was read successfully. Read total of " + fileSize + "kb.");
+            Debug.Log("RFL file " + fileName + " was read successfully. Read total of " + fileSize + "kb.");
         }
         else
             throw new RFLReadException("RFL parsing ended in erronous state!");

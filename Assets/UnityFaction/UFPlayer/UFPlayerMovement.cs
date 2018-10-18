@@ -706,6 +706,16 @@ public class UFPlayerMovement : MonoBehaviour {
         return motionState == MotionState.noClip;
     }
 
+    public string GetDebugText() {
+        string toReturn = "Pos: " + transform.position + "\n";
+        toReturn += "Vel: " + velocity + "\n";
+        toReturn += "Rot: (" + rotationX.ToString("F1") + 
+            ", " + rotationY.ToString("F1") + ")\n";
+        toReturn += "Platform: " + (platform != null) + "\n";
+        toReturn += "Slope: " + walkSlope.ToString("F1");
+        return toReturn;
+    }
+
     public virtual void InButtonRange(KeyCode useKey) { }
     public virtual void SetCountDown(float value) { }
     public virtual float GetCountDownValue() { return 0f; }

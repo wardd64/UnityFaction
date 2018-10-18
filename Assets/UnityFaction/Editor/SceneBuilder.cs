@@ -8,26 +8,19 @@ using UnityEngine.SceneManagement;
 
 public class SceneBuilder {
 
+    private const string pbwTitle = "Scene rebuilder";
+    private static string pbwMessage;
+    private static float pbwProgress;
+
     /// <summary>
-    /// Read RFL file and build its contents into the current Unity scene.
+    /// Get all scene files in the build settings and rebuild them.
     /// </summary>
     [MenuItem("UnityFaction/Rebuild UF Scenes")]
     public static void RebuildAllScenes() {
-        //let user select rfl file that needs to be built into the scene
-        string fileSearchMessage = "Select folder in which to look for scenes";
-        string defaultPath = "Assets";
 
-        string sceneFolder = EditorUtility.OpenFolderPanel(fileSearchMessage, defaultPath, "");
-        if(string.IsNullOrEmpty(sceneFolder))
-            return;
-
-        string[] files = Directory.GetFiles(sceneFolder);
         List<string> sceneFiles = new List<string>();
-
-        foreach(string file in files) {
-            if(Path.GetExtension(file).ToLower() == ".unity")
-                sceneFiles.Add(file);
-        }
+        foreach(EditorBuildSettingsScene scene in EditorBuildSettings.scenes)
+            sceneFiles.Add(scene.path);
 
         int nboScenes = sceneFiles.Count;
         string timeEstimate = "";
@@ -43,17 +36,30 @@ public class SceneBuilder {
 
         if(!EditorUtility.DisplayDialog("Confirm Rebuild", 
             "You are about to rebuild " + nboScenes + 
-            " scenes. Note that this process will take " + timeEstimate + 
-            ", and unity will freeze until it is completed.", 
+            " scenes. Note that this process will take " + timeEstimate + ".", 
             "Continue", "Cancel"))
             return;
 
-        foreach(string file in sceneFiles) 
-            TryBuildScene(file);
+        for(int i = 0; i < sceneFiles.Count; i++) {
+            string sceneName = Path.GetFileNameWithoutExtension(sceneFiles[i]);
+            pbwProgress = (float)i / sceneFiles.Count;
+            pbwMessage = "Rebuilding " + sceneName + ": ";
+            EditorUtility.DisplayProgressBar(pbwTitle, pbwMessage + "initializing.", pbwProgress);
+            try {
+                TryBuildScene(sceneFiles[i]);
+            }
+            catch(System.Exception e) {
+                Debug.LogError("Failed to rebuild scene " + sceneName + ". Cause:\n" + e);
+            }
+        }
+
+        EditorUtility.ClearProgressBar();
     }
 
     private static void TryBuildScene(string sceneFile) {
         string sceneName = Path.GetFileNameWithoutExtension(sceneFile);
+
+        EditorUtility.DisplayProgressBar(pbwTitle, pbwMessage + "opening scene...", pbwProgress);
         EditorSceneManager.OpenScene(sceneFile, OpenSceneMode.Single);
         UFLevel level = Object.FindObjectOfType<UFLevel>();
         if(level == null) {
@@ -62,6 +68,7 @@ public class SceneBuilder {
             return;
         }
 
+        EditorUtility.DisplayProgressBar(pbwTitle, pbwMessage + "opening map builder...", pbwProgress);
         LevelBuilder builder = EditorWindow.GetWindow<LevelBuilder>();
         if(builder == null || !builder.TryLoadRefRFL()) {
             Debug.LogWarning("Could not rebuild scene " + sceneName + 
@@ -69,18 +76,24 @@ public class SceneBuilder {
             return;
         }
 
+        EditorUtility.DisplayProgressBar(pbwTitle, pbwMessage + "building UF level...", pbwProgress);
         builder.RefreshLevel();
         builder.BuildAll();
 
+        EditorUtility.DisplayProgressBar(pbwTitle, pbwMessage + "baking lightmaps...", pbwProgress);
         BakeLightMaps();
 
+        EditorUtility.DisplayProgressBar(pbwTitle, pbwMessage + "saving scene...", pbwProgress);
         Scene scene = SceneManager.GetActiveScene();
         EditorSceneManager.SaveScene(scene);
     }
 
     private static void BakeLightMaps() {
         LightmapSettings.lightmapsMode = LightmapsMode.CombinedDirectional;
-        LightmapEditorSettings.lightmapper = LightmapEditorSettings.Lightmapper.Enlighten;
+        LightmapEditorSettings.prioritizeView = false;
+        LightmapEditorSettings.directSampleCount = 16;
+        LightmapEditorSettings.indirectSampleCount = 64;
+        LightmapEditorSettings.lightmapper = LightmapEditorSettings.Lightmapper.ProgressiveCPU;
         LightmapEditorSettings.realtimeResolution = .2f;
         LightmapEditorSettings.bakeResolution = 2f;
         LightmapEditorSettings.maxAtlasSize = 1024;
@@ -88,8 +101,8 @@ public class SceneBuilder {
         LightmapEditorSettings.enableAmbientOcclusion = true;
         Lightmapping.bakedGI = true;
         Lightmapping.realtimeGI = true;
-
-        Lightmapping.Bake();
+        
+        Lightmapping.Bake(); 
     }
 
     private LightmapParameters GetLMP() {

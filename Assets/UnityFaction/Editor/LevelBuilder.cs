@@ -246,7 +246,7 @@ public class LevelBuilder : EditorWindow {
     /// Faces with scrolling textures
     /// Sky room; dynamic skybox in the level
     /// </summary>
-    private void BuildStaticGeometry() {
+    public void BuildStaticGeometry() {
         //set up split
         int split = 6;
         List<Face>[] faceSplit = new List<Face>[split];
@@ -435,7 +435,7 @@ public class LevelBuilder : EditorWindow {
     /// Builds standard Unity lights into the scene with 
     /// properties as close as possible to the Redfaction types
     /// </summary>
-    private void BuildLights() {
+    public void BuildLights() {
         Transform p = MakeParent("Lights");
         foreach(UFLevelStructure.Light l in level.lights) {
             string name = l.type + "_" + GetIdString(l.transform);
@@ -491,7 +491,7 @@ public class LevelBuilder : EditorWindow {
     /// Build specialized player info object that handles parameters such as 
     /// global lighting, fog, skyroom etc.
     /// </summary>
-    private void BuildPlayerInfo() {
+    public void BuildPlayerInfo() {
         Transform p = MakeParent("PlayerInfo");
         UFPlayerInfo info = p.gameObject.AddComponent<UFPlayerInfo>();
         info.Set(level, levelLayer, playerLayer, skyLayer, lastRFLPath);
@@ -501,7 +501,7 @@ public class LevelBuilder : EditorWindow {
     /// Build specialized geomodder object that encodes level strength
     /// and allows player to breach static geometry when needed.
     /// </summary>
-    private void BuildGeoModder() {
+    public void BuildGeoModder() {
         Transform p = MakeParent("GeoModder");
         UFGeoModder gm = p.gameObject.AddComponent<UFGeoModder>();
         Material geoMat = GetMaterial(level.geomodTexture, assetPath);
@@ -516,7 +516,7 @@ public class LevelBuilder : EditorWindow {
     /// Colliders cannot be assigned accurately in general, so extra work may be 
     /// required to get them in proper working condition.
     /// </summary>
-    private void BuildMovers() {
+    public void BuildMovers() {
         Transform p = MakeParent("Movers");
 
         //make moving groups
@@ -570,7 +570,7 @@ public class LevelBuilder : EditorWindow {
     /// Builds geometric objects into the scene including 
     /// things like furniture, machines, switches and plants.
     /// </summary>
-    private void BuildClutter() {
+    public void BuildClutter() {
         Transform p = MakeParent("Clutter");
         foreach(Clutter clutter in level.clutter) {
             string modelName = TableReader.FindClutterModel(clutter.name);
@@ -599,7 +599,7 @@ public class LevelBuilder : EditorWindow {
     /// Build items into the scene that players can pick up.
     /// Includes health packs, powerups, weapons and ammo.
     /// </summary>
-    private void BuildItems() {
+    public void BuildItems() {
         Transform p = MakeParent("Items");
         foreach(Item item in level.items) {
             string modelName = TableReader.FindItemModel(item.name);
@@ -619,7 +619,7 @@ public class LevelBuilder : EditorWindow {
     /// Build Triggers into the scene that respond to the player's actions
     /// and activate other UnityFaction objects in response (mainly events and movers!)
     /// </summary>
-    private void BuildTriggers() {
+    public void BuildTriggers() {
         Transform p = MakeParent("Triggers");
         foreach(Trigger trigger in level.triggers) {
             string name = "Trigger_" + GetIdString(trigger.transform);
@@ -631,7 +631,7 @@ public class LevelBuilder : EditorWindow {
     /// <summary>
     /// Build ladder and push regions that work with UFPlayerMovement
     /// </summary>
-    private void BuildForceRegions() {
+    public void BuildForceRegions() {
         Transform p = MakeParent("ForceRegions");
         foreach(PushRegion region in level.pushRegions) {
             string name = "PushRegion_" + GetIdString(region.transform);
@@ -649,7 +649,7 @@ public class LevelBuilder : EditorWindow {
     /// Builds special event objects that have unique effects when activated.
     /// Events are to be activated mainly by triggers and other events.
     /// </summary>
-    private void BuildEvents() {
+    public void BuildEvents() {
         Transform p = MakeParent("Events");
         foreach(UFLevelStructure.Event e in level.events) {
             string name = "Event_" + GetIdString(e.transform) + "_" + e.name;
@@ -663,7 +663,7 @@ public class LevelBuilder : EditorWindow {
     /// <summary>
     /// Build particle and bolt emitters into the scene. 
     /// </summary>
-    private void BuildEmitters() {
+    public void BuildEmitters() {
         Transform p = MakeParent("Emitters");
 
         Transform ptclParent = (new GameObject("ParticleEmitters")).transform;
@@ -695,7 +695,7 @@ public class LevelBuilder : EditorWindow {
     /// <summary>
     /// Build ambient sound objects that constantly emit faint 3D noise.
     /// </summary>
-    private void BuildAmbSounds() {
+    public void BuildAmbSounds() {
         Transform p = MakeParent("AmbSounds");
         foreach(AmbSound s in level.ambSounds) {
             string name = "Ambient_" + GetIdString(s.transform);
@@ -721,7 +721,7 @@ public class LevelBuilder : EditorWindow {
     /// UnityFaction implements these as seperate faces hovering slightly over
     /// their intended location.
     /// </summary>
-    private void BuildDecals() {
+    public void BuildDecals() {
         Transform p = MakeParent("Decals");
         p.gameObject.isStatic = true;
         foreach(Decal d in level.decals) {
