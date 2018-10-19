@@ -1426,7 +1426,9 @@ public class LevelBuilder : EditorWindow {
         foreach(string result in results) {
             string resultPath = AssetDatabase.GUIDToAssetPath(result);
             string matchName = Path.GetFileNameWithoutExtension(resultPath);
-            if(string.Equals(matchName, clipName, StringComparison.OrdinalIgnoreCase)) {
+            bool match = string.Equals(matchName, clipName, StringComparison.OrdinalIgnoreCase);
+            bool isAudio = IsValidAudioClipName(resultPath);
+            if(match && isAudio) {
                 AudioClip toReturn = (AudioClip)AssetDatabase.LoadAssetAtPath(resultPath, typeof(AudioClip));
                 if(toReturn == null) {
                     string absPath = UFUtils.GetAbsoluteUnityPath(resultPath);

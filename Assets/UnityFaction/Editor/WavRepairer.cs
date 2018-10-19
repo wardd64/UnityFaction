@@ -44,6 +44,11 @@ public class WavRepairer {
         if(!UFUtils.IsAssetPath(path))
             path = UFUtils.GetAbsoluteUnityPath(path);
 
+        if(!path.Contains(".wav")) {
+            Debug.LogError("Cannot apply wav repair to non wav files: " + path);
+            return;
+        }
+
         string encodingInfo = "";
         string backUpPath = path.Replace(".wav", "_backup.wav");
         string tempPath = path.Replace(".wav", "_temp.wav");
