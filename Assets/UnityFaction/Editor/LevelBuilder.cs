@@ -310,7 +310,7 @@ public class LevelBuilder : EditorWindow {
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
             mr.gameObject.AddComponent<MeshCollider>();
         }
-        visG.layer = levelLayer;
+        UFUtils.SetLayerRecursively(visG, levelLayer);
         CalculateLightMapUVs(visG);
 
         //static visible geometry; same as visible (difference depends on name)
@@ -321,7 +321,7 @@ public class LevelBuilder : EditorWindow {
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
             mr.gameObject.AddComponent<MeshCollider>();
         }
-        icyG.layer = levelLayer;
+        UFUtils.SetLayerRecursively(icyG, levelLayer);
         CalculateLightMapUVs(icyG);
 
         //static invisible; disabled renderers, but still active colliders
@@ -330,7 +330,7 @@ public class LevelBuilder : EditorWindow {
         invisG.transform.SetParent(p);
         invisG.GetComponent<MeshRenderer>().enabled = false;
         invisG.AddComponent<MeshCollider>();
-        invisG.layer = levelLayer;
+        UFUtils.SetLayerRecursively(invisG, levelLayer);
 
         //destructible geometry: brushes that can be shot and shattered (glass)
         GameObject destrG = new GameObject("Destructible");
@@ -427,7 +427,7 @@ public class LevelBuilder : EditorWindow {
         GameObject sky = MakeMeshObject(level.staticGeometry, faceSplit[4], "SkyRoom");
         sky.isStatic = true;
         sky.transform.SetParent(p);
-        sky.layer = skyLayer;
+        UFUtils.SetLayerRecursively(sky, skyLayer);
         sky.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
     }
 
@@ -474,7 +474,6 @@ public class LevelBuilder : EditorWindow {
 
             UFUtils.SetStaticRecursively(lightHolder.gameObject, !l.dynamic);
             LightmapBakeType bakeType = l.dynamic ? LightmapBakeType.Realtime : LightmapBakeType.Baked;
-
             foreach(UnityEngine.Light subLight in lightHolder.GetComponentsInChildren<UnityEngine.Light>()) {
                 subLight.lightmapBakeType = bakeType;
                 subLight.color = l.color;

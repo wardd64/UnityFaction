@@ -708,11 +708,20 @@ public class UFUtils {
     }
 
     /// <summary>
-    /// Sets given object and all of its chilrden to be static or not.
+    /// Sets given object and all of its children to be static or not.
     /// </summary>
     public static void SetStaticRecursively(GameObject g, bool value) {
         for(int i = 0; i < g.transform.childCount; i++)
             SetStaticRecursively(g.transform.GetChild(i).gameObject, value);
         g.isStatic = value;
+    }
+
+    /// <summary>
+    /// Sets given object and all of its children to the given layer.
+    /// </summary>
+    public static void SetLayerRecursively(GameObject g, int layer) {
+        for(int i = 0; i < g.transform.childCount; i++)
+            SetLayerRecursively(g.transform.GetChild(i).gameObject, layer);
+        g.layer = layer;
     }
 }
