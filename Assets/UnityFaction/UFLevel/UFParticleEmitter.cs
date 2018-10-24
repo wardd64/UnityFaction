@@ -115,7 +115,7 @@ public class UFParticleEmitter : MonoBehaviour {
             float stick = emit.stickieness / 15f;
             psCollision.dampen = new ParticleSystem.MinMaxCurve(stick);
             psCollision.enableDynamicColliders = false;
-            psCollision.radiusScale = .5f;
+            psCollision.radiusScale = 0f;
             //TODO: explodeOnImpact, collidWithLiquids, playCollisionSounds
         }
 
@@ -136,6 +136,14 @@ public class UFParticleEmitter : MonoBehaviour {
         if(ps != null) {
             Renderer psRenderer = ps.GetComponent<Renderer>();
             psRenderer.material = material;
+
+            Vector2 scale = material.mainTextureScale;
+            float scaleFactor = Mathf.Max(scale.x, scale.y);
+
+            ParticleSystem.MainModule psMain = ps.main;
+            float rMin = psMain.startSize.constantMin;
+            float rMax = psMain.startSize.constantMax;
+            psMain.startSize = new ParticleSystem.MinMaxCurve(scaleFactor * rMin, scaleFactor * rMax);
         }
     }
 
