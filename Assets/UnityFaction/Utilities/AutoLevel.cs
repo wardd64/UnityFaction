@@ -13,20 +13,15 @@ public class AutoLevel : MonoBehaviour {
     int returnScene;
     bool readyToLoad;
 
-    private bool inStartingScene { get { return SceneManager.GetActiveScene().buildIndex == 0; } }
-
     private void Awake() {
-        if(!inStartingScene && Global.global == null) {
-            //script is needed! save it and load starting scene
+        bool started = Time.time == 0f;
+        if(started && !InStartingScene() && EditorStart()) {
             DontDestroyOnLoad(this.gameObject);
-
             returnScene = SceneManager.GetActiveScene().buildIndex;
             SceneManager.LoadScene(0);
         }
-        else {
-            //everything is fine, remove this script
+        else
             Destroy(this.gameObject);
-        }
     }
 
     private void Update() {
@@ -35,7 +30,19 @@ public class AutoLevel : MonoBehaviour {
             Destroy(this.gameObject);
             Debug.LogWarning("Started from non-starting scene. Unexpected behaviour may occur.");
         }
-        else if(inStartingScene)
+        else if(InStartingScene())
             readyToLoad = true;
+    }
+
+    private bool InStartingScene() {
+        return SceneManager.GetActiveScene().buildIndex == 0;
+    }
+
+    private bool EditorStart() {
+        bool editor = false;
+#if UNITY_EDITOR
+        editor = true;
+#endif
+        return editor;
     }
 }
