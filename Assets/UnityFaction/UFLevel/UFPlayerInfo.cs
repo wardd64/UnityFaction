@@ -14,7 +14,9 @@ public class UFPlayerInfo : MonoBehaviour {
     public float ambChangeTime = 10f;
 
     public Color fogColor;
-    public float fogStart, fogEnd;
+    public bool useFog;
+    public float fogStart;
+    public float clipPlane;
 
     public bool multiplayer;
     public SpawnPoint[] spawnPoints;
@@ -49,11 +51,19 @@ public class UFPlayerInfo : MonoBehaviour {
         this.playerLayer = playerLayer;
         this.skyMask = LayerMask.GetMask(LayerMask.LayerToName(skyLayer));
 
-        this.fogStart = Mathf.Max(0f, level.nearPlane);
-        if(level.farPlane <= 0f || fogEnd < fogStart)
-            fogEnd = 1000f;
-        else
-            fogEnd = Mathf.Max(fogStart + 10f, level.farPlane);
+        this.useFog = level.nearPlane <= level.farPlane && level.farPlane > 0f;
+        this.fogStart = 0f;
+        this.clipPlane = level.farPlane;
+        if(this.clipPlane <= 0f)
+            this.clipPlane = 1000f;
+        if(level.nearPlane > 0f && level.nearPlane <= level.farPlane)
+            Debug.LogWarning("Found non trivial value " + level.nearPlane +
+                " for fog start (near plane). By Default RF behaviour this value was ignored. " +
+                "Please set in the UFPlayerInfo script if you which to use the value.");
+        if(level.nearPlane > 0f && level.nearPlane > level.farPlane)
+            Debug.LogWarning("Value for fog start (near plane) was greater than the value " +
+                "for the far clipping plane. As a result, by default RF behaviour, fog has " +
+                "been disabled. Visit the UFPlayerInfo object if this was not intended.");
 
         this.defaultAmbient = level.ambientColor;
         this.fogColor = level.fogColor;
@@ -164,19 +174,16 @@ public class UFPlayerInfo : MonoBehaviour {
     }
 
     private void SetFog() {
-        RenderSettings.fog = fogStart > 0f;
+        RenderSettings.fog = useFog;
         RenderSettings.fogColor = fogColor;
         RenderSettings.fogMode = FogMode.Linear;
         RenderSettings.fogStartDistance = fogStart;
-        RenderSettings.fogEndDistance = fogEnd;
+        RenderSettings.fogEndDistance = clipPlane;
     }
 
     public void ResetVision() {
         RenderSettings.ambientLight = targetAmbient;
-        RenderSettings.fog = fogStart > 0f;
-        RenderSettings.fogColor = fogColor;
-        RenderSettings.fogStartDistance = fogStart;
-        RenderSettings.fogEndDistance = fogEnd;
+        SetFog();
     }
 
     private void SetRenderSettings() {
@@ -194,7 +201,7 @@ public class UFPlayerInfo : MonoBehaviour {
         if(skyCamera != null)
             //rely on sky camera to render sky room
             playerCamera.clearFlags = CameraClearFlags.Depth;
-        else if(fogEnd > 0f){
+        else if(useFog){
             //aply solid color to represent thick fog
             playerCamera.clearFlags = CameraClearFlags.SolidColor;
             playerCamera.backgroundColor = fogColor;
@@ -204,7 +211,7 @@ public class UFPlayerInfo : MonoBehaviour {
             playerCamera.clearFlags = CameraClearFlags.Nothing;
 
         //far clipping
-        playerCamera.farClipPlane = fogEnd;
+        playerCamera.farClipPlane = clipPlane;
         playerCamera.cullingMask &= ~skyMask; //remove skymask layers from direct player view
     }
 

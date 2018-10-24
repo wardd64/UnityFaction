@@ -86,6 +86,9 @@ public class LevelBuilder : EditorWindow {
                 level.author = EditorGUILayout.TextField("      Author name", level.author);
                 level.multiplayer = EditorGUILayout.Toggle("      Multiplayer", level.multiplayer);
                 level.playerStart.position = EditorGUILayout.Vector3Field("      Player start", level.playerStart.position);
+                level.fogColor = EditorGUILayout.ColorField("      Fog color", level.fogColor);
+                level.nearPlane = EditorGUILayout.FloatField("      Near plane", level.nearPlane);
+                level.farPlane = EditorGUILayout.FloatField("      Far plane", level.farPlane);
             }
 
             showGeometryContents = EditorGUILayout.Foldout(showGeometryContents, "   Static geometry content", contentFoldout);
