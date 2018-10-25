@@ -675,6 +675,18 @@ public class LevelBuilder : EditorWindow {
             UFParticleEmitter emit = MakeUFObject<UFParticleEmitter>(name, ptclParent, e.transform);
             emit.Set(e);
             Material particleMat = GetMaterial(e.texture, assetPath, GetParticleShader(e.fade, e.glow));
+
+            //set material scale
+            float aspect = particleMat.mainTexture.width / particleMat.mainTexture.height;
+            if(aspect > 1f) {
+                particleMat.mainTextureScale = new Vector2(1f, aspect);
+                particleMat.mainTextureOffset = new Vector2(0f, (aspect - 1f) * -.5f);
+            }
+            else if(aspect < 1f) {
+                particleMat.mainTextureScale = new Vector2(1f / aspect, 1f);
+                particleMat.mainTextureOffset = new Vector2(((1f / aspect) - 1f) * -.5f, 0f);
+            }
+
             emit.SetMaterial(particleMat);
         }
 
