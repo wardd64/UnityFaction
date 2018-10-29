@@ -4,15 +4,15 @@ using System;
 
 public class UFPlayerMovement : MonoBehaviour {
 
-    private CharacterController cc;
-    private Camera playerCamera;
-    private UFPlayerMoveSounds moveSound;
+    protected CharacterController cc;
+    protected Camera playerCamera;
+    protected UFPlayerMoveSounds moveSound;
 
-    private MotionState motionState;
+    protected MotionState motionState;
     public enum MotionState {
         ground, air, crouch, climb, swim, noClip
     }
-    private bool crouching;
+    protected bool crouching;
 
     private Vector3 velocity;
     private bool slippery;
@@ -141,7 +141,7 @@ public class UFPlayerMovement : MonoBehaviour {
             motionState = MotionState.air;
     }
 
-    private void Update() {
+    protected virtual void Update() {
         MoveUpdate();
 
         //animation states:
