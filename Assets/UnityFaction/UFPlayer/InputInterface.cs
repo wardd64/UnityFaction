@@ -24,7 +24,7 @@ public class InputInterface : MonoBehaviour {
         LoadBindings();
     }
 
-    private void LoadBindings() {
+    public void LoadBindings() {
         for(int i = 0; i < bindings.Length; i++) {
             int oldValue = (int)bindings[i].code;
             bindings[i].code = (KeyCode)PlayerPrefs.GetInt(bindings[i].name, oldValue);
@@ -117,7 +117,6 @@ public class InputInterface : MonoBehaviour {
             if(keyName.Equals(bindings[i].name, StringComparison.OrdinalIgnoreCase))
                 return bindings[i].code;
         }
-
         Debug.LogError("Looked for unknown key: " + keyName);
         return 0;
     }
@@ -132,6 +131,8 @@ public class InputInterface : MonoBehaviour {
         for(int i = 0; i < bindings.Length; i++) {
             if(binding.name.Equals(bindings[i].name, StringComparison.OrdinalIgnoreCase)) {
                 bindings[i] = binding;
+                if(!initialSet)
+                    PlayerPrefs.SetInt(bindings[i].name, (int)bindings[i].code);
                 return;
             }
         }
