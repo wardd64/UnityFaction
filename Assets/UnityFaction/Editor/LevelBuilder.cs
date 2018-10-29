@@ -589,6 +589,7 @@ public class LevelBuilder : EditorWindow {
             if(c.isSwitch) {
                 AudioSource switchSound = g.AddComponent<AudioSource>();
                 switchSound.spatialBlend = 1f;
+                switchSound.playOnAwake = false;
                 switchSound.clip = GetClip("Switch_01");
                 switchSound.outputAudioMixerGroup = effectsChannel;
             }
