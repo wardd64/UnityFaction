@@ -192,6 +192,7 @@ public class LevelBuilder : EditorWindow {
     }
 
     public void RefreshLevel() {
+        TryLoadRefRFL();
         GameObject.DestroyImmediate(root.GetComponent<UFLevel>());
         UFLevel l = root.gameObject.AddComponent<UFLevel>();
         l.Set(level);
