@@ -291,7 +291,7 @@ public class LevelBuilder : EditorWindow {
             int sort = 0;
             if(nextTex.Contains("invis"))
                 sort = 1;
-            if(FaceIsContainedInLiquidSurface(level.staticGeometry, liquids, face))
+            if(face.liquid)
                 sort = 2;
             else if(hasSkyRoom && FaceIsInRoom(level.staticGeometry, skyRoom, face))
                 sort = 4;

@@ -179,7 +179,7 @@ namespace UFLevelStructure {
     public struct Face {
         public int texture;
         public int id;
-        public bool showSky, mirrored, fullBright;
+        public bool showSky, mirrored, liquid, detail, fullBright;
         public FaceVertex[] vertices;
     }
 

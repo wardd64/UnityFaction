@@ -1337,6 +1337,8 @@ public class RFLReader {
 
             nextFace.showSky = UFUtils.GetFlag(bytes, pointer, 0);
             nextFace.mirrored = UFUtils.GetFlag(bytes, pointer, 1);
+            nextFace.liquid = UFUtils.GetFlag(bytes, pointer, 2);
+            nextFace.detail = UFUtils.GetFlag(bytes, pointer, 3);
             nextFace.fullBright = UFUtils.GetFlag(bytes, pointer, 5);
             pointer += 12;
 
