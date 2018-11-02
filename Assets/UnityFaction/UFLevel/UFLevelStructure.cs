@@ -140,6 +140,10 @@ namespace UFLevelStructure {
             }
             return new AxisAlignedBoundingBox(newMin, newMax);
         }
+
+        public override string ToString() {
+            return "[" + min + ";" + max + "]";
+        }
     }
 
     /* -----------------------------------------------------------------------------------------------
@@ -187,6 +191,7 @@ namespace UFLevelStructure {
 
     [Serializable]
     public struct Room {
+        public int id; //used to identify and prioritize rooms over eachother
         public AxisAlignedBoundingBox aabb;
         public bool isSkyRoom, isCold, isOutside, isAirlock, hasLiquid, hasAmbientLight, isSubRoom;
         public float life; // -1 -> infinite
@@ -227,6 +232,10 @@ namespace UFLevelStructure {
 
         //only available when hasAmbientLight == true
         public Color ambientLightColor;
+
+        public override string ToString() {
+            return "Room " + id + (isSubRoom ? " sub " : " ") + aabb;
+        }
 
     }
 

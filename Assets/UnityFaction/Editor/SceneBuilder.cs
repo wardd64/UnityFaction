@@ -89,6 +89,11 @@ public class SceneBuilder {
     }
 
     private static void BakeLightMaps() {
+        SetLightMapSettings();        
+        Lightmapping.Bake(); 
+    }
+
+    public static void SetLightMapSettings() {
         LightmapSettings.lightmapsMode = LightmapsMode.CombinedDirectional;
         LightmapEditorSettings.prioritizeView = false;
         LightmapEditorSettings.directSampleCount = 16;
@@ -99,13 +104,12 @@ public class SceneBuilder {
         LightmapEditorSettings.maxAtlasSize = 1024;
         LightmapEditorSettings.textureCompression = true;
         LightmapEditorSettings.enableAmbientOcclusion = true;
+        
         Lightmapping.bakedGI = true;
         Lightmapping.realtimeGI = true;
-        
-        Lightmapping.Bake(); 
     }
 
-    private LightmapParameters GetLMP() {
+    private static LightmapParameters GetLMP() {
         string fileName = "UFLighting";
         string fullName = fileName + ".giparams";
         string[] results = AssetDatabase.FindAssets(fileName);

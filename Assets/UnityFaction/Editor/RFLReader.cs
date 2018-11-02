@@ -2,6 +2,7 @@
 using System.IO;
 using UnityEngine;
 using UFLevelStructure;
+using System.Collections.Generic;
 
 public class RFLReader {
 
@@ -898,10 +899,10 @@ public class RFLReader {
             nextGroup.closeVol = BitConverter.ToSingle(bytes, pointer);
             pointer += 4;
 
-            int unkownCount2 = BitConverter.ToInt32(bytes, pointer);
-            pointer += 4 + (unkownCount2 * 4); //seems to be ID, but with what purpose?
-
-            nextGroup.contents = ReadIntList(bytes);
+            List<int> links = new List<int>();
+            links.AddRange(ReadIntList(bytes));
+            links.AddRange(ReadIntList(bytes));
+            nextGroup.contents = links.ToArray();
 
             level.movingGroups[i] = nextGroup;
         }
@@ -1241,6 +1242,7 @@ public class RFLReader {
         pointer += 4;
         for(int i = 0; i < nboRooms; i++) {
             Room nextRoom;
+            nextRoom.id = i;
 
             pointer += 4;
 
@@ -1327,7 +1329,8 @@ public class RFLReader {
         geometry.faces = new Face[nboFaces];
         for(int i = 0; i < nboFaces; i++) {
             Face nextFace;
-            pointer += 16;
+            pointer += 16; //unkown stuff
+
             nextFace.texture = BitConverter.ToInt32(bytes, pointer);
             nextFace.id = BitConverter.ToInt32(bytes, pointer + 8);
             pointer += 24;

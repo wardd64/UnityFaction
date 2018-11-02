@@ -211,8 +211,18 @@ public class UFPlayerInfo : MonoBehaviour {
             playerCamera.clearFlags = CameraClearFlags.Nothing;
 
         //far clipping
+        if(clipPlane <= 0f) {
+            Debug.LogWarning("Far clipping plane was set to invalid value! Reverting to default, 1000.");
+            clipPlane = 1000f;
+        }
         playerCamera.farClipPlane = clipPlane;
-        playerCamera.cullingMask &= ~skyMask; //remove skymask layers from direct player view
+        if((skyMask & levelMask) != 0) {
+            Debug.LogWarning("Sky and level mask settings overlap! As a result, sky layer will not " +
+                "be culled from direct player view. please create and assign a unique layer for " +
+                "the level, sky and player in the level builder to fix this issue");
+        }
+        else
+            playerCamera.cullingMask &= ~skyMask; //remove skymask layers from direct player view
     }
 
     public void UpdateCamera(Camera playerCamera) {

@@ -12,6 +12,8 @@ public class InputInterface : MonoBehaviour {
     public static InputInterface input { get {
             if(instance == null)
                 instance = FindObjectOfType<InputInterface>();
+            if(instance == null)
+                instance = MakeDefault();
             return instance;
     } }
     private static InputInterface instance;
@@ -171,6 +173,28 @@ public class InputInterface : MonoBehaviour {
             this.name = name;
             this.code = code;
         }
+    }
+
+    public static InputInterface MakeDefault() {
+        Debug.LogWarning("Made default Input interface object. Please include this object in a " +
+            "static (DontDestroyOnLoad) manner to be able to change user input.");
+
+        GameObject g = new GameObject("DefaultInputInterface");
+        InputInterface ii = g.AddComponent<InputInterface>();
+        ii.bindings = 
+            new KeyBinding[] {
+                new KeyBinding("Fire", KeyCode.Mouse0),
+                new KeyBinding("AltFire", KeyCode.Mouse1),
+                new KeyBinding("left", KeyCode.A),
+                new KeyBinding("right", KeyCode.D),
+                new KeyBinding("forward", KeyCode.W),
+                new KeyBinding("backward", KeyCode.S),
+                new KeyBinding("jump", KeyCode.Space),
+                new KeyBinding("crouch", KeyCode.LeftShift),
+                new KeyBinding("escape", KeyCode.Escape)
+            };
+
+        return ii;
     }
 
 }

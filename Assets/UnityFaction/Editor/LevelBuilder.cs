@@ -498,6 +498,7 @@ public class LevelBuilder : EditorWindow {
         Transform p = MakeParent("PlayerInfo");
         UFPlayerInfo info = p.gameObject.AddComponent<UFPlayerInfo>();
         info.Set(level, levelLayer, playerLayer, skyLayer, lastRFLPath);
+        SceneBuilder.SetLightMapSettings();
     }
 
     /// <summary>

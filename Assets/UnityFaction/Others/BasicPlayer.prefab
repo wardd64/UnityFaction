@@ -464,8 +464,8 @@ MonoBehaviour:
   invulnClip: {fileID: 0}
   damAmpClip: {fileID: 0}
   dieClip: {fileID: 0}
-  playerSound: {fileID: 0}
-  itemSound: {fileID: 0}
+  playerSound: {fileID: 82295299858899516}
+  itemSound: {fileID: 82295299858899516}
   leftFootSound: {fileID: 82295299858899516}
   rightFootSound: {fileID: 82295299858899516}
   footstepClips_solid: []

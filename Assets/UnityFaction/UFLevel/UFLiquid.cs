@@ -9,7 +9,8 @@ public class UFLiquid : MonoBehaviour {
     public float visibility;
     public float alpha;
     public Color color;
-    public bool onlyApplyInLiquidRooms;
+    public int roomID;
+    public bool onlyApplyWhenPlayerInRoom;
 
     private UFPlayerMovement player;
     private int nbCols;
@@ -37,16 +38,19 @@ public class UFLiquid : MonoBehaviour {
         color = liquid.color;
         type = liquid.type;
         visibility = liquid.visibility;
+
+        roomID = room.id;
+        onlyApplyWhenPlayerInRoom = true;
     }
 
     private void Update() {
         if(player == null)
             return;
 
-        if(onlyApplyInLiquidRooms) {
+        if(onlyApplyWhenPlayerInRoom) {
             Room playerRoom;
             UFLevel.playerInfo.GetRoom(player.transform.position, out playerRoom);
-            if(!playerRoom.hasLiquid)
+            if(playerRoom.id != this.roomID)
                 return;
         }
 
