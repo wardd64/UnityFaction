@@ -165,7 +165,12 @@ public class VPPUnpacker {
         for(int i = 0; i < length; i++)
             fileBytes[i] = bytes[start + i];
         string exportPath = exportFolder + '/' + name;
-        File.WriteAllBytes(exportPath, fileBytes);
+        try {
+            File.WriteAllBytes(exportPath, fileBytes);
+        }
+        catch(Exception e) {
+            Debug.LogError("Failed to write to " + exportPath + "\n" + e);
+        }
 
         //handle extentions that require further processing 
         string ext = Path.GetExtension(name).TrimStart('.').ToLower();

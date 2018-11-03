@@ -20,7 +20,7 @@ public class LevelBuilder : EditorWindow {
 
     //Build options
     public int levelLayer, playerLayer, skyLayer;
-    public bool convexMovers;
+    public bool convexMovers, forceMultiplayer;
     public AudioMixerGroup musicChannel, ambientChannel, effectsChannel;
 
     /// <summary>
@@ -152,6 +152,7 @@ public class LevelBuilder : EditorWindow {
             if(GUILayout.Button("Build static geometry")) BuildStaticGeometry();
             if(GUILayout.Button("Build lights")) BuildLights();
             playerLayer = EditorGUILayout.LayerField("player layer", playerLayer);
+            forceMultiplayer = EditorGUILayout.Toggle("Force multiplayer", forceMultiplayer);
             if(GUILayout.Button("Build player info")) BuildPlayerInfo();
             if(GUILayout.Button("Build geomodder")) BuildGeoModder();
             convexMovers = EditorGUILayout.Toggle("Mke mesh clldrs convex", convexMovers);
@@ -388,12 +389,19 @@ public class LevelBuilder : EditorWindow {
 
             if(allRooms[i].hasLiquid) {
                 UFLiquid liq = nextRoom.GetComponentInChildren<UFLiquid>();
+                if(liq == null) {
+                    GameObject surf = new GameObject("LiquidSurface");
+                    surf.transform.SetParent(nextRoom.transform);
+                    liq = surf.AddComponent<UFLiquid>();
+                }
                 liq.Set(allRooms[i]);
-                MeshRenderer mr = liq.GetComponent<MeshRenderer>();
                 Room.LiquidProperties liqProp = allRooms[i].liquidProperties;
-                Vector2 scroll = new Vector2(liqProp.scrollU, liqProp.scrollV);
-                mr.material = GetScrollingTexture(liqProp.texture, scroll);
-                mr.enabled = true;
+                MeshRenderer mr = liq.GetComponent<MeshRenderer>();
+                if(mr != null) {
+                    Vector2 scroll = new Vector2(liqProp.scrollU, liqProp.scrollV);
+                    mr.material = GetScrollingTexture(liqProp.texture, scroll);
+                    mr.enabled = true;
+                }
                 ufr.SetLiquid(liq);
             }
         }
@@ -463,6 +471,8 @@ public class LevelBuilder : EditorWindow {
         UFPlayerInfo info = p.gameObject.AddComponent<UFPlayerInfo>();
         info.Set(level, levelLayer, playerLayer, skyLayer, lastRFLPath);
         SceneBuilder.SetLightMapSettings();
+        if(forceMultiplayer)
+            info.multiplayer = true;
     }
 
     /// <summary>
