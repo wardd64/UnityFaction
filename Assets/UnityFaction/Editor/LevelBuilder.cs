@@ -634,8 +634,19 @@ public class LevelBuilder : EditorWindow {
             string name = "Event_" + GetIdString(e.transform) + "_" + e.name;
             UFEvent ufe = MakeUFObject<UFEvent>(name, p, e.transform);
             ufe.Set(e);
-            if(IsValidAudioClipName(e.string1))
-                ufe.SetAudio(GetClip(e.string1), musicChannel, effectsChannel);
+
+            //some event types need further editor support
+            switch(e.type) {
+
+            case UFLevelStructure.Event.EventType.Music_Start:
+            case UFLevelStructure.Event.EventType.Play_Sound:
+            ufe.SetAudio(GetClip(e.string1), musicChannel, effectsChannel);
+            break;
+
+            case UFLevelStructure.Event.EventType.Explode:
+            ufe.obj = GetPrefab("ExplosionEffect");
+            break;
+            }            
         }
     }
 
@@ -1147,6 +1158,24 @@ public class LevelBuilder : EditorWindow {
     }
 
     /// <summary>
+    /// Looks for assets with the given name and returns one 
+    /// if it matches matchName exactly
+    /// </summary>
+    private static T FindAsset<T>(string searchName, string matchName) where T : UnityEngine.Object {
+        string[] results = AssetDatabase.FindAssets(searchName);
+
+        foreach(string result in results) {
+            string resultPath = AssetDatabase.GUIDToAssetPath(result);
+            string resultName = Path.GetFileName(resultPath);
+
+            if(string.Equals(resultName, matchName, StringComparison.OrdinalIgnoreCase))
+                return (T)AssetDatabase.LoadAssetAtPath(resultPath, typeof(T));
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Finds or generates a special scrolling material 
     /// with the given texture and scrollspeed.
     /// Note that each scrollspeed will lead to a new material being generated.
@@ -1156,15 +1185,9 @@ public class LevelBuilder : EditorWindow {
         string matName = Path.GetFileNameWithoutExtension(texture) + "_scroll_" + scrollStr;
         string fullMatName = matName + ".mat";
 
-        string[] results = AssetDatabase.FindAssets(matName);
-
-        foreach(string result in results) {
-            string resultPath = AssetDatabase.GUIDToAssetPath(result);
-            string resultName = Path.GetFileName(resultPath);
-
-            if(string.Equals(resultName, fullMatName, StringComparison.OrdinalIgnoreCase))
-                return (Material)AssetDatabase.LoadAssetAtPath(resultPath, typeof(Material));
-        }
+        Material toReturn = FindAsset<Material>(matName, fullMatName);
+        if(toReturn != null)
+            return toReturn;
 
         Material mat = new Material(Shader.Find("UnityFaction/UVScroll"));
         mat.mainTexture = GetTexture(texture);
@@ -1501,16 +1524,12 @@ public class LevelBuilder : EditorWindow {
     /// </summary>
     public static GameObject GetPrefab(string name) {
         string prefabName = name + ".prefab";
-        string[] results = AssetDatabase.FindAssets(name);
-        foreach(string result in results) {
-            string resultPath = AssetDatabase.GUIDToAssetPath(result);
-            string resultName = Path.GetFileName(resultPath);
-            if(string.Equals(resultName, prefabName, StringComparison.OrdinalIgnoreCase))
-                return (GameObject)AssetDatabase.LoadAssetAtPath(resultPath, typeof(GameObject));
-        }
 
-        Debug.LogWarning("Could not find prefab for " + name);
-        return null;
+        GameObject toReturn = FindAsset<GameObject>(name, prefabName);
+        if(toReturn == null)
+            Debug.LogWarning("Could not find prefab for " + name);
+
+        return toReturn;
     }
 
     /// <summary>
