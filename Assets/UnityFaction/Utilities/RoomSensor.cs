@@ -32,7 +32,7 @@ public class RoomSensorEditor : Editor {
         }
 
 
-        List<Room> rooms = GetContainedRooms();
+        List<UFRoom> rooms = GetContainedRooms();
         int nboRooms = rooms.Count;
 
         if(nboRooms <= 0)
@@ -42,17 +42,17 @@ public class RoomSensorEditor : Editor {
         else
             GUILayout.Label("Multiple rooms");
 
-        foreach(Room room in rooms) {
+        foreach(UFRoom room in rooms) {
             GUILayout.Label(room.ToString());
         }
     }
 
     void OnSceneGUI() {
-        List<Room> rooms = GetContainedRooms();
+        List<UFRoom> rooms = GetContainedRooms();
 
         Handles.color = Color.red;
 
-        foreach(Room room in rooms) {
+        foreach(UFRoom room in rooms) {
             for(int i = 0; i < 8; i++) {
                 Vector3 b = Vector3.zero;
                 float l;
@@ -72,11 +72,11 @@ public class RoomSensorEditor : Editor {
 
 
 
-    private List<Room> GetContainedRooms() {
-        List<Room> toReturn = new List<Room>();
-        Room[] rooms = sensor.info.rooms;
+    private List<UFRoom> GetContainedRooms() {
+        List<UFRoom> toReturn = new List<UFRoom>();
+        List<UFRoom> rooms = FindObjectOfType<UFLevel>().rooms;
 
-        for(int i = rooms.Length - 1; i >= 0; i--) {
+        for(int i = rooms.Count - 1; i >= 0; i--) {
             if(rooms[i].aabb.IsInside(sensor.transform.position))
                 toReturn.Add(rooms[i]);
         }

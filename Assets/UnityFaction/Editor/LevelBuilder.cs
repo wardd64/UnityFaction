@@ -241,6 +241,10 @@ public class LevelBuilder : EditorWindow {
      * -----------------------------------------------------------------------------------------------
      */
 
+    private static Vector3 meshBuildOffset;
+    private List<int> scrollerIDs;
+    private List<Brush> exceptedBrushes;
+
     /// <summary>
     /// Builds all the non-moving geometry in a set of objects:
     /// Standard static geometry
@@ -251,92 +255,33 @@ public class LevelBuilder : EditorWindow {
     /// Sky room; dynamic skybox in the level
     /// </summary>
     public void BuildStaticGeometry() {
-        //set up split
-        int split = 6;
-        List<Face>[] faceSplit = new List<Face>[split];
-        for(int i = 0; i < split; i++)
-            faceSplit[i] = new List<Face>();
-
-        List<Brush> excepted = GetSpecialBrushes();
-
-        List<int> scrollers = new List<int>();
-        foreach(FaceScroll scroll in level.staticGeometry.scrolls)
-            scrollers.Add(scroll.faceRef);
-
-        List<Room> liquids = new List<Room>();
-        bool hasSkyRoom = false; Room skyRoom = default(Room);
-        foreach(Room room in level.staticGeometry.rooms) {
-            if(room.hasLiquid)
-                liquids.Add(room);
-
-            if(room.isSkyRoom) {
-                hasSkyRoom = true;
-                skyRoom = room;
-            }
-        }
-
-        //split faces
-        int nboFaces = level.staticGeometry.faces.Length;
-        for(int i = 0; i < nboFaces; i++){
-            Face face = level.staticGeometry.faces[i];
-
-            bool excludedFace = face.showSky;
-            excludedFace |= FaceIsContainedInBrushes(level.staticGeometry, face, excepted);
-            if(excludedFace)
-                continue;
-
-            int texIdx = Mathf.Max(0, face.texture);
-            string nextTex = level.staticGeometry.textures[texIdx].ToLower();
-
-            int sort = 0;
-            if(nextTex.Contains("invis"))
-                sort = 1;
-            if(face.liquid)
-                sort = 2;
-            else if(hasSkyRoom && FaceIsInRoom(level.staticGeometry, skyRoom, face))
-                sort = 4;
-            else if(scrollers.Contains(face.id))
-                sort = 3;
-            else if(nextTex.Contains("ice") || nextTex.Contains("icy"))
-                sort = 5;
-                
-            faceSplit[sort].Add(face);
-        }
-
-        //make objects
         Transform p = MakeParent("StaticGeometry");
 
-        //static visible geometry; all standard stuff
-        GameObject visG = MakeMeshObject(level.staticGeometry, faceSplit[0], "StaticVisible");
-        UFUtils.SetStaticRecursively(visG, true);
-        visG.transform.SetParent(p);
-        foreach(MeshRenderer mr in visG.GetComponentsInChildren<MeshRenderer>()) {
-            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
-            mr.gameObject.AddComponent<MeshCollider>();
+        //retrieve data
+        Face[] allFaces = level.staticGeometry.faces;
+        Room[] allRooms = level.staticGeometry.rooms;
+        int nboRooms = allRooms.Length;
+
+        //set up common variables
+        scrollerIDs = new List<int>();
+        foreach(FaceScroll f in level.staticGeometry.scrolls)
+            scrollerIDs.Add(f.faceRef);
+        exceptedBrushes = GetSpecialBrushes();
+
+        //set up room counting
+        List<Face>[] roomFaces = new List<Face>[nboRooms];
+        int skyRoomID = -1;
+        for(int i = 0; i < nboRooms; i++) {
+            roomFaces[i] = new List<Face>();
+            if(allRooms[i].isSkyRoom)
+                skyRoomID = allRooms[i].id;
         }
-        UFUtils.SetLayerRecursively(visG, levelLayer);
-        CalculateLightMapUVs(visG);
 
-        //static visible geometry; same as visible (difference depends on name)
-        GameObject icyG = MakeMeshObject(level.staticGeometry, faceSplit[5], "StaticIcy");
-        UFUtils.SetStaticRecursively(icyG, true);
-        icyG.transform.SetParent(p);
-        foreach(MeshRenderer mr in icyG.GetComponentsInChildren<MeshRenderer>()) {
-            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
-            mr.gameObject.AddComponent<MeshCollider>();
-        }
-        UFUtils.SetLayerRecursively(icyG, levelLayer);
-        CalculateLightMapUVs(icyG);
+        //split faces by room        
+        foreach(Face face in allFaces)
+            roomFaces[face.roomID].Add(face);
 
-        //static invisible; disabled renderers, but still active colliders
-        GameObject invisG = MakeMeshObject(level.staticGeometry, faceSplit[1], "StaticInvisible");
-        UFUtils.SetStaticRecursively(invisG, true);
-        invisG.transform.SetParent(p);
-        invisG.GetComponent<MeshRenderer>().enabled = false;
-        invisG.AddComponent<MeshCollider>();
-        UFUtils.SetLayerRecursively(invisG, levelLayer);
-
-        //destructible geometry: brushes that can be shot and shattered (glass)
+        //make destructible geometry
         GameObject destrG = new GameObject("Destructible");
         destrG.transform.SetParent(p);
         List<Brush> brushes = GetDestructibleBrushes();
@@ -363,76 +308,95 @@ public class LevelBuilder : EditorWindow {
                 foundAirPortals = true;
                 name = "_AIR_" + name;
             }
-            
+
             Transform brush = (MakeMeshObject(b.geometry, name)).transform;
             brush.SetParent(portalG.transform);
             UFUtils.SetTransform(brush, b.transform);
             brush.gameObject.SetActive(b.isAir);
-            
+
         }
         if(foundAirPortals)
             Debug.LogWarning("Portal air brushes may lead to faulty geometry! " +
                 "These brushes were built under the StaticGeometry/PortalGeometry GameObject. " +
                 "Please return to the RED level editor and replace these brushes with solid plane portals.");
 
-        //liquid surfaces
-        GameObject surf = new GameObject("Liquids");
-        surf.transform.SetParent(p);
-        List<Face>[] liquidFaces = new List<Face>[liquids.Count];
-        for(int i = 0; i < liquidFaces.Length; i++)
-            liquidFaces[i] = new List<Face>();
+        //find invalid rooms that we want to merge into their parents
+        bool[] validRoom = new bool[nboRooms];
+        for(int i = 0; i < nboRooms; i++) {
+            bool keepRoom = allRooms[i].hasAmbientLight;
+            keepRoom |= allRooms[i].hasLiquid;
 
-        foreach(Face f in faceSplit[2]) {
-            int i = GetLiquidRoomOfFace(level.staticGeometry, liquids, f);
-            liquidFaces[i].Add(f);
+            Vector3 roomSize = allRooms[i].aabb.GetSize();
+            bool spaceous = roomSize.y > 1f;
+            spaceous &= roomSize.x > 3f || roomSize.z > 3f;
+            spaceous &= roomSize.x > 1f && roomSize.z > 1f;
+
+            bool large = roomFaces[i].Count >= 6;
+
+            keepRoom &= spaceous && large;
+            validRoom[i] = keepRoom || i == skyRoomID;
         }
 
-        for(int i = 0; i < liquidFaces.Length; i++){
-            List<Face> faces = liquidFaces[i];
-            GameObject surface = MakeMeshObject(level.staticGeometry, faces, "Surface_" + i);
-            surface.transform.SetParent(surf.transform);
-            UFLiquid liquid = surface.AddComponent<UFLiquid>();
-            liquid.Set(liquids[i]);
-            MeshRenderer mr = surface.GetComponent<MeshRenderer>();
-            Room.LiquidProperties liqProp = liquids[i].liquidProperties;
-            Vector2 scroll = new Vector2(liqProp.scrollU, liqProp.scrollV);
-            mr.material = GetScrollingTexture(liqProp.texture, scroll);
-        }
-
-        //static scrolling textures
-        GameObject scrol = new GameObject("Scrollers");
-        scrol.isStatic = true;
-        scrol.transform.SetParent(p);
-        for(int i = 0; i < faceSplit[3].Count; i++){
-            Face face = faceSplit[3][i];
-
-            int scrollID = -1;
-            for(int j = 0; j < scrollers.Count; j++) {
-                if(scrollers[j] == face.id)
-                    scrollID = j;
-            }
-            if(scrollID < 0)
+        //merge invalid rooms into their parents when possible
+        for(int i = 0; i < nboRooms; i++) {
+            if(validRoom[i])
                 continue;
 
-            FaceScroll scroll = level.staticGeometry.scrolls[scrollID];
-            List<Face> scrollFaceInList = new List<Face> { face };
-            GameObject mesh = MakeMeshObject(level.staticGeometry, scrollFaceInList, "ScrolFace_" + scrollID);
-            mesh.transform.SetParent(scrol.transform);
-            MeshRenderer mr = mesh.GetComponent<MeshRenderer>();
-            mesh.AddComponent<MeshCollider>();
-            mesh.layer = levelLayer;
-            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
-            if(face.texture >= 0) {
-                string tex = level.staticGeometry.textures[face.texture];
-                mr.material = GetScrollingTexture(tex, scroll.scrollVelocity);
+            Vector3 roomPos = allRooms[i].aabb.GetCenter();
+            int parentIndex = nboRooms - 1;
+            while(parentIndex >= 0) {
+                bool validParent = validRoom[parentIndex];
+                validParent &= allRooms[parentIndex].aabb.IsInside(roomPos);
+                if(validParent) {
+                    roomFaces[parentIndex].AddRange(roomFaces[i]);
+                    break;
+                }
+                parentIndex--;
             }
+
+            //keep room anyway if we could not find a valid parent
+            validRoom[i] = parentIndex < 0;
         }
 
-        GameObject sky = MakeMeshObject(level.staticGeometry, faceSplit[4], "SkyRoom");
-        sky.isStatic = true;
-        sky.transform.SetParent(p);
-        UFUtils.SetLayerRecursively(sky, skyLayer);
-        sky.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        //make sky room seperately
+        if(skyRoomID >= 0) {
+            meshBuildOffset = allRooms[skyRoomID].aabb.GetCenter();
+            GameObject sky = MakeMeshObject(level.staticGeometry, roomFaces[skyRoomID], "SkyRoom");
+            sky.transform.SetParent(p);
+            sky.transform.position = meshBuildOffset;
+            meshBuildOffset = Vector3.zero;
+            sky.isStatic = true;
+            sky.transform.SetParent(p);
+            UFUtils.SetLayerRecursively(sky, skyLayer);
+            sky.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        }
+
+        //build rooms
+        UFLevel.ClearRooms();
+        for(int i = 0; i < nboRooms; i++) {
+            if(!validRoom[i] || i == skyRoomID)
+                continue;
+
+            int extLength = Mathf.CeilToInt(Mathf.Log10(nboRooms + 1));
+            string roomName = "Room_" + i.ToString().PadLeft(extLength, '0');
+            GameObject nextRoom = new GameObject(roomName);
+            nextRoom.transform.SetParent(p);
+            nextRoom.transform.position = allRooms[i].aabb.GetCenter();
+            UFRoom ufr = nextRoom.AddComponent<UFRoom>();
+            ufr.Set(allRooms[i]);
+            MakeRoomGeometry(nextRoom.transform, level.staticGeometry, roomFaces[i]);
+
+            if(allRooms[i].hasLiquid) {
+                UFLiquid liq = nextRoom.GetComponentInChildren<UFLiquid>();
+                liq.Set(allRooms[i]);
+                MeshRenderer mr = liq.GetComponent<MeshRenderer>();
+                Room.LiquidProperties liqProp = allRooms[i].liquidProperties;
+                Vector2 scroll = new Vector2(liqProp.scrollU, liqProp.scrollV);
+                mr.material = GetScrollingTexture(liqProp.texture, scroll);
+                mr.enabled = true;
+                ufr.SetLiquid(liq);
+            }
+        }
     }
 
     /// <summary>
@@ -566,7 +530,7 @@ public class LevelBuilder : EditorWindow {
             UFLevel.SetObject(b.transform.id, brush.gameObject);
         }
         if(movingMeshColliders > 0)
-            Debug.LogWarning("A number of moving brushes are using mesh colliders: " + movingMeshColliders + 
+            Debug.Log("A number of moving brushes are using mesh colliders: " + movingMeshColliders + 
                 ". Consider giving them compound colliders for efficiency.");
     }
 
@@ -847,6 +811,120 @@ public class LevelBuilder : EditorWindow {
         return MakeMeshObject(geometry, faces, name);
     }
 
+    /// <summary>
+    /// Take given faces and neatly split them into
+    /// standard, invisbile, liquid, scrolling and icy geometry
+    /// Then build those meshes and parent them under the given room transform.
+    /// </summary>
+    private void MakeRoomGeometry(Transform parent, Geometry geometry, List<Face> roomFaces) {
+        meshBuildOffset = parent.position;
+
+        int split = 6;
+        List<Face>[] faceSplit = new List<Face>[split];
+        for(int i = 0; i < split; i++)
+            faceSplit[i] = new List<Face>();
+
+        foreach(Face face in roomFaces) { 
+            bool excludedFace = face.showSky;
+            excludedFace |= FaceIsContainedInBrushes(geometry, face, exceptedBrushes);
+            if(excludedFace)
+                continue;
+
+            int texIdx = Mathf.Max(0, face.texture);
+            string nextTex = geometry.textures[texIdx].ToLower();
+
+            int sort = 0;
+            if(nextTex.Contains("invis"))
+                sort = 1;
+            if(face.liquid)
+                sort = 2;
+            else if(scrollerIDs.Contains(face.id))
+                sort = 3;
+            else if(nextTex.Contains("ice") || nextTex.Contains("icy"))
+                sort = 4;
+
+            faceSplit[sort].Add(face);
+        }
+
+        //static visible geometry; all standard stuff
+        if(faceSplit[0].Count > 0) {
+            GameObject visG = MakeMeshObject(geometry, faceSplit[0], "StaticVisible");
+            UFUtils.SetStaticRecursively(visG, true);
+            visG.transform.SetParent(parent);
+            foreach(MeshRenderer mr in visG.GetComponentsInChildren<MeshRenderer>()) {
+                mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+                mr.gameObject.AddComponent<MeshCollider>();
+            }
+            UFUtils.SetLayerRecursively(visG, levelLayer);
+            CalculateLightMapUVs(visG);
+        }
+
+        //static invisible; disabled renderers, but still active colliders
+        if(faceSplit[1].Count > 0) {
+            GameObject invisG = MakeMeshObject(level.staticGeometry, faceSplit[1], "StaticInvisible");
+            UFUtils.SetStaticRecursively(invisG, true);
+            invisG.transform.SetParent(parent);
+            invisG.GetComponent<MeshRenderer>().enabled = false;
+            invisG.AddComponent<MeshCollider>();
+            UFUtils.SetLayerRecursively(invisG, levelLayer);
+        }
+
+        //liquid surfaces
+        if(faceSplit[2].Count > 0) {
+            GameObject surface = MakeMeshObject(level.staticGeometry, faceSplit[2], "LiquidSurface");
+            surface.transform.SetParent(parent);
+            surface.AddComponent<UFLiquid>();
+        }
+
+        //static scrolling textures
+        if(faceSplit[3].Count > 0) {
+            GameObject scrol = new GameObject("Scrollers");
+            scrol.isStatic = true;
+            scrol.transform.SetParent(parent);
+            for(int i = 0; i < faceSplit[3].Count; i++) {
+                Face face = faceSplit[3][i];
+
+                int scrollID = -1;
+                for(int j = 0; j < scrollerIDs.Count; j++) {
+                    if(scrollerIDs[j] == face.id)
+                        scrollID = j;
+                }
+                if(scrollID < 0)
+                    continue;
+
+                FaceScroll scroll = level.staticGeometry.scrolls[scrollID];
+                List<Face> scrollFaceInList = new List<Face> { face };
+                GameObject mesh = MakeMeshObject(level.staticGeometry, scrollFaceInList, "ScrolFace_" + scrollID);
+                mesh.transform.SetParent(scrol.transform);
+                MeshRenderer mr = mesh.GetComponent<MeshRenderer>();
+                mesh.AddComponent<MeshCollider>();
+                mesh.layer = levelLayer;
+                mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+                if(face.texture >= 0) {
+                    string tex = level.staticGeometry.textures[face.texture];
+                    mr.material = GetScrollingTexture(tex, scroll.scrollVelocity);
+                }
+            }
+        }
+        
+        //static icy geometry; same as visible (difference depends on name)
+        if(faceSplit[4].Count > 0) {
+            GameObject icyG = MakeMeshObject(level.staticGeometry, faceSplit[4], "StaticIcy");
+            UFUtils.SetStaticRecursively(icyG, true);
+            icyG.transform.SetParent(parent);
+            foreach(MeshRenderer mr in icyG.GetComponentsInChildren<MeshRenderer>()) {
+                mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+                mr.gameObject.AddComponent<MeshCollider>();
+            }
+            UFUtils.SetLayerRecursively(icyG, levelLayer);
+            CalculateLightMapUVs(icyG);
+        }
+
+        UFUtils.ResetChildrenRecursively(parent);
+
+        meshBuildOffset = Vector3.zero;
+    }
+
     const int MAX_TEXTURES = 16;
     const string FLAG_TEXTURE = "USERBMAP";
 
@@ -875,7 +953,7 @@ public class LevelBuilder : EditorWindow {
 
         int texCount = usedTextures.Count;
         if(texCount > MAX_TEXTURES) {
-            Debug.LogWarning("Mesh object " + name + " had too many textures and had to be split into multiple objects");
+            Debug.Log("Mesh object " + name + " had too many textures and had to be split into multiple objects");
 
             int nboSplits = (texCount / MAX_TEXTURES) + 1;
             List<Face>[] faceSplit = new List<Face>[nboSplits];
@@ -1009,7 +1087,7 @@ public class LevelBuilder : EditorWindow {
             Material mat = new Material(Shader.Find(shader));
             
             mat.mainTexture = tex;
-            AssetDatabase.CreateAsset(mat, assetPath +  materialName);
+            TrySaveMaterial(mat, assetPath +  materialName);
             
             return mat;
         }
@@ -1035,6 +1113,15 @@ public class LevelBuilder : EditorWindow {
         }
 
         return null;
+    }
+
+    private static void TrySaveMaterial(Material mat, string name) {
+        try {
+            AssetDatabase.CreateAsset(mat, name);
+        }
+        catch(Exception e) {
+            Debug.LogError("Failed to create material asset\n" + e);
+        }
     }
 
     /// <summary>
@@ -1076,7 +1163,7 @@ public class LevelBuilder : EditorWindow {
 
         mat.name = matName;
 
-        AssetDatabase.CreateAsset(mat, assetPath + fullMatName);
+        TrySaveMaterial(mat, assetPath + fullMatName);
 
         return mat;
     }
@@ -1491,7 +1578,7 @@ public class LevelBuilder : EditorWindow {
             Vector3[] faceVertices = new Vector3[nboPoints];
             Vector2[] faceUVs = new Vector2[nboPoints];
             for(int i = 0; i < nboPoints; i++) {
-                faceVertices[i] = geometry.vertices[face.vertices[i].vertexRef];
+                faceVertices[i] = geometry.vertices[face.vertices[i].vertexRef] - meshBuildOffset;
                 faceUVs[i] = new Vector2(face.vertices[i].uv.x, -face.vertices[i].uv.y);
             }
 

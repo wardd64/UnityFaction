@@ -141,6 +141,14 @@ namespace UFLevelStructure {
             return new AxisAlignedBoundingBox(newMin, newMax);
         }
 
+        public Vector3 GetCenter() {
+            return .5f * (min + max);
+        }
+
+        public Vector3 GetSize() {
+            return max - min;
+        }
+
         public override string ToString() {
             return "[" + min + ";" + max + "]";
         }
@@ -178,7 +186,7 @@ namespace UFLevelStructure {
     [Serializable]
     public struct Face {
         public int texture;
-        public int id;
+        public int id, roomID;
         public bool showSky, mirrored, liquid, detail, fullBright;
         public FaceVertex[] vertices;
     }

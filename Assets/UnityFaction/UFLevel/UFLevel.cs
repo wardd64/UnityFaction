@@ -40,6 +40,8 @@ public class UFLevel : MonoBehaviour {
 
     [SerializeField]
     public List<IDRef> idDictionary;
+    public List<UFRoom> rooms;
+    
 
     public void Awake(){
         if(singleton != this) {
@@ -116,5 +118,23 @@ public class UFLevel : MonoBehaviour {
             idRef.SetObject(objectRef);
         else
             Debug.LogWarning("Tried to set object to id reference that does not exist: " + id);
+    }
+
+    public static void ClearRooms() {
+        instance.rooms = null;
+    }
+
+    public static void AddRoom(UFRoom room) {
+        if(instance.rooms == null)
+            instance.rooms = new List<UFRoom>();
+        instance.rooms.Add(room);
+    }
+
+    public static UFRoom GetRoom(Vector3 position) {
+        for(int i = instance.rooms.Count - 1; i >= 0; i--) {
+            if(instance.rooms[i].aabb.IsInside(position))
+                return instance.rooms[i];
+        }
+        return null;
     }
 }

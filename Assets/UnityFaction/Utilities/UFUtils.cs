@@ -724,4 +724,25 @@ public class UFUtils {
             SetLayerRecursively(g.transform.GetChild(i).gameObject, layer);
         g.layer = layer;
     }
+
+    /// <summary>
+    /// Sets all of the children of the given transform
+    /// to the default local transform.
+    /// </summary>
+    public static void ResetChildrenRecursively(Transform t) {
+        for(int i = 0; i < t.childCount; i++)
+            ResetTransformRecursively(t.GetChild(i));
+    }
+
+    /// <summary>
+    /// Sets given transform and all of its children to default 
+    /// local transform.
+    /// </summary>
+    public static void ResetTransformRecursively(Transform t) {
+        for(int i = 0; i < t.childCount; i++)
+            ResetTransformRecursively(t.GetChild(i));
+        t.localPosition = Vector3.zero;
+        t.localRotation = Quaternion.identity;
+        t.localScale = Vector3.one;
+    }
 }

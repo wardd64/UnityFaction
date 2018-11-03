@@ -9,8 +9,6 @@ public class UFLiquid : MonoBehaviour {
     public float visibility;
     public float alpha;
     public Color color;
-    public int roomID;
-    public bool onlyApplyWhenPlayerInRoom;
 
     private UFPlayerMovement player;
     private int nbCols;
@@ -21,13 +19,13 @@ public class UFLiquid : MonoBehaviour {
         } }
 
     public void Set(Room room) {
-        Vector3 center = (room.aabb.min + room.aabb.max) / 2f;
+        Vector3 center = -transform.position + (.5f * (room.aabb.min + room.aabb.max));
         Vector3 extents = room.aabb.max - room.aabb.min;
 
         Room.LiquidProperties liquid = room.liquidProperties;
 
         float depth = liquid.depth;
-        float y = room.aabb.min.y + depth / 2f;
+        float y = -transform.position.y + room.aabb.min.y + depth / 2f;
 
         BoxCollider bc = gameObject.AddComponent<BoxCollider>();
         bc.center = new Vector3(center.x, y, center.z);
@@ -38,21 +36,16 @@ public class UFLiquid : MonoBehaviour {
         color = liquid.color;
         type = liquid.type;
         visibility = liquid.visibility;
-
-        roomID = room.id;
-        onlyApplyWhenPlayerInRoom = true;
     }
 
     private void Update() {
         if(player == null)
             return;
 
-        if(onlyApplyWhenPlayerInRoom) {
-            Room playerRoom;
-            UFLevel.playerInfo.GetRoom(player.transform.position, out playerRoom);
-            if(playerRoom.id != this.roomID)
-                return;
-        }
+        UFRoom room = GetComponentInParent<UFRoom>();
+        Vector3 playerPos = player.transform.position + .8f * Vector3.up;
+        if(!room.IsInside(playerPos))
+            return;
 
         player.SwimState(this);
         ApplyDPS(player.GetComponent<UFPlayerLife>(), type);

@@ -1340,7 +1340,10 @@ public class RFLReader {
             nextFace.liquid = UFUtils.GetFlag(bytes, pointer, 2);
             nextFace.detail = UFUtils.GetFlag(bytes, pointer, 3);
             nextFace.fullBright = UFUtils.GetFlag(bytes, pointer, 5);
-            pointer += 12;
+            pointer += 8;
+
+            nextFace.roomID = BitConverter.ToInt32(bytes, pointer);
+            pointer += 4;
 
             int nboFaceVertices = BitConverter.ToInt32(bytes, pointer);
             bool hasExtraCoords = false;

@@ -20,8 +20,6 @@ public class UFPlayerInfo : MonoBehaviour {
 
     public bool multiplayer;
     public SpawnPoint[] spawnPoints;
-
-    public Room[] rooms;
     public Camera skyCamera;
 
     public LayerMask levelMask;
@@ -73,39 +71,18 @@ public class UFPlayerInfo : MonoBehaviour {
 
         AxisAlignedBoundingBox levelBox = level.staticGeometry.rooms[0].aabb;
 
-        List<Room> roomList = new List<Room>();
         foreach(Room room in level.staticGeometry.rooms) {
-            Vector3 roomExtents = room.aabb.max - room.aabb.min;
-            Vector3 roomCenter = (room.aabb.max + room.aabb.min)/2f;
-
             levelBox = AxisAlignedBoundingBox.Join(levelBox, room.aabb);
 
-            bool realRoom = true;
             if(room.isSkyRoom) {
                 foundSkyRoom = true;
                 skyRoom = room;
                 continue;
             }
 
-            //check if this room is worth keeping
-            realRoom &= roomExtents.x > 3f;
-            realRoom &= roomExtents.z > 3f;
-            realRoom &= roomExtents.y > 1.1f;
-
-            realRoom |= room.hasAmbientLight;
-            realRoom |= room.hasLiquid;
-            realRoom |= room.isAirlock;
-
-            //TODO implement something with room life
-
-            if(!realRoom)
-                continue;
-            
-            roomList.Add(room);
-
-            MakeEAX(room.eaxEffect, roomCenter, roomExtents.magnitude / 2f);
+            float roomRadius = .5f * room.aabb.GetSize().magnitude;
+            MakeEAX(room.eaxEffect, room.aabb.GetCenter(), roomRadius);
         }
-        this.rooms = roomList.ToArray();
 
         BoxCollider bc = gameObject.AddComponent<BoxCollider>();
         bc.isTrigger = true;
@@ -228,13 +205,9 @@ public class UFPlayerInfo : MonoBehaviour {
     public void UpdateCamera(Camera playerCamera) {
         targetAmbient = defaultAmbient;
         
-        Room room;
-        if(GetRoom(playerCamera.transform.position, out room)) {
-            if(room.hasAmbientLight)
-                targetAmbient = room.ambientLightColor;
-
-            //TODO apply remaining room effects
-        }
+        UFRoom room = UFLevel.GetRoom(playerCamera.transform.position);
+        if(room != null && room.hasAmbientLight)
+            targetAmbient = room.ambientLightColor;
 
         Color currentAmb = RenderSettings.ambientLight;
         float r = Time.deltaTime / ambChangeTime;
@@ -295,17 +268,6 @@ public class UFPlayerInfo : MonoBehaviour {
 
     public enum PlayerClass {
         Free, Bot, RedTeam, BlueTeam
-    }
-
-    public bool GetRoom(Vector3 position, out Room room) {
-        for(int i = rooms.Length - 1; i >= 0; i--) {
-            if(rooms[i].aabb.IsInside(position)) {
-                room = rooms[i];
-                return true;
-            }
-        }
-        room = default(Room);
-        return false;
     }
 
     public void SetSkyboxRotation(string axis, float speed) {

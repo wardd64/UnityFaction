@@ -22,7 +22,7 @@ public class InputInterface : MonoBehaviour {
     public KeyBinding[] bindings;
     public AudioSource changeBindingSound;
 
-    private void Awake() {
+    private void Start() {
         LoadBindings();
     }
 
