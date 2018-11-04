@@ -369,7 +369,8 @@ public class LevelBuilder : EditorWindow {
             sky.isStatic = true;
             sky.transform.SetParent(p);
             UFUtils.SetLayerRecursively(sky, skyLayer);
-            sky.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            foreach(MeshRenderer mr in sky.GetComponentsInChildren<MeshRenderer>())
+                mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         }
 
         //build rooms
@@ -665,17 +666,20 @@ public class LevelBuilder : EditorWindow {
             Material particleMat = GetMaterial(e.texture, assetPath, GetParticleShader(e.fade, e.glow));
 
             //set material scale
-            float aspect = particleMat.mainTexture.width / particleMat.mainTexture.height;
-            if(aspect > 1f) {
-                particleMat.mainTextureScale = new Vector2(1f, aspect);
-                particleMat.mainTextureOffset = new Vector2(0f, (aspect - 1f) * -.5f);
+            if(particleMat != null) {
+                if(particleMat.mainTexture != null) {
+                    float aspect = particleMat.mainTexture.width / particleMat.mainTexture.height;
+                    if(aspect > 1f) {
+                        particleMat.mainTextureScale = new Vector2(1f, aspect);
+                        particleMat.mainTextureOffset = new Vector2(0f, (aspect - 1f) * -.5f);
+                    }
+                    else if(aspect < 1f) {
+                        particleMat.mainTextureScale = new Vector2(1f / aspect, 1f);
+                        particleMat.mainTextureOffset = new Vector2(((1f / aspect) - 1f) * -.5f, 0f);
+                    }
+                }
+                emit.SetMaterial(particleMat);
             }
-            else if(aspect < 1f) {
-                particleMat.mainTextureScale = new Vector2(1f / aspect, 1f);
-                particleMat.mainTextureOffset = new Vector2(((1f / aspect) - 1f) * -.5f, 0f);
-            }
-
-            emit.SetMaterial(particleMat);
         }
 
         Transform trgtParent = (new GameObject("BoltTargets")).transform;
