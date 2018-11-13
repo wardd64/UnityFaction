@@ -488,6 +488,7 @@ public class UFUtils {
     /// </summary>
     public static Mesh MakeQuad(float width, float height) {
         Mesh mesh = new Mesh();
+        mesh.name = "StretchedQuad";
 
         Vector3[] vertices = new Vector3[4];
         float x = width / 2f;
@@ -744,5 +745,16 @@ public class UFUtils {
         t.localPosition = Vector3.zero;
         t.localRotation = Quaternion.identity;
         t.localScale = Vector3.one;
+    }
+
+    /// <summary>
+    /// Scales fov value to match a certain aspect ratio.
+    /// </summary>
+    /// <param name="input">Input fov in degrees</param>
+    /// <param name="ratio">scaling factor: fov will increase if bigger than 1 and decrease if smaller than 1.</param>
+    /// <returns></returns>
+    public static float ScaleFOV(float input, float ratio) {
+        float r = Mathf.Tan(.5f * input * Mathf.Deg2Rad) * ratio;
+        return 2f * Mathf.Atan(r) * Mathf.Rad2Deg;
     }
 }

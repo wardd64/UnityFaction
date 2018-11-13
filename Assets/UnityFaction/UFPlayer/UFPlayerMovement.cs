@@ -53,6 +53,7 @@ public class UFPlayerMovement : MonoBehaviour {
     public float crouchSpeed = 6f; //movement speed while crouching
     public float standingHeight = 1.85f, crouchingHeight = 1.15f; //cc height
     public float standingRadius = 0.6f, crouchingRadius = 0.55f; //cc radius
+    public float camStandingHeight = 1.58f, camCrouchingHeight = 0.95f; //cam local y pos
     public float antJmpGMulplr = 4f; //maximum gravity multiplier used to cut jump short
     public float sharpEdgeTrshold = 2.5f; //speed above which sharp edge correction activates
     public float moverHitForce = 1f; //factor by which mover collissions are multiplied
@@ -299,6 +300,7 @@ public class UFPlayerMovement : MonoBehaviour {
             crouching = true;
         else if(!crouch && crouching)
             crouching = !CheckIfClearForStandingUp();
+        
         SetCharacterHeight(crouching);
 
         //others
@@ -479,8 +481,9 @@ public class UFPlayerMovement : MonoBehaviour {
         cc.radius = Mathf.MoveTowards(cc.radius, targetRadius, radiusDelta * dt);
         cc.center = Vector3.up * (cc.height / 2f);
 
-        float deltaHeight = cc.height - oldHeight;
-        playerCamera.transform.position += deltaHeight * Vector3.up;
+        float standRatio = (cc.height - crouchingHeight) / heightDelta;
+        float camHeight = Mathf.Lerp(camCrouchingHeight, camStandingHeight, standRatio);
+        playerCamera.transform.localPosition = Vector3.up * camHeight;
     }
 
     private bool CheckIfClearForStandingUp() {

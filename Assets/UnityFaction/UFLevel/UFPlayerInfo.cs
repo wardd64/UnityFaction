@@ -36,6 +36,9 @@ public class UFPlayerInfo : MonoBehaviour {
     private Vector3 angularVelocity;
     private Quaternion cameraRotation;
 
+    private const float DEFAULT_ASPECT = 4f / 3f;
+    private const float FP_FOV = 70f;
+
     public void Set(LevelData level, int levelLayer, int playerLayer, int skyLayer, string rflPath) {
         this.levelRFLPath = rflPath;
 
@@ -172,6 +175,8 @@ public class UFPlayerInfo : MonoBehaviour {
         targetAmbient = defaultAmbient;
         SetFog();
         Application.targetFrameRate = 120;
+
+        RenderSettings.ambientIntensity = 0f;
     }
 
     public void ApplyCameraSettings(Camera playerCamera) {
@@ -213,12 +218,22 @@ public class UFPlayerInfo : MonoBehaviour {
         float r = Time.deltaTime / ambChangeTime;
         RenderSettings.ambientLight = UFUtils.MoveTowards(currentAmb, targetAmbient, r);
 
+        float fov = UFUtils.ScaleFOV(Global.save.fov, 1f / DEFAULT_ASPECT);
+
+        float realAspect = (float) Screen.width / Screen.height;
+        float aspect = realAspect * DEFAULT_ASPECT;
+        playerCamera.fieldOfView = fov;
+
+        playerCamera.aspect = aspect;
+        UpdateFPCamera(playerCamera);
+
         if(skyCamera != null) {
             float rotAngle = -Time.deltaTime * angularVelocity.magnitude;
             cameraRotation *= Quaternion.AngleAxis(rotAngle, angularVelocity);
 
             skyCamera.transform.rotation = cameraRotation * playerCamera.transform.rotation;
-            skyCamera.fieldOfView = playerCamera.fieldOfView;
+            skyCamera.fieldOfView = fov;
+            skyCamera.aspect = aspect;
         }
     }
 
@@ -227,6 +242,16 @@ public class UFPlayerInfo : MonoBehaviour {
         playerMissingFrames++;
         if(playerMissingTime > 1f && playerMissingFrames > 10)
             UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(500f * Time.deltaTime, 0, true);
+    }
+
+    private void UpdateFPCamera(Camera playerCamera) {
+        if(playerCamera.transform.childCount <= 0)
+            return;
+        Camera fpCamera = playerCamera.transform.GetChild(0).GetComponent<Camera>();
+        if(fpCamera == null)
+            return;
+        fpCamera.fieldOfView = FP_FOV;
+        fpCamera.aspect = DEFAULT_ASPECT;
     }
 
     /// <summary>

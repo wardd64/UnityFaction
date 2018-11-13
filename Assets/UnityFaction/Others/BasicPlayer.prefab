@@ -164,7 +164,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1321733352001462}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.6, z: 0}
+  m_LocalPosition: {x: 0, y: 1.58, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 4339415164729246}
@@ -443,6 +443,8 @@ MonoBehaviour:
   crouchingHeight: 1.15
   standingRadius: 0.6
   crouchingRadius: 0.55
+  camStandingHeight: 1.58
+  camCrouchingHeight: 0.95
   antJmpGMulplr: 4
   sharpEdgeTrshold: 2.5
   moverHitForce: 1

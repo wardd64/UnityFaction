@@ -5,8 +5,9 @@ using UnityEngine;
 public class UFPlayerLife : MonoBehaviour {
 
     protected float health, armor;
-    protected float timer;
-    protected bool invulnerable { get { return timer > 0f; } }
+    protected float invulnTimer;
+    protected bool invulnerable { get { return invulnTimer > 0f; } }
+    protected bool initial;
 
     public const float MAX_HP = 100f;
     public const float SUPER_HP = 200f;
@@ -17,16 +18,20 @@ public class UFPlayerLife : MonoBehaviour {
     }
 
     protected virtual void Update() {
-        if(timer > 0f) {
-            timer -= Time.deltaTime;
-            if(timer < 0f)
-                timer = 0f;
+        if(invulnTimer > 0f) {
+            invulnTimer -= Time.deltaTime;
+            if(invulnTimer < 0f) {
+                invulnTimer = 0f;
+                initial = false;
+            }
         }
     }
 
     protected void SetBaseHealth() {
         health = MAX_HP;
         armor = 0f;
+        initial = true;
+        invulnTimer = 1f;
     }
 
     public bool CanPickUpHealth() {
@@ -50,7 +55,7 @@ public class UFPlayerLife : MonoBehaviour {
     }
 
     public virtual void TakeDamage(float amount, DamageType type, bool bypassInvuln) {
-        if(invulnerable && !bypassInvuln)
+        if(invulnerable && (!bypassInvuln || initial))
             return;
 
         if(health <= 0f)
@@ -84,7 +89,9 @@ public class UFPlayerLife : MonoBehaviour {
     }
 
     public void Invulnerability() {
-        timer = INVULN_TIME;
+        if(initial)
+            return;
+        invulnTimer = INVULN_TIME;
     }
 
     public enum DamageType {
