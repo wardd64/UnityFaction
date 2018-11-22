@@ -1,8 +1,11 @@
 #Examples, testings levels, source files and game specific files
 Assets/Examples
 Assets/Examples.meta
-Assets/GameFiles
-Assets/GameFiles.meta
+Assets/GameFiles/MapSources/*
+!Assets/GameFiles/MapSources/_tutorial_map.vpp
+Assets/GameFiles/_UFScenes/*
+!Assets/GameFiles/_UFScenes/*.unity
+
 ProjectSettings
 RFTools
 Assets/UnityFaction/RFSource
