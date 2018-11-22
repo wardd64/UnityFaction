@@ -757,4 +757,18 @@ public class UFUtils {
         float r = Mathf.Tan(.5f * input * Mathf.Deg2Rad) * ratio;
         return 2f * Mathf.Atan(r) * Mathf.Rad2Deg;
     }
+
+    /// <summary>
+    /// Trims away characters in the given path that are not legal for paths
+    /// </summary>
+    public static string TrimIllegalPathChars(string input) {
+        string invalid = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+        string toReturn = input;
+
+        foreach(char c in invalid) {
+            toReturn = toReturn.Replace(c.ToString(), "");
+        }
+
+        return toReturn;
+    }
 }

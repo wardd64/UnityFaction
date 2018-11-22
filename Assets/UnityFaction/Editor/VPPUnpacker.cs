@@ -52,7 +52,7 @@ public class VPPUnpacker {
 
         ReadFile(vppPath, exportFolder);
 
-        Debug.Log("Content of " + Path.GetFileName(vppPath) + " has been unpacked succesfully!");
+        Debug.Log("Finished unpacking content of " + Path.GetFileName(vppPath));
         AssetDatabase.Refresh();
     }
 
@@ -147,12 +147,15 @@ public class VPPUnpacker {
         for(int i = 0; i < nFiles; i++) {
 
             string subFileName = Encoding.UTF8.GetString(bytes, pointer, BYTES_IN_STRING);
-            pointer += BYTES_IN_STRING;
+            int nullPos = GetNullPos(subFileName);
+            subFileName = subFileName.Substring(0, nullPos);
+
+            pointer += BYTES_IN_STRING;    
 
             int subFileSize = BitConverter.ToInt32(bytes, pointer);
             pointer += 4;
 
-            ExportFile(subFileName.Trim('\0'), exportFolder, bytes, offset, subFileSize);
+            ExportFile(subFileName, exportFolder, bytes, offset, subFileSize);
             offset += RoundToBlockSize(subFileSize);
         }
 
@@ -160,20 +163,31 @@ public class VPPUnpacker {
             "Actual file size did not match reported size. File may be corrupted.");
     }
 
+    private static int GetNullPos(string text) {
+        char[] chars = text.ToCharArray();
+        for(int i = 0; i < text.Length; i++) {
+            if(chars[i] < 32)
+                return i;
+        }
+        return -1;
+    }
+
     private static void ExportFile(string name, string exportFolder, byte[] bytes, int start, int length) {
+        string ext = "";
+
         Byte[] fileBytes = new Byte[length];
         for(int i = 0; i < length; i++)
             fileBytes[i] = bytes[start + i];
         string exportPath = exportFolder + '/' + name;
         try {
             File.WriteAllBytes(exportPath, fileBytes);
+            ext = Path.GetExtension(name).TrimStart('.').ToLower();
         }
         catch(Exception e) {
-            Debug.LogError("Failed to write to " + exportPath + "\n" + e);
+            Debug.LogError("Failed to write to " + name + " Because of error: \n" + e);
         }
 
         //handle extentions that require further processing 
-        string ext = Path.GetExtension(name).TrimStart('.').ToLower();
         switch(ext) {
         case "v3d": case "v3m": case "v3c":
         V3DReader modelReader = new V3DReader(exportPath);

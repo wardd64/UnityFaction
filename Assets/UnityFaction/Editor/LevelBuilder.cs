@@ -899,6 +899,7 @@ public class LevelBuilder : EditorWindow {
             GameObject surface = MakeMeshObject(level.staticGeometry, faceSplit[2], "LiquidSurface");
             surface.transform.SetParent(parent);
             surface.AddComponent<UFLiquid>();
+            surface.isStatic = true;
         }
 
         //static scrolling textures
@@ -930,6 +931,8 @@ public class LevelBuilder : EditorWindow {
                     mr.material = GetScrollingTexture(tex, scroll.scrollVelocity);
                 }
             }
+
+            UFUtils.SetStaticRecursively(scrol, true);
         }
         
         //static icy geometry; same as visible (difference depends on name)
