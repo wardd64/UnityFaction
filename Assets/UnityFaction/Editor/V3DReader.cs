@@ -490,7 +490,7 @@ public class V3DReader {
         MeshFilter mf = g.AddComponent<MeshFilter>();
         mf.sharedMesh = mesh;
 
-        Material[] materials = LevelBuilder.GetMaterials(textures, assetPath);
+        Material[] materials = LevelBuilder.GetMaterials(textures);
         MeshRenderer mr = g.AddComponent<MeshRenderer>();
         mr.materials = materials;
         mesh.name = name;

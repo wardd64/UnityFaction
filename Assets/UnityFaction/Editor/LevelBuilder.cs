@@ -362,7 +362,7 @@ public class LevelBuilder : EditorWindow {
         //make sky room seperately
         if(skyRoomID >= 0) {
             meshBuildOffset = allRooms[skyRoomID].aabb.GetCenter();
-            GameObject sky = MakeMeshObject(level.staticGeometry, roomFaces[skyRoomID], "SkyRoom");
+            GameObject sky = MakeMeshObject(level.staticGeometry, roomFaces[skyRoomID], "SkyRoom", true);
             sky.transform.SetParent(p);
             sky.transform.position = meshBuildOffset;
             meshBuildOffset = Vector3.zero;
@@ -400,7 +400,7 @@ public class LevelBuilder : EditorWindow {
                 MeshRenderer mr = liq.GetComponent<MeshRenderer>();
                 if(mr != null) {
                     Vector2 scroll = new Vector2(liqProp.scrollU, liqProp.scrollV);
-                    mr.material = GetScrollingTexture(liqProp.texture, scroll);
+                    mr.material = GetMaterial(liqProp.texture, RenderingMode.TRANSPARENT, scroll);
                     mr.enabled = true;
                 }
                 ufr.SetLiquid(liq);
@@ -483,7 +483,7 @@ public class LevelBuilder : EditorWindow {
     public void BuildGeoModder() {
         Transform p = MakeParent("GeoModder");
         UFGeoModder gm = p.gameObject.AddComponent<UFGeoModder>();
-        Material geoMat = GetMaterial(level.geomodTexture, assetPath);
+        Material geoMat = GetMaterial(level.geomodTexture);
         gm.Set(level, geoMat);
     }
 
@@ -663,7 +663,7 @@ public class LevelBuilder : EditorWindow {
             string name = "ParticleEmitter_" + GetIdString(e.transform);
             UFParticleEmitter emit = MakeUFObject<UFParticleEmitter>(name, ptclParent, e.transform);
             emit.Set(e);
-            Material particleMat = GetMaterial(e.texture, assetPath, GetParticleShader(e.fade, e.glow));
+            Material particleMat = GetParticleMaterial(e.texture, GetParticleShader(e.fade, e.glow));
 
             //set material scale
             if(particleMat != null) {
@@ -693,7 +693,7 @@ public class LevelBuilder : EditorWindow {
             string name = "BoltEmitter_" + GetIdString(e.transform);
             UFBoltEmitter emit = MakeUFObject<UFBoltEmitter>(name, boltParent, e.transform);
             emit.Set(e);
-            Material particleMat = GetMaterial(e.texture, assetPath, GetParticleShader(e.fade, e.glow));
+            Material particleMat = GetParticleMaterial(e.texture, GetParticleShader(e.fade, e.glow));
             emit.SetMaterial(particleMat);
         }
     }
@@ -735,10 +735,16 @@ public class LevelBuilder : EditorWindow {
             MeshFilter mf = MakeUFObject<MeshFilter>(name, p, d.cbTransform.transform);
             mf.sharedMesh = UFUtils.MakeQuad(d.cbTransform.extents);
             MeshRenderer mr = mf.gameObject.AddComponent<MeshRenderer>();
-            mr.material = GetMaterial(d.texture, assetPath);
+            mr.material = GetMaterial(d.texture, RenderingMode.TRANSPARENT);
             SnapToGeometry(mf.transform, d.cbTransform.extents.z);
             mf.gameObject.isStatic = true;
         }
+    }
+
+    public enum RenderingMode {
+        OPAQUE = 0,
+        CUTOUT = 1,
+        TRANSPARENT = 2,
     }
 
     /* -----------------------------------------------------------------------------------------------
@@ -859,7 +865,7 @@ public class LevelBuilder : EditorWindow {
             string nextTex = geometry.textures[texIdx].ToLower();
 
             int sort = 0;
-            if(nextTex.Contains("invis"))
+            if(IsInvisibleTexture(nextTex))
                 sort = 1;
             if(face.liquid)
                 sort = 2;
@@ -928,7 +934,7 @@ public class LevelBuilder : EditorWindow {
                 mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
                 if(face.texture >= 0) {
                     string tex = level.staticGeometry.textures[face.texture];
-                    mr.material = GetScrollingTexture(tex, scroll.scrollVelocity);
+                    mr.material = GetMaterial(tex, GetRenderingModeForFace(face), scroll.scrollVelocity);
                 }
             }
 
@@ -953,14 +959,21 @@ public class LevelBuilder : EditorWindow {
         meshBuildOffset = Vector3.zero;
     }
 
+    private static RenderingMode GetRenderingModeForFace(Face face) {
+        if (face.detail) {
+            return RenderingMode.TRANSPARENT;
+        } else {
+            return RenderingMode.OPAQUE;
+        }
+    }
+
     const int MAX_TEXTURES = 16;
-    const string FLAG_TEXTURE = "USERBMAP";
 
     /// <summary>
     /// Makes a single object containing mesh data (and renderer) of the given faces.
     /// This only works correctly when all given faces are part of the given geometry.
     /// </summary>
-    public static GameObject MakeMeshObject(Geometry geometry, List<Face> faces, string name) {
+    public static GameObject MakeMeshObject(Geometry geometry, List<Face> faces, string name, bool unlit = false) {
         //make object
         GameObject g = new GameObject(name);
 
@@ -971,7 +984,6 @@ public class LevelBuilder : EditorWindow {
         foreach(Face face in faces) {
             int texIdx = Mathf.Max(0, face.texture);
             string nextTex = geometry.textures[texIdx];
-            nextTex = CheckFlagTexture(geometry, nextTex);
 
             if(!usedTextures.Contains(nextTex) && face.texture >= 0) {
                 texMap[face.texture] = usedTextures.Count;
@@ -1019,18 +1031,18 @@ public class LevelBuilder : EditorWindow {
 
                 GameObject gi = new GameObject(giName);
                 MakeMeshObject(gi, geometry, giName, faceSplit[i], 
-                    texSplit, subTexMap, subTexCount);
+                    texSplit, subTexMap, subTexCount, unlit);
                 gi.transform.SetParent(g.transform);
             }
         }
         else 
-            MakeMeshObject(g, geometry, name, faces, usedTextures, texMap, texCount);
+            MakeMeshObject(g, geometry, name, faces, usedTextures, texMap, texCount, unlit);
 
         return g;
     }
 
     private static void MakeMeshObject(GameObject g, Geometry geometry, string name, 
-        List<Face> faces, List<String> textures, int[] texMap, int texCount) {
+        List<Face> faces, List<String> textures, int[] texMap, int texCount, bool unlit) {
 
         Mesh mesh = MakeMesh(geometry, faces, texMap, texCount);
         mesh.name = name;
@@ -1038,37 +1050,37 @@ public class LevelBuilder : EditorWindow {
         mf.sharedMesh = mesh;
 
         MeshRenderer mr = g.AddComponent<MeshRenderer>();
-        mr.materials = GetMaterials(textures, assetPath);
+        RenderingMode[] renderingModeArray = new RenderingMode[textures.Count];
+        for (int i = 0; i < textures.Count; i++ ) {
+            renderingModeArray[i] = RenderingMode.OPAQUE;
+        }
+        foreach(Face face in faces) {
+            if (face.detail && face.texture >= 0) {
+                int texRef = texMap[face.texture];
+                renderingModeArray[texRef] = RenderingMode.TRANSPARENT;
+            }
+        }
+        Material[] materials = new Material[textures.Count];
+        for (int i = 0; i < textures.Count; i++ ) {
+            materials[i] = GetMaterial(textures[i], renderingModeArray[i], null, unlit);
+        }
+        mr.materials = materials;
 
         bool fullyInvis = true;
         foreach(String tex in textures)
-            fullyInvis &= tex.ToLower().Contains("invis");
+            fullyInvis &= IsInvisibleTexture(tex);
 
         mr.enabled = !fullyInvis;
-    }
-
-    /// <summary>
-    /// Checks if the given texture name matches a texture that is flagged for special properties.
-    /// If so, a new texture name will be returned that handles this feature appropriately.
-    /// </summary>
-    private static string CheckFlagTexture(Geometry geometry, string texture) {
-        if(texture == FLAG_TEXTURE) {
-            for(int i = 0; i < geometry.textures.Length; i++) {
-                if(geometry.textures[i] != FLAG_TEXTURE)
-                    return geometry.textures[i];
-            }
-        }
-        return texture;
     }
 
     /// <summary>
     /// Return or generate standard materials for each of the given texture names.
     /// Appropriate files are searched for in the given assetPath.
     /// </summary>
-    public static Material[] GetMaterials(string[] textures, string assetPath) {
+    public static Material[] GetMaterials(string[] textures, RenderingMode renderingMode = RenderingMode.TRANSPARENT, bool unlit = false) {
         Material[] materials = new Material[textures.Length];
         for(int i = 0; i < materials.Length; i++)
-            materials[i] = GetMaterial(textures[i], assetPath);
+            materials[i] = GetMaterial(textures[i], renderingMode, null, unlit); // FIXME: set proper rendering mode
         return materials;
     }
 
@@ -1076,78 +1088,25 @@ public class LevelBuilder : EditorWindow {
     /// Return or generate standard materials for each of the given texture names.
     /// Appropriate files are searched for in the given assetPath.
     /// </summary>
-    public static Material[] GetMaterials(List<string> textures, string assetPath) {
-        return GetMaterials(textures.ToArray(), assetPath);
-    }
-
-    /// <summary>
-    /// Return or generate a standard material for the given texture name.
-    /// Appropriate files are searched for in the given assetPath.
-    /// </summary>
-    public static Material GetMaterial(string texture, string assetPath) {
-        return GetMaterial(texture, assetPath, "Standard");
-    }
-
-    /// <summary>
-    /// Return or generate a material with a custom shader for the given texture name.
-    /// Appropriate files are searched for in the given assetPath.
-    /// </summary>
-    private static Material GetMaterial(string texture, string assetPath, string shader) {
-        string textureName = Path.GetFileNameWithoutExtension(texture);
-        string materialName = textureName + ".mat";
-        string[] results = AssetDatabase.FindAssets(textureName);
-
-        string texPath = null;
-        foreach(string result in results) {
-            string resultPath = AssetDatabase.GUIDToAssetPath(result);
-            string resultName = Path.GetFileName(resultPath);
-            
-            if(string.Equals(resultName, materialName, StringComparison.OrdinalIgnoreCase))
-                return (Material)AssetDatabase.LoadAssetAtPath(resultPath, typeof(Material));
-            if(string.Equals(resultName, texture, StringComparison.OrdinalIgnoreCase))
-                texPath = resultPath;
-        }
-
-        if(texPath != null) {
-            //material doesn't exist, but the texture does, so we can make a new material
-            Texture2D tex = (Texture2D)AssetDatabase.LoadAssetAtPath(texPath, typeof(Texture2D));
-
-            Material mat = new Material(Shader.Find(shader));
-            
-            mat.mainTexture = tex;
-            TrySaveMaterial(mat, assetPath +  materialName);
-            
-            return mat;
-        }
-
-        //neither material nor texture exists
-        Debug.LogWarning("Could not find texture: " + texture);
-        return new Material(Shader.Find(shader));
+    public static Material[] GetMaterials(List<string> textures, RenderingMode renderingMode = RenderingMode.TRANSPARENT, bool unlit = false) {
+        return GetMaterials(textures.ToArray(), renderingMode, unlit);
     }
 
     /// <summary>
     /// Find and return texture file with the given name
     /// </summary>
-    private static Texture2D GetTexture(string texture) {
-        string textureName = Path.GetFileNameWithoutExtension(texture);
-        string[] results = AssetDatabase.FindAssets(textureName);
-
-        foreach(string result in results) {
-            string resultPath = AssetDatabase.GUIDToAssetPath(result);
-            string resultName = Path.GetFileName(resultPath);
-
-            if(string.Equals(resultName, texture, StringComparison.OrdinalIgnoreCase))
-                return (Texture2D)AssetDatabase.LoadAssetAtPath(resultPath, typeof(Texture2D));
+    private static Texture2D GetTexture(string textureName) {
+        Texture2D tex = FindAsset<Texture2D>(textureName, false);
+        if (tex == null) {
+            Debug.LogWarning("texture not found: " + textureName);
         }
-
-        return null;
+        return tex;
     }
 
-    private static void TrySaveMaterial(Material mat, string name) {
+    private static void TryCreateAsset(Material mat, string name) {
         try {
             AssetDatabase.CreateAsset(mat, name);
-        }
-        catch(Exception e) {
+        } catch(Exception e) {
             Debug.LogError("Failed to create material asset\n" + e);
         }
     }
@@ -1168,72 +1127,102 @@ public class LevelBuilder : EditorWindow {
     /// Looks for assets with the given name and returns one 
     /// if it matches matchName exactly
     /// </summary>
-    private static T FindAsset<T>(string searchName, string matchName) where T : UnityEngine.Object {
-        string[] results = AssetDatabase.FindAssets(searchName);
+    private static T FindAsset<T>(string fileName, bool exactMatch = true) where T : UnityEngine.Object {
+        string name = Path.GetFileNameWithoutExtension(fileName);
+        string[] results = AssetDatabase.FindAssets(name + " t:" + typeof(T).Name);
 
         foreach(string result in results) {
             string resultPath = AssetDatabase.GUIDToAssetPath(result);
             string resultName = Path.GetFileName(resultPath);
 
-            if(string.Equals(resultName, matchName, StringComparison.OrdinalIgnoreCase))
+            if(!exactMatch || string.Equals(resultName, fileName, StringComparison.OrdinalIgnoreCase))
                 return (T)AssetDatabase.LoadAssetAtPath(resultPath, typeof(T));
         }
 
         return null;
     }
 
-    /// <summary>
-    /// Finds or generates a special scrolling material 
-    /// with the given texture and scrollspeed.
-    /// Note that each scrollspeed will lead to a new material being generated.
-    /// </summary>
-    private static Material GetScrollingTexture(string texture, Vector2 scroll) {
-        string scrollStr = UFUtils.GetVecStr(scroll);
-        string matName = Path.GetFileNameWithoutExtension(texture) + "_scroll_" + scrollStr;
-        string fullMatName = matName + ".mat";
+    private static bool IsInvisibleTexture(string textureName) {
+        return textureName.Contains("_invisible");
+    }
 
-        Material toReturn = FindAsset<Material>(matName, fullMatName);
-        if(toReturn != null)
-            return toReturn;
+    private static Material GetMaterial(string textureName, RenderingMode renderingMode = RenderingMode.OPAQUE,
+                                        Vector2? scroll = null, bool unlit = false) {
+        // Generate material name
+        string materialName = Path.GetFileNameWithoutExtension(textureName) + "_" + renderingMode;
+        if (scroll != null) {
+            string scrollStr = UFUtils.GetVecStr(scroll.Value);
+            materialName += "_scroll_" + scrollStr;
+        }
+        materialName += ".mat";
 
-        Material mat = new Material(Shader.Find("UnityFaction/UVScroll"));
-        mat.mainTexture = GetTexture(texture);
-        mat.SetFloat("_ScrollXSpeed", scroll.x);
-        mat.SetFloat("_ScrollYSpeed", scroll.y);
+        // Check if material already exists
+        Material mat = FindAsset<Material>(materialName);
+        if (mat != null) {
+            // already exists
+            return mat;
+        }
 
-        mat.name = matName;
+        // Find shader and create material
+        if (IsInvisibleTexture(textureName) || textureName == "USERBMAP") {
+            Shader shader = Shader.Find("UnityFaction/Invisible");
+            mat = new Material(shader);
+            textureName = null;
+        } else if (scroll != null) {
+            Shader shader = Shader.Find("UnityFaction/UVScroll");
+            mat = new Material(shader);
+            mat.SetFloat("_ScrollXSpeed", scroll.Value.x);
+            mat.SetFloat("_ScrollYSpeed", scroll.Value.y);
+        } else if (unlit) {
+            string shaderName;
+            switch (renderingMode) {
+            case RenderingMode.TRANSPARENT:
+                shaderName = "Unlit/Transparent";
+                break;
+            case RenderingMode.CUTOUT:
+                shaderName = "Unlit/Transparent Cutout";
+                break;
+            default:
+                shaderName = "Unlit/Texture";
+                break;
+            }
+            Shader shader = Shader.Find(shaderName);
+            mat = new Material(shader);
+        } else {
+            Shader shader = Shader.Find("Standard");
+            mat = new Material(shader);
+            mat.SetFloat("_Mode", (int) renderingMode);
+        }
 
-        TrySaveMaterial(mat, assetPath + fullMatName);
+        // Init texture
+        if (textureName != null) {
+            mat.mainTexture = GetTexture(textureName);
+        }
 
+        // Save material asset
+        TryCreateAsset(mat, assetPath + materialName);
         return mat;
     }
 
-    /// <summary>
-    /// DOES NOT WORK AS OF YET
-    /// Returns material for the given texture which automatically has the appropriate
-    /// render settings (e.g. being transparant, cutout, fade or opaque).
-    /// </summary>
-    private static Material GetStandardMaterialFor(Texture2D tex) {
-        Material mat = new Material(Shader.Find("Standard"));
-        float minAlpha = 1f, avgAlpha = 0f;
-        for(int x = 0; x < tex.width; x++) {
-            for(int y = 0; y < tex.height; y++) {
-                float value = tex.GetPixel(x, y).a;
-                if(value < minAlpha)
-                    minAlpha = value;
-                avgAlpha += value;
-            }
-        }
-        avgAlpha /= (tex.width * tex.height);
-        if(avgAlpha == 0f)
-            mat.SetFloat("_Mode", 1f); //completely transparant
-        else if(minAlpha == 0f)
-            mat.SetFloat("_Mode", 2f); //fade to transparant
-        else if(avgAlpha < 1f)
-            mat.SetFloat("_Mode", 3f); //semi transparant
-        else
-            mat.SetFloat("_Mode", 0f); //opaque
+    private static Material GetParticleMaterial(string textureName, string shaderName) {
+        // Generate material name
+        string materialName = Path.GetFileNameWithoutExtension(textureName) + "_" + shaderName.Replace("/", "_");
+        materialName += ".mat";
 
+        // Check if material already exists
+        Material mat = FindAsset<Material>(materialName);
+        if (mat != null) {
+            // already exists
+            return mat;
+        }
+
+        // Find shader and create material
+        Shader shader = Shader.Find(shaderName);
+        mat = new Material(shader);
+        mat.mainTexture = GetTexture(textureName);
+
+        // Save material asset
+        TryCreateAsset(mat, assetPath + materialName);
         return mat;
     }
 
@@ -1532,7 +1521,7 @@ public class LevelBuilder : EditorWindow {
     public static GameObject GetPrefab(string name) {
         string prefabName = name + ".prefab";
 
-        GameObject toReturn = FindAsset<GameObject>(name, prefabName);
+        GameObject toReturn = FindAsset<GameObject>(prefabName);
         if(toReturn == null)
             Debug.LogWarning("Could not find prefab for " + name);
 
@@ -1540,48 +1529,19 @@ public class LevelBuilder : EditorWindow {
     }
 
     /// <summary>
-    /// Returns true if the given string likely encodes a valid audioclip,
-    /// since it is not empty and has the appropriate extension.
-    /// This is usefull to detect audio events ahead of time.
-    /// </summary>
-    public static bool IsValidAudioClipName(string clip) {
-        if(string.IsNullOrEmpty(clip))
-            return false;
-        Path.GetExtension(clip);
-        string ext = Path.GetExtension(clip).TrimStart('.').ToLower();
-        return new List<string> { "wav", "mp3", "ogg" }.Contains(ext);
-    }
-
-    /// <summary>
     /// Finds and returns an AudioClip with the given name.
     /// Spits out warnings if the clip does not exist or is unreadable.
     /// </summary>
-    public static AudioClip GetClip(string clip) {
-        if(string.IsNullOrEmpty(clip))
+    public static AudioClip GetClip(string clipName) {
+        if(string.IsNullOrEmpty(clipName))
             return null;
 
-        string clipName = Path.GetFileNameWithoutExtension(clip);
-        string[] results = AssetDatabase.FindAssets(clipName);
-
-        foreach(string result in results) {
-            string resultPath = AssetDatabase.GUIDToAssetPath(result);
-            string matchName = Path.GetFileNameWithoutExtension(resultPath);
-            bool match = string.Equals(matchName, clipName, StringComparison.OrdinalIgnoreCase);
-            bool isAudio = IsValidAudioClipName(resultPath);
-            if(match && isAudio) {
-                AudioClip toReturn = (AudioClip)AssetDatabase.LoadAssetAtPath(resultPath, typeof(AudioClip));
-                if(toReturn == null) {
-                    string absPath = UFUtils.GetAbsoluteUnityPath(resultPath);
-                    new WavRepairer(absPath);
-                    toReturn = (AudioClip)AssetDatabase.LoadAssetAtPath(resultPath, typeof(AudioClip));
-                }
-                return toReturn;
-            }
+        AudioClip clip = FindAsset<AudioClip>(clipName);
+        if (clip == null) {
+            //audio clip does not exist
+            Debug.LogWarning("Could not find audio clip: " + clip);
         }
-
-        //audio clip does not exist
-        Debug.LogWarning("Could not find audio clip: " + clip);
-        return null;
+        return clip;
     }
 
     /// <summary>
