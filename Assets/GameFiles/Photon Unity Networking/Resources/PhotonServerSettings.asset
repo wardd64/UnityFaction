@@ -3,7 +3,7 @@
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   AppID: b9e96416-4552-44cc-b808-d4c271a73325
   VoiceAppID: 
-  ChatAppID: 
+  ChatAppID: ac60d63c-f5ce-401a-a15b-d74b102af887
   HostType: 1
   PreferredRegion: 0
   EnabledRegions: -1
@@ -42,4 +42,5 @@ MonoBehaviour:
   - RequestForPickupItems
   - RequestForPickupTimes
   - TaggedPlayer
+  - SyncTrigger_RPC
   DisableAutoOpenWizard: 1

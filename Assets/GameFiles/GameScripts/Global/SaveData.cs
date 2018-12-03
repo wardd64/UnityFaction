@@ -16,7 +16,10 @@ public class SaveData : MonoBehaviour {
     public string playerName
     {
         get { return PlayerPrefs.GetString(PLAYER_NAME_SAVE, "Default"); }
-        set { PlayerPrefs.SetString(playerName, value); }
+        set {
+            PlayerPrefs.SetString(PLAYER_NAME_SAVE, value);
+            PhotonNetwork.playerName = value;
+        }
     }
 
     /*
@@ -175,6 +178,10 @@ public class SaveData : MonoBehaviour {
     private string recordFilePath { get {
             return Application.persistentDataPath + "/" + recordFile;
     } }
+
+    private void Awake() {
+        PhotonNetwork.playerName = playerName;
+    }
 
     public void InitializeRecords(string[] mapList) {
         records = UFUtils.Load(recordFilePath) as RecordHolder;

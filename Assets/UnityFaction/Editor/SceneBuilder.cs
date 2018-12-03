@@ -76,16 +76,29 @@ public class SceneBuilder {
             return;
         }
 
-        EditorUtility.DisplayProgressBar(pbwTitle, pbwMessage + "building UF level...", pbwProgress);
-        builder.RefreshLevel();
-        builder.BuildAll();
+        if(!ShortRebuild(builder)) {
+            EditorUtility.DisplayProgressBar(pbwTitle, pbwMessage + "building UF level...", pbwProgress);
+            builder.RefreshLevel();
+            builder.BuildAll();
 
-        EditorUtility.DisplayProgressBar(pbwTitle, pbwMessage + "baking lightmaps...", pbwProgress);
-        BakeLightMaps();
+            EditorUtility.DisplayProgressBar(pbwTitle, pbwMessage + "baking lightmaps...", pbwProgress);
+            BakeLightMaps();
+        }
 
         EditorUtility.DisplayProgressBar(pbwTitle, pbwMessage + "saving scene...", pbwProgress);
         Scene scene = SceneManager.GetActiveScene();
         EditorSceneManager.SaveScene(scene);
+    }
+
+    /// <summary>
+    /// In case you made a small change to some specific level building aspect
+    /// you can implement this method (and return true) and the scenebuilder will
+    /// run trough this rebuilding version for every scene in stead of the complete one.
+    /// </summary>
+    /// <param name="builder">Initialized level builder in this scene</param>
+    /// <returns>True if implemented, false if default build behaviour should be used in stead.</returns>
+    private static bool ShortRebuild(LevelBuilder builder) {
+        return false;
     }
 
     private static void BakeLightMaps() {

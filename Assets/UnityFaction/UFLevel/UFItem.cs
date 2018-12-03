@@ -150,6 +150,8 @@ public class UFItem : MonoBehaviour {
 
     private bool PickUp() {
         UFPlayerLife life = UFLevel.GetPlayer<UFPlayerLife>();
+        if(life.isDead)
+            return false;
         UFPlayerMoveSounds sound = life.GetComponentInChildren<UFPlayerMoveSounds>();
 
         switch(type) {

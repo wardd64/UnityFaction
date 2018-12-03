@@ -20,7 +20,7 @@ public class LevelBuilder : EditorWindow {
 
     //Build options
     public int levelLayer, playerLayer, skyLayer;
-    public bool convexMovers, forceMultiplayer;
+    public bool convexMovers, forceMultiplayer, forcePCFogSettings;
     public AudioMixerGroup musicChannel, ambientChannel, effectsChannel;
 
     /// <summary>
@@ -153,6 +153,7 @@ public class LevelBuilder : EditorWindow {
             if(GUILayout.Button("Build lights")) BuildLights();
             playerLayer = EditorGUILayout.LayerField("player layer", playerLayer);
             forceMultiplayer = EditorGUILayout.Toggle("Force multiplayer", forceMultiplayer);
+            forcePCFogSettings = EditorGUILayout.Toggle("Force PC Fog settings", forcePCFogSettings);
             if(GUILayout.Button("Build player info")) BuildPlayerInfo();
             if(GUILayout.Button("Build geomodder")) BuildGeoModder();
             convexMovers = EditorGUILayout.Toggle("Mke mesh clldrs convex", convexMovers);
@@ -470,10 +471,19 @@ public class LevelBuilder : EditorWindow {
     public void BuildPlayerInfo() {
         Transform p = MakeParent("PlayerInfo");
         UFPlayerInfo info = p.gameObject.AddComponent<UFPlayerInfo>();
-        info.Set(level, levelLayer, playerLayer, skyLayer, lastRFLPath);
-        SceneBuilder.SetLightMapSettings();
+
+        info.Set(level, levelLayer, playerLayer, skyLayer, lastRFLPath, forcePCFogSettings);
         if(forceMultiplayer)
             info.multiplayer = true;
+
+        //ambient lighting
+        SceneBuilder.SetLightMapSettings();
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+        RenderSettings.ambientIntensity = 0f;
+        
+        Transform abl = MakeAmbientRig(level.ambientColor);
+        abl.SetParent(p);
+        
     }
 
     /// <summary>
@@ -955,6 +965,8 @@ public class LevelBuilder : EditorWindow {
 
     const int MAX_TEXTURES = 16;
     const string FLAG_TEXTURE = "USERBMAP";
+    const string FB_FLAG = "@fb";
+    const string DT_FLAG = "@dt";
 
     /// <summary>
     /// Makes a single object containing mesh data (and renderer) of the given faces.
@@ -966,17 +978,26 @@ public class LevelBuilder : EditorWindow {
 
         //materials
         List<String> usedTextures = new List<string>();
-        int[] texMap = new int[geometry.textures.Length];
+        int[] texMap = new int[faces.Count];
 
-        foreach(Face face in faces) {
+        //make list of textures actually contained in the face list
+        for(int i = 0; i < faces.Count; i++) {
+            Face face = faces[i];
             int texIdx = Mathf.Max(0, face.texture);
             string nextTex = geometry.textures[texIdx];
             nextTex = CheckFlagTexture(geometry, nextTex);
 
-            if(!usedTextures.Contains(nextTex) && face.texture >= 0) {
-                texMap[face.texture] = usedTextures.Count;
+            if(face.fullBright)
+                nextTex += FB_FLAG;
+            else if(face.detail)
+                nextTex += DT_FLAG;
+
+            int texMapIndex = usedTextures.IndexOf(nextTex);
+            if(texMapIndex < 0) {
+                texMapIndex = usedTextures.Count;
                 usedTextures.Add(nextTex);
             }
+            texMap[i] = texMapIndex;
         }
 
         int texCount = usedTextures.Count;
@@ -985,54 +1006,62 @@ public class LevelBuilder : EditorWindow {
 
             int nboSplits = (texCount / MAX_TEXTURES) + 1;
             List<Face>[] faceSplit = new List<Face>[nboSplits];
+            List<int>[] texMapSplit = new List<int>[nboSplits];
 
-            for(int i = 0; i < nboSplits; i++)
-                faceSplit[i] = new List<Face>();
-
-            foreach(Face face in faces) {
-                if(face.texture < 0)
-                    continue;
-
-                int geomTexIdx = Mathf.Max(0, face.texture);
-                string nextTex = geometry.textures[geomTexIdx];
-                int usedTexIdx = usedTextures.IndexOf(nextTex);
-                int split = usedTexIdx / MAX_TEXTURES;
-                if(split < 0 || split >= nboSplits)
-                    Debug.Log(split + " " + nboSplits + " " + usedTexIdx);
-                faceSplit[split].Add(face);
-            }
+            int digits = Mathf.FloorToInt(Mathf.Log10(nboSplits)) + 1;
 
             for(int i = 0; i < nboSplits; i++) {
+                faceSplit[i] = new List<Face>();
+                texMapSplit[i] = new List<int>();
+            }
 
+            //split faces evenly, remap texMap accordingly
+            for(int i = 0; i < faces.Count; i++) {
+                int texIdx = texMap[i];
+                int split = texIdx / MAX_TEXTURES;
+                faceSplit[split].Add(faces[i]);
+                texMapSplit[split].Add(texIdx - split * MAX_TEXTURES);
+            }
+
+            //make a mesh object for each split
+            for(int i = 0; i < nboSplits; i++) {
+
+                //extract textures in this split
                 List<String> texSplit = new List<string>();
                 int subTexCount = Mathf.Min(MAX_TEXTURES, texCount - MAX_TEXTURES * i);
                 for(int j = i * MAX_TEXTURES; j < i * MAX_TEXTURES + subTexCount; j++)
                     texSplit.Add(usedTextures[j]);
 
-                int[] subTexMap = new int[texMap.Length];
-                for(int j = 0; j < subTexMap.Length; j++)
-                    subTexMap[j] = texMap[j] - i * MAX_TEXTURES;
-
-                int digits = Mathf.FloorToInt(Mathf.Log10(nboSplits)) + 1;
+                //generate properly enumerated name for this split
                 string digitExt = "_" + i.ToString().PadLeft(digits, '0');
                 string giName = name + digitExt;
 
+                //generate object
                 GameObject gi = new GameObject(giName);
                 MakeMeshObject(gi, geometry, giName, faceSplit[i], 
-                    texSplit, subTexMap, subTexCount);
+                    texSplit, texMapSplit[i].ToArray());
                 gi.transform.SetParent(g.transform);
             }
         }
         else 
-            MakeMeshObject(g, geometry, name, faces, usedTextures, texMap, texCount);
+            MakeMeshObject(g, geometry, name, faces, usedTextures, texMap);
 
         return g;
     }
 
+    /// <summary>
+    /// Add a mesh (renderer) to the given gameobject using the given parameters
+    /// </summary>
+    /// <param name="g">GameObject that should acquire new components</param>
+    /// <param name="geometry">Source geometry of the given faces and textures</param>
+    /// <param name="name">name for the new mesh</param>
+    /// <param name="faces">List of faces to be added to the mesh</param>
+    /// <param name="textures">List of textures</param>
+    /// <param name="texMap">maps faces to their textures</param>
     private static void MakeMeshObject(GameObject g, Geometry geometry, string name, 
-        List<Face> faces, List<String> textures, int[] texMap, int texCount) {
+        List<Face> faces, List<String> textures, int[] texMap) {
 
-        Mesh mesh = MakeMesh(geometry, faces, texMap, texCount);
+        Mesh mesh = MakeMesh(geometry, faces, texMap);
         mesh.name = name;
         MeshFilter mf = g.AddComponent<MeshFilter>();
         mf.sharedMesh = mesh;
@@ -1093,8 +1122,25 @@ public class LevelBuilder : EditorWindow {
     /// Appropriate files are searched for in the given assetPath.
     /// </summary>
     private static Material GetMaterial(string texture, string assetPath, string shader) {
+        bool standardShader = shader == "Standard";
+        string flag = "";
+        bool fb = false, dt = false;
+
+        if(standardShader) {
+            fb = texture.EndsWith(FB_FLAG);
+            dt = texture.EndsWith(DT_FLAG);
+            if(fb) {
+                flag = FB_FLAG;
+                texture = texture.Substring(0, texture.Length - FB_FLAG.Length);
+            }
+            else if(dt) {
+                flag = DT_FLAG;
+                texture = texture.Substring(0, texture.Length - DT_FLAG.Length);
+            }
+        }
+
         string textureName = Path.GetFileNameWithoutExtension(texture);
-        string materialName = textureName + ".mat";
+        string materialName = textureName + flag + ".mat";
         string[] results = AssetDatabase.FindAssets(textureName);
 
         string texPath = null;
@@ -1115,6 +1161,15 @@ public class LevelBuilder : EditorWindow {
             Material mat = new Material(Shader.Find(shader));
             
             mat.mainTexture = tex;
+            if(standardShader) {
+                if(fb) {
+                    mat = new Material(Shader.Find("Unlit/Transparent Cutout"));
+                    mat.mainTexture = tex;
+                }
+                else if(dt) {
+                    mat.SetFloat("_Mode", 1f);
+                }
+            }
             TrySaveMaterial(mat, assetPath +  materialName);
             
             return mat;
@@ -1204,35 +1259,6 @@ public class LevelBuilder : EditorWindow {
         mat.name = matName;
 
         TrySaveMaterial(mat, assetPath + fullMatName);
-
-        return mat;
-    }
-
-    /// <summary>
-    /// DOES NOT WORK AS OF YET
-    /// Returns material for the given texture which automatically has the appropriate
-    /// render settings (e.g. being transparant, cutout, fade or opaque).
-    /// </summary>
-    private static Material GetStandardMaterialFor(Texture2D tex) {
-        Material mat = new Material(Shader.Find("Standard"));
-        float minAlpha = 1f, avgAlpha = 0f;
-        for(int x = 0; x < tex.width; x++) {
-            for(int y = 0; y < tex.height; y++) {
-                float value = tex.GetPixel(x, y).a;
-                if(value < minAlpha)
-                    minAlpha = value;
-                avgAlpha += value;
-            }
-        }
-        avgAlpha /= (tex.width * tex.height);
-        if(avgAlpha == 0f)
-            mat.SetFloat("_Mode", 1f); //completely transparant
-        else if(minAlpha == 0f)
-            mat.SetFloat("_Mode", 2f); //fade to transparant
-        else if(avgAlpha < 1f)
-            mat.SetFloat("_Mode", 3f); //semi transparant
-        else
-            mat.SetFloat("_Mode", 0f); //opaque
 
         return mat;
     }
@@ -1589,14 +1615,12 @@ public class LevelBuilder : EditorWindow {
     /// </summary>
     /// <param name="geometry">Geometry that contains the given faces.</param>
     /// <param name="faces">Faces to be built</param>
-    /// <param name="texMap">Maps RedFaction texture index to the index of textures actually contained within the list of faces. 
+    /// <param name="texMap">Maps faces to their textures
     /// This is needed since the given list of faces may not contain all textures in the given geometry.</param>
-    /// <param name="texCount">Number of different textures contained in the given list of faces.</param>
-    /// <returns></returns>
-    private static Mesh MakeMesh(Geometry geometry, List<Face> faces, int[] texMap, int texCount) {
+    private static Mesh MakeMesh(Geometry geometry, List<Face> faces, int[] texMap) {
         Mesh mesh = new Mesh();
 
-        texCount = Mathf.Max(1, texCount);
+        int texCount = Mathf.Max(texMap) + 1;
 
         //mesh
         List<Vector3> vertices = new List<Vector3>();
@@ -1605,7 +1629,9 @@ public class LevelBuilder : EditorWindow {
         for(int i = 0; i < triangles.Length; i++)
             triangles[i] = new List<int>();
 
-        foreach(Face face in faces) {
+        for(int f = 0; f < faces.Count; f++) {
+            Face face = faces[f];
+
             if(face.showSky)
                 continue;
 
@@ -1628,12 +1654,7 @@ public class LevelBuilder : EditorWindow {
             //add results to mesh
             vertices.AddRange(faceVertices);
             uvs.AddRange(faceUVs);
-
-            int texRef = Mathf.Max(0, face.texture);
-            texRef = texMap[texRef];
-            if(texRef < 0 || texRef >= triangles.Length)
-                Debug.Log(texRef);
-            triangles[texRef].AddRange(faceTriangles);
+            triangles[texMap[f]].AddRange(faceTriangles);
         }
 
         //mesh data is ready, insert all of it
@@ -1673,6 +1694,39 @@ public class LevelBuilder : EditorWindow {
         }
         else
             Debug.LogWarning("Could not snap decall " + t.name + " to any geometry.");
+    }
+
+    /// <summary>
+    /// Creates a gameobject that provides equivalent ambient light without
+    /// Unity shadowing (approx. illuminating all surfaces equally)
+    /// </summary>
+    public static Transform MakeAmbientRig(Color color) {
+        GameObject g = new GameObject("AmbientLightRig");
+        
+        for(int i = 0; i < 6; i++) {
+            GameObject gi = new GameObject("DirLight_" + i);
+            Quaternion rot = Quaternion.identity;
+
+            switch(i) {
+            case 1: rot = Quaternion.Euler(0f, 90f, 0f); break;
+            case 2: rot = Quaternion.Euler(0f, 180f, 0f); break;
+            case 3: rot = Quaternion.Euler(0f, -90f, 0f); break;
+            case 4: rot = Quaternion.Euler(-90f, 0f, 0f); break;
+            case 5: rot = Quaternion.Euler(90f, 0f, 0f); break;
+            }
+
+            gi.transform.rotation = rot;
+            gi.transform.SetParent(g.transform);
+
+            UnityEngine.Light subLight = gi.AddComponent<UnityEngine.Light>();
+            subLight.type = LightType.Directional;
+            subLight.color = color;
+            subLight.intensity = .7f;
+            subLight.lightmapBakeType = LightmapBakeType.Baked;
+            subLight.bounceIntensity = 0f;
+        }
+
+        return g.transform;
     }
 
     private static void CalculateLightMapUVs(GameObject meshObject) {

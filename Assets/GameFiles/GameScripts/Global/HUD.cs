@@ -5,13 +5,16 @@ using UnityEngine.UI;
 
 public class HUD : MonoBehaviour {
 
+    public Chat chat;
+    public MatchInfo matchInfo;
+
     public Animator ccpAlert;
     public Slider ccpProgressSlider;
     public Animator buttonAlert;
     public Text buttonAlertText;
     public Image armorGauge, healthGauge;
     public GameObject timerPanel;
-    public Text timerText;
+    public Text countdownText, matchTimerText;
     public Transform weaponTagPanel;
 
     //Finish plaque
@@ -50,11 +53,22 @@ public class HUD : MonoBehaviour {
                 timerPanel.SetActive(false);
             }
             else 
-                timerText.text = UFUtils.GetTimeString(timer, 1);
+                countdownText.text = UFUtils.GetTimeString(timer, 1);
         }
 
         if(weaponTagPanelTimer.TickTrigger())
             weaponTagPanel.gameObject.SetActive(false);
+
+        matchTimerText.gameObject.SetActive(!PhotonNetwork.offlineMode);
+        float matchTime = Global.match.timeLeft;
+        if(matchTime < 10f)
+            matchTimerText.text = UFUtils.GetTimeString(matchTime, 1);
+        else
+            matchTimerText.text = UFUtils.GetTimeString(Mathf.FloorToInt(matchTime));
+    }
+
+    public void ConnectChat() {
+        chat.Connect();
     }
 
     public void SetCCPProgress(float value, float min, float max, bool trying) {
@@ -87,7 +101,7 @@ public class HUD : MonoBehaviour {
         finishPlaque.gameObject.SetActive(true);
 
         Global.save.SetRecordText(map, recordText);
-        CSVReader mapList = MainMenu.mapList;
+        CSVReader mapList = MapList.mapData;
         int i = mapList.GetRow(map, "Scene name");
 
         string title = mapList.GetValue(i, "Title");

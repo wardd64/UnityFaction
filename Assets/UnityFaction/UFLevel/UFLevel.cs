@@ -33,8 +33,17 @@ public class UFLevel : MonoBehaviour {
 
     private static UFPlayerMovement ufPlayer;
     public static UFPlayerMovement player { get {
-            if(ufPlayer == null)
-                ufPlayer = FindObjectOfType<UFPlayerMovement>();
+            if(ufPlayer == null) {
+                UFPlayerMovement[] candidates = FindObjectsOfType<UFPlayerMovement>();
+                foreach(UFPlayerMovement candidate in candidates) {
+                    if(candidate.isMine) {
+                        if(ufPlayer == null)
+                            ufPlayer = candidate;
+                        else
+                            PhotonNetwork.Destroy(candidate.gameObject);
+                    }
+                }
+            }
             return ufPlayer;
     } }
 
@@ -51,6 +60,7 @@ public class UFLevel : MonoBehaviour {
     }
 
 	public void Set(LevelData level) {
+        //set up ID links
         idDictionary = new List<IDRef>();
         foreach(Decal d in level.decals)
             SetID(d.cbTransform.transform.id, IDRef.Type.Decal);
@@ -87,6 +97,22 @@ public class UFLevel : MonoBehaviour {
             SetID(t.id, IDRef.Type.Target);
         foreach(Trigger d in level.triggers)
             SetID(d.transform.id, IDRef.Type.Trigger);
+
+        //add photon view for critical syncing
+        gameObject.AddComponent<PhotonView>();
+    }
+
+    public static void SyncTrigger(int id) {
+        singleton.GetComponent<PhotonView>().RPC("SyncTrigger_RPC", PhotonTargets.AllBufferedViaServer, id);
+    }
+
+    /// <summary>
+    /// Activate trigger with the given ID over the network, so it is synced
+    /// with all players, even those who join late
+    /// </summary>
+    [PunRPC]
+    private void SyncTrigger_RPC(int id) {
+        GetByID(id).objectRef.GetComponent<UFTrigger>().SyncTrigger();
     }
 
     public static T GetPlayer<T>() where T : Component{
@@ -134,7 +160,7 @@ public class UFLevel : MonoBehaviour {
 
     public static UFRoom GetRoom(Vector3 position) {
         for(int i = instance.rooms.Count - 1; i >= 0; i--) {
-            if(instance.rooms[i].aabb.IsInside(position))
+            if(instance.rooms[i].IsInside(position))
                 return instance.rooms[i];
         }
         return null;

@@ -15,8 +15,14 @@ public class MatchProgress : MonoBehaviour {
     private bool recordFrozen;
 
     private static bool initialized = false;
+    private float matchTimer;
 
-    private void Start() {
+    private const float STANDARD_MATCH_TIME = 1800f;
+    private const float EXTEND_MATCH_TIME = 300f;
+
+    public float timeLeft { get { return matchTimer; } }
+
+    private void Awake() {
         SceneManager.sceneLoaded += InitializeMatch;
         initialized = true;
     }
@@ -25,7 +31,15 @@ public class MatchProgress : MonoBehaviour {
         if(!Global.IsMatchScene(scene))
             return;
 
-        GameObject player = Instantiate(playerPrefab);
+        if(!PhotonNetwork.inRoom) {
+            PhotonNetwork.offlineMode = true;
+            PhotonNetwork.CreateRoom(null);
+        }
+
+        if(UFLevel.player != null)
+            return;
+
+        GameObject player = PhotonNetwork.Instantiate(playerPrefab.name, Vector3.zero, Quaternion.identity, 0);
         player.SetActive(true);
         player.name = "Controlled Player";
 
@@ -33,15 +47,39 @@ public class MatchProgress : MonoBehaviour {
         totalTime = 0f;
         totalResets = 0;
         recordFrozen = false;
+
+        if(!PhotonNetwork.offlineMode)
+            matchTimer = STANDARD_MATCH_TIME;
+
         Global.hud.StartState();
     }
 
     private void Update() {
         if(!initialized)
-            Start();
+            Awake();
 
         if(!recordFrozen)
             totalTime += Time.deltaTime;
+
+        if(!PhotonNetwork.offlineMode)
+            CountDown();
+    }
+
+    public void ExtendMatch() {
+        matchTimer += EXTEND_MATCH_TIME;
+    }
+
+    public void SkipMatch() {
+        matchTimer = 0f;
+        NextMap();
+    }
+
+    private void CountDown() {
+        matchTimer -= Time.deltaTime;
+        if(matchTimer <= 0f) {
+            matchTimer = 0f;
+            NextMap();
+        }
     }
 
     public void Finish() {
@@ -52,6 +90,11 @@ public class MatchProgress : MonoBehaviour {
         bool newRecord = Global.save.SetRecord(map, lowestDifficulty, totalTime, totalResets);
         recordFrozen = true;
         Global.hud.Finish(map, newRecord);
+    }
+
+    private void NextMap() {
+        if(PhotonNetwork.isMasterClient)
+            Global.levelLauncher.OnJoinedRoom();
     }
 
     public void CountReset() {

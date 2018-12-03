@@ -12,7 +12,6 @@ public class PlayerLife : UFPlayerLife {
 
     private const float AUTO_FINISH_DEATH = 3f;
 
-    public bool isDead { get { return base.health <= 0f; } }
     private PlayerMovement mov { get { return GetComponent<PlayerMovement>(); } }
 
     private void Awake() {
@@ -20,7 +19,7 @@ public class PlayerLife : UFPlayerLife {
         localCameraPos = playerCamera.transform.localPosition;
         Global.hud.gameObject.SetActive(true);
 
-        if(!FindObjectOfType<MapFinish>())
+        if(!FindObjectOfType<MapFinish>() && !Global.InMainMenu())
             Debug.LogWarning("Current map does not contain finish!");
     }
 
@@ -40,11 +39,13 @@ public class PlayerLife : UFPlayerLife {
             finish |= Global.input.GetKeyDown("PlaceCCP");
             if(finish)
                 FinishDeath();
+
+            mov.RagdollUpdate();
         }
     }
 
     private void LateUpdate() {
-        if(isDead && deadTimer > 0f)
+        if(isDead && (deadTimer > 0f || deadBody.activeSelf))
             OrbitCameraUpdate();
     }
 
@@ -56,23 +57,38 @@ public class PlayerLife : UFPlayerLife {
 
         Ray offRay = new Ray(basePoint, offDirection);
         RaycastHit hit;
-        Physics.SphereCast(offRay, .25f, out hit, 5f, UFLevel.playerInfo.levelMask);
+        LayerMask rayMask = UFLevel.playerInfo.levelMask;
+        rayMask &= ~UFLevel.playerInfo.playerMask;
+        Physics.SphereCast(offRay, .25f, out hit, 5f, rayMask);
         float offDist = hit.collider != null ? hit.distance : 5f;
 
         playerCamera.transform.position = basePoint + offDirection * offDist;
     }
 
-    public void SoftDie() {
-        Die();
+    /// <summary>
+    /// Trigger death to continue to CCP mode
+    /// </summary>
+    public void CCPDie() {
+        Die(DamageType.ccp);
         FinishDeath();
     }
 
-    protected override void Die() {
+    /// <summary>
+    /// Trigger to death to respawn
+    /// </summary>
+    public void RespawnDie() {
+        Die(DamageType.respawn);
+        Respawn();
+    }
+
+    protected override void Die(DamageType type) {
         mov.SetRagdoll(true);
         health = 0f; armor = 0f;
         Global.hud.gameObject.SetActive(false);
         deadTimer = Time.deltaTime;
         GetComponentInChildren<UFPlayerMoveSounds>().Die();
+        Global.hud.chat.DeathMessage(type);
+        
     }
 
     private void FinishDeath() {

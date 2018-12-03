@@ -15,11 +15,33 @@ public class UFPlayerMoveSounds : MonoBehaviour {
         footstepClips_water, footstepClips_ice, footstepClips_gravel, 
         footstepClips_glass, footstepClips_brokenGlass;
 
+    private const float FOOTSTEP_INTERVAL = 2.5f;
+
+    private Vector3 lastPos;
     private FootstepContext.Type footstepContext;
+    private bool rightFoot;
+    private float distance;
 
     private void Awake() {
         move = transform.GetComponentInParent<UFPlayerMovement>();
         footstepContext = FootstepContext.Type.gravel;
+    }
+
+    private void Start() {
+        lastPos = transform.position;
+    }
+
+    private void Update() {
+        Vector3 newPos = transform.position;
+        Vector3 delta = newPos - lastPos;
+        float dDistance = Vector3.ProjectOnPlane(delta, Vector3.up).magnitude;
+        if(move.grounded)
+            distance += dDistance;
+        lastPos = newPos;
+        if(distance > FOOTSTEP_INTERVAL) {
+            distance %= FOOTSTEP_INTERVAL;
+            PlayFootStep(rightFoot = !rightFoot);
+        }
     }
 
     public void PickUpDamageAmp() {
@@ -58,14 +80,6 @@ public class UFPlayerMoveSounds : MonoBehaviour {
             else
                 footstepContext = FootstepContext.Type.gravel;
         }
-    }
-
-    public void FootstepL() {
-        PlayFootStep(false);
-    }
-
-    public void FootstepR() {
-        PlayFootStep(true);
     }
 
     private void PlayFootStep(bool right, bool maxForce = false) {

@@ -12,6 +12,8 @@ public class MapListElement : MonoBehaviour {
     public Text mapTitleText, mapAuthorText, recordText,
         verificationText, creditsText, infoText;
 
+    public Transform votingToggle;
+
     private string scene;
 
     public void SetMap(string scene, string title, string author, 
@@ -22,8 +24,8 @@ public class MapListElement : MonoBehaviour {
         mapAuthorText.text = author;
         creditsText.text = credits;
         infoText.text = info;
-        ratingImage.fillAmount = rating;
-        difficultyImage.fillAmount = difficulty;
+        ratingImage.fillAmount = rating / 100f;
+        difficultyImage.fillAmount = difficulty / 100f;
     }
 
     public void SetStatus(bool mapAvailable, string valid) {
@@ -83,5 +85,20 @@ public class MapListElement : MonoBehaviour {
 
     public void LaunchScene() {
         Global.levelLauncher.Launch(scene);
+    }
+
+    public void Vote(int vote) {
+        Global.levelLauncher.SetMapPreference(scene, vote);
+    }
+
+    public void CycleVote() {
+        int voteIdx = 0;
+        for(int i = 3; i < 6; i++) {
+            if(votingToggle.GetChild(i).gameObject.activeSelf)
+                voteIdx = i;
+        }
+
+        voteIdx = (voteIdx - 1) % 3;
+        votingToggle.GetChild(voteIdx).GetComponent<Button>().onClick.Invoke();
     }
 }

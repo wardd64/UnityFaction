@@ -61,12 +61,19 @@ public class DamageTool : PlayerTool {
         if(hit.collider != null) {
             Vector3 lingerPos = hit.point + EFFECT_OFFSET * hit.normal;
             Quaternion lingerRot = Quaternion.LookRotation(-hit.normal);
-            Rigidbody lingerMover = hit.collider.GetComponentInParent<Rigidbody>();
 
-            GameObject linger = SFXHolder.Spawn(bulletLinger, lingerPos, lingerRot, lingerMover);
+            Rigidbody lingerMover = hit.collider.GetComponentInParent<Rigidbody>();
+            UFDestructible lingerDestr = hit.collider.GetComponent<UFDestructible>();
+            Transform holder = null;
+            if(lingerMover != null)
+                holder = lingerMover.transform;
+            else if(lingerDestr != null)
+                holder = lingerDestr.transform;
+
+            GameObject linger = SFXHolder.Spawn(bulletLinger, lingerPos, lingerRot, holder);
             linger.GetComponentInChildren<MeshRenderer>().material.SetColor("_TintColor", fadeClr);
 
-            if(DealDamage(hit.collider.transform))
+            if(DealDamage(hit.collider.transform) && linger != null && linger.activeInHierarchy)
                 linger.GetComponent<AudioSource>().Play();
         }
 

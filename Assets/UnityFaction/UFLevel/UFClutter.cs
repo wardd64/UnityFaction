@@ -46,8 +46,6 @@ public class UFClutter : MonoBehaviour {
             if(sound != null)
                 sound.Play();
         }
-        else
-            Debug.LogError("Clutter with unknown functionality was activated: " + name);
     }
 
     public void Damage(float amount) {

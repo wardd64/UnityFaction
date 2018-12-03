@@ -97,7 +97,6 @@ public class CCPPlacer : MonoBehaviour {
             transform.position = Vector3.Lerp(transform.position, currentPoint.Value, r);
         }
 
-        
         Global.hud.SetCCPProgress(timer, COOLDOWN, DELAY, trying);
     }
 
@@ -138,7 +137,7 @@ public class CCPPlacer : MonoBehaviour {
 
         if(!player.isDead) {
             AddCheckPoint();
-            player.SoftDie();
+            player.CCPDie();
         }
 
         if(checkPoints.Count > 0)

@@ -13,6 +13,8 @@ public class UFPlayerLife : MonoBehaviour {
     public const float SUPER_HP = 200f;
     private const float INVULN_TIME = 12f;
 
+    public bool isDead { get { return health <= 0f; } }
+
     protected virtual void Start() {
         SetBaseHealth();
     }
@@ -71,10 +73,10 @@ public class UFPlayerLife : MonoBehaviour {
         health -= damage; amount -= damage;
 
         if(amount > 0f)
-            Die();
+            Die(type);
     }
 
-    protected virtual void Die() {
+    protected virtual void Die(DamageType type) {
         GetComponent<UFPlayerMovement>().Spawn();
         GetComponentInChildren<UFPlayerMoveSounds>().Die();
         SetBaseHealth();
@@ -95,7 +97,7 @@ public class UFPlayerLife : MonoBehaviour {
     }
 
     public enum DamageType {
-        Melee, Bullet, ArmorPiercing, Explosive, Fire, Energy, Electrical, Acid, Scalding
+        Melee, Bullet, ArmorPiercing, Explosive, Fire, Energy, Electrical, Acid, Scalding, exitLevel, ccp, respawn, other, unkown
     }
 
     public float GetHealth() {

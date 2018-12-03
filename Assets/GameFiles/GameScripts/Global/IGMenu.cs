@@ -7,12 +7,13 @@ using UnityEngine.UI;
 public class IGMenu : MonoBehaviour {
 
     //menu UI connections
-    public GameObject escapeMenu, optionsMenu;
+    public GameObject escapeMenu, optionsMenu, mapSelectionMenu;
     public Dropdown qualityDropdown, resolutionDropdown;
     public Text resolutionText, recordText;
     public Slider fovSlider, sensSlider;
     public InputField fovInput, sensInput;
     public Toggle slowScrollToggle;
+    public Button restartButton, extendMatchButton, nextMatchButton;
 
     //debugging UI
     public Text fps;
@@ -55,13 +56,13 @@ public class IGMenu : MonoBehaviour {
             if(menuOpen) {
                 if(optionsMenu.activeInHierarchy)
                     CloseOptions();
+                else if(mapSelectionMenu.activeInHierarchy)
+                    CloseOptions();
                 else
                     CloseMenu();
             }
-            else {
-                escapeMenu.gameObject.SetActive(true);
-                menuOpen = true;
-            }
+            else if(!Global.hud.chat.recentOpen)
+                OpenMenu();
         }
 
         resolutionText.text = Screen.width + " x " + Screen.height;
@@ -95,6 +96,15 @@ public class IGMenu : MonoBehaviour {
             debugText.text = "No player info";
     }
 
+    private void OpenMenu() {
+        menuOpen = true;
+        escapeMenu.gameObject.SetActive(true);
+        restartButton.interactable = PhotonNetwork.offlineMode;
+        bool master = !PhotonNetwork.offlineMode && PhotonNetwork.isMasterClient;
+        extendMatchButton.gameObject.SetActive(master);
+        nextMatchButton.gameObject.SetActive(master);
+    }
+
     public void CloseMenu() {
         for(int i = 0; i < transform.childCount; i++)
             transform.GetChild(i).gameObject.SetActive(false);
@@ -102,6 +112,8 @@ public class IGMenu : MonoBehaviour {
     }
 
     public void ReturnToMainMenu() {
+        if(PhotonNetwork.inRoom)
+            PhotonNetwork.LeaveRoom();
         CloseMenu();
         Global.LoadMainMenu();
     }
@@ -112,19 +124,35 @@ public class IGMenu : MonoBehaviour {
     }
 
     public void Respawn() {
-        UFLevel.GetPlayer<PlayerMovement>().Spawn();
+        UFLevel.GetPlayer<PlayerLife>().RespawnDie();
         CloseMenu();
     }
 
     public void OpenOptions() {
         optionsMenu.SetActive(true);
+        mapSelectionMenu.SetActive(false);
         escapeMenu.SetActive(false);
+
         qualityDropdown.value = QualitySettings.GetQualityLevel();
         sensSlider.value = Global.save.mouseSensitivity;
         fovSlider.value = Global.save.fov;
         slowScrollToggle.isOn = Global.save.slowScroll;
         UpdateAllBySlider();
         SetResolutions();
+    }
+
+    public void OpenMapSelection() {
+        mapSelectionMenu.SetActive(true);
+        optionsMenu.SetActive(false);
+        escapeMenu.SetActive(false);
+    }
+
+    public void ExtendMatch() {
+        Global.match.ExtendMatch();
+    }
+
+    public void SkipMatch() {
+        Global.match.SkipMatch();
     }
 
     public void UpdateAllBySlider() {
@@ -156,6 +184,7 @@ public class IGMenu : MonoBehaviour {
 
     public void CloseOptions() {
         optionsMenu.SetActive(false);
+        mapSelectionMenu.SetActive(false);
         escapeMenu.SetActive(!Global.InMainMenu());
         Global.save.mouseSensitivity = sensSlider.value;
         Global.save.fov = fovSlider.value;

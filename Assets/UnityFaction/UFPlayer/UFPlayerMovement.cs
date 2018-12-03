@@ -60,6 +60,9 @@ public class UFPlayerMovement : MonoBehaviour {
     public float liquidJumpMultiplier = 2f; //factor for vert speed when exiting liquids
     public float noClipSpeed = 20f; //flying speed when noclipping
 
+    protected PhotonView pv { get { return GetComponent<PhotonView>(); } }
+    public bool isMine { get { return pv.isMine; } }
+
     /// <summary>
     /// Unit vector pointing horizontally in the direction the player is turned towards
     /// </summary>
@@ -105,13 +108,25 @@ public class UFPlayerMovement : MonoBehaviour {
         moveSound = this.GetComponentInChildren<UFPlayerMoveSounds>();
     }
 
-    private void Start() {
-        if(UFLevel.playerInfo != null)
-            UFLevel.playerInfo.ApplyCameraSettings(playerCamera);
-        SetRotSmoothing(rotSmoothing);
-        UFLevel.playerInfo.ResetVision();
-        GetComponent<UFPlayerWeapons>().SetLiquidVision(false, Color.clear);
-        Spawn();
+    protected virtual void Start() {
+        if(isMine) {
+            if(UFLevel.player != this)
+                PhotonNetwork.Destroy(this.gameObject);
+            if(UFLevel.playerInfo != null)
+                UFLevel.playerInfo.ApplyCameraSettings(playerCamera);
+            SetRotSmoothing(rotSmoothing);
+            UFLevel.playerInfo.ResetVision();
+            GetComponent<UFPlayerWeapons>().SetLiquidVision(false, Color.clear);
+            Spawn();
+        }
+        else {
+            playerCamera.gameObject.SetActive(false);
+            moveSound.enabled = false;
+            UFUtils.SetLayerRecursively(gameObject, 0);
+            GetComponentInChildren<UFTriggerSensor>().gameObject.SetActive(false);
+            GetComponent<UFPlayerLife>().enabled = false;
+            GetComponent<CCPPlacer>().enabled = false;
+        }
     }
 
     public virtual void Spawn() {
@@ -129,7 +144,7 @@ public class UFPlayerMovement : MonoBehaviour {
     }
 
     private void OnEnable() {
-        if(!cc.enabled)
+        if(!cc.enabled || !isMine)
             return;
 
         bool onGround = CheckGround(0.1f);
@@ -143,15 +158,22 @@ public class UFPlayerMovement : MonoBehaviour {
     }
 
     protected virtual void Update() {
-        MoveUpdate();
+        bool unusedDefault = this.transform.position == Vector3.zero;
+        unusedDefault &= this.transform.rotation == Quaternion.identity;
+        GetComponentInChildren<Animator>(true).gameObject.SetActive(!unusedDefault);
 
-        //animation states:
-        SetAnimation("Airborne", motionState == MotionState.air);
-        SetAnimation("Crouch", motionState == MotionState.crouch);
+        if(isMine) {
+            MoveUpdate();
 
-        MouseUpdate();
-        if(UFLevel.playerInfo != null)
-            UFLevel.playerInfo.UpdateCamera(playerCamera);
+            //movement state dependent animation states:
+            SetAnimation("Airborne", motionState == MotionState.air);
+            SetAnimation("Crouch", motionState == MotionState.crouch);
+
+            MouseUpdate();
+            if(UFLevel.playerInfo != null)
+                UFLevel.playerInfo.UpdateCamera(playerCamera);
+        }
+        
     }
 
     private void MouseUpdate() {
@@ -164,6 +186,9 @@ public class UFPlayerMovement : MonoBehaviour {
 
     public Vector2 MouseRotate() {
         float sensitivity = GetSensitivity();
+
+        if(prevRotX == null || prevRotY == null)
+            SetRotSmoothing(rotSmoothing);
 
         for(int i = 0; i < rotSmoothing - 1; i++) {
             prevRotX[i] = prevRotX[i + 1];

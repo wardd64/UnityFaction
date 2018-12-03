@@ -5,13 +5,25 @@ using UnityEngine;
 public class PlayerMovement : UFPlayerMovement {
 
     public Animator playerAnim;
+    private Ragdoll rag;
+
+    public void RagdollUpdate() {
+        Rigidbody ragHip = playerAnim.GetComponentInChildren<Rigidbody>();
+        UFRoom room = UFLevel.GetRoom(ragHip.position);
+        if(room.InLiquid(ragHip.position)) {
+            foreach(Rigidbody rb in playerAnim.GetComponentsInChildren<Rigidbody>()) {
+                rb.AddForce(10f * Vector3.up);
+                rb.velocity *= Mathf.Exp(-2f * Time.deltaTime);
+            }
+        }
+    }
 
     public override void InButtonRange(KeyCode useKey) {
         Global.hud.InButtonRange(useKey);
     }
 
     protected override bool IgnoreInput() {
-        return Global.igMenu.isOpen;
+        return Global.igMenu.isOpen || Global.hud.chat.lockInput;
     }
 
     protected override bool AllowShortJump() {

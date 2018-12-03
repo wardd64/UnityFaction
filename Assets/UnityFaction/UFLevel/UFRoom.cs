@@ -67,6 +67,12 @@ public class UFRoom : MonoBehaviour {
         return bestRoom == this;
     }
 
+    public bool InLiquid(Vector3 pos) {
+        if(!this.hasLiquid)
+            return false;
+        return pos.y <= this.liquid.absoluteY;
+    }
+
     public override string ToString() {
         return "Room " + id + (isSubRoom ? " sub " : " ") + aabb;
     }

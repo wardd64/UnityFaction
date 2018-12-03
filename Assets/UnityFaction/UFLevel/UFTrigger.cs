@@ -5,8 +5,9 @@ using UnityEngine;
 
 public class UFTrigger : MonoBehaviour {
 
+    public int ownID; //uniquely needed for online syncing
     public bool triggeredByWeapon, triggeredByVehicle,
-        requireUseKey, permanent, oneWay, auto;
+        requireUseKey, oneWay, auto;
 
     public KeyCode useKey;
 
@@ -18,10 +19,12 @@ public class UFTrigger : MonoBehaviour {
     public int switchRef;
 
     //dynamic variables
-    float insideTime, buttonTime;
-    bool inside, triggeredOnce;
+    private bool permanent;
+    private float insideTime, buttonTime;
+    private bool inside, permanentTriggered;
 
 	public void Set(Trigger trigger) {
+        ownID = trigger.transform.id;
 
         triggeredByWeapon = trigger.weaponActivates;
         requireUseKey = trigger.useKey;
@@ -117,7 +120,21 @@ public class UFTrigger : MonoBehaviour {
         return uts != null && uts.type == UFTriggerSensor.Type.Vehicle;
     }
 
+    /// <summary>
+    /// Activate this trigger over the network
+    /// </summary>
+    public void SyncTrigger() {
+        permanentTriggered = true;
+        Trigger();
+    }
+
     private void Trigger() {
+        //sync this trigger press over the network if necessary
+        if(permanent && !permanentTriggered) { 
+            permanentTriggered = true;
+            UFLevel.SyncTrigger(ownID);
+        }
+
         if(resetsRemaining > 0)
             resetsRemaining--;
         else if(resetsRemaining == 0)

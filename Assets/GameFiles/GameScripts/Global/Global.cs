@@ -18,6 +18,8 @@ public class Global : MonoBehaviour {
             return instance;
     }}
 
+    public static string multiplayerVersion { get { return levelLauncher.multiplayerVersion; } }
+
     private static Global instance;
 
     private void Awake() {

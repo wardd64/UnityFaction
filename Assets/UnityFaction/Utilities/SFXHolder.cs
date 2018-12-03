@@ -38,10 +38,10 @@ public class SFXHolder : MonoBehaviour {
         return go;
     }
 
-    public static GameObject Spawn(GameObject effect, Vector3 position, Quaternion rotation, Rigidbody rb, float timeOut = 0f) {
+    public static GameObject Spawn(GameObject effect, Vector3 position, Quaternion rotation, Transform holder, float timeOut = 0f) {
         GameObject go = Spawn(effect, position, rotation, timeOut);
-        if(rb != null)
-            go.transform.SetParent(rb.transform);
+        if(holder != null)
+            go.transform.SetParent(holder);
         return go;
     }
 

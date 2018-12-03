@@ -9,11 +9,7 @@ public class UFPlayerInfo : MonoBehaviour {
     public string levelRFLPath;
     public string levelName, author;
     public PosRot playerStart;
-
-    public Color defaultAmbient;
-    public float ambChangeTime = 10f;
-
-    public Color fogColor;
+    public Color fogColor, ambientColor;
     public bool useFog;
     public float fogStart;
     public float clipPlane;
@@ -30,7 +26,6 @@ public class UFPlayerInfo : MonoBehaviour {
     public LayerMask playerMask { get { return LayerMask.GetMask(LayerMask.LayerToName(playerLayer)); } }
 
     //dynamic variables
-    private Color targetAmbient;
     private float playerMissingTime;
     private int playerMissingFrames;
     private Vector3 angularVelocity;
@@ -39,7 +34,9 @@ public class UFPlayerInfo : MonoBehaviour {
     private const float DEFAULT_ASPECT = 4f / 3f;
     private const float FP_FOV = 70f;
 
-    public void Set(LevelData level, int levelLayer, int playerLayer, int skyLayer, string rflPath) {
+    public void Set(LevelData level, int levelLayer, int playerLayer, int skyLayer, 
+        string rflPath, bool pcFog) {
+
         this.levelRFLPath = rflPath;
 
         this.levelName = level.name;
@@ -57,7 +54,7 @@ public class UFPlayerInfo : MonoBehaviour {
         this.clipPlane = level.farPlane;
         if(this.clipPlane <= 0f)
             this.clipPlane = 1000f;
-        if(level.nearPlane > 0f && level.nearPlane <= level.farPlane)
+        if(pcFog && level.nearPlane > 0f && level.nearPlane <= level.farPlane)
             Debug.LogWarning("Found non trivial value " + level.nearPlane +
                 " for fog start (near plane). By Default RF behaviour this value was ignored. " +
                 "Please set in the UFPlayerInfo script if you which to use the value.");
@@ -66,8 +63,8 @@ public class UFPlayerInfo : MonoBehaviour {
                 "for the far clipping plane. As a result, by default RF behaviour, fog has " +
                 "been disabled. Visit the UFPlayerInfo object if this was not intended.");
 
-        this.defaultAmbient = level.ambientColor;
         this.fogColor = level.fogColor;
+        this.ambientColor = level.ambientColor;
 
         bool foundSkyRoom = false;
         Room skyRoom = default(Room);
@@ -105,8 +102,6 @@ public class UFPlayerInfo : MonoBehaviour {
             skyCamera.farClipPlane = skyDiagonal.magnitude / 2f;
             skyCamera.cullingMask = skyMask;
         }
-
-        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
     }
 
     private void MakeEAX(Room.EAXEffectType eax, Vector3 roomCenter, float roomRadius) {
@@ -150,7 +145,7 @@ public class UFPlayerInfo : MonoBehaviour {
 
         cameraRotation = Quaternion.identity;
         angularVelocity = Vector3.zero;
-
+        RenderSettings.ambientLight = ambientColor;
     }
 
     private void SetFog() {
@@ -162,21 +157,13 @@ public class UFPlayerInfo : MonoBehaviour {
     }
 
     public void ResetVision() {
-        RenderSettings.ambientLight = targetAmbient;
         SetFog();
+        RenderSettings.ambientLight = ambientColor;
     }
 
     private void SetRenderSettings() {
-        bool ambientIsCorrect = RenderSettings.ambientMode == UnityEngine.Rendering.AmbientMode.Flat;
-        if(!ambientIsCorrect)
-            Debug.LogError("Ambient light settings should be set to a flat color!");
-
-        RenderSettings.ambientLight = defaultAmbient;
-        targetAmbient = defaultAmbient;
         SetFog();
         Application.targetFrameRate = 120;
-
-        RenderSettings.ambientIntensity = 0f;
     }
 
     public void ApplyCameraSettings(Camera playerCamera) {
@@ -208,16 +195,6 @@ public class UFPlayerInfo : MonoBehaviour {
     }
 
     public void UpdateCamera(Camera playerCamera) {
-        targetAmbient = defaultAmbient;
-        
-        UFRoom room = UFLevel.GetRoom(playerCamera.transform.position);
-        if(room != null && room.hasAmbientLight)
-            targetAmbient = room.ambientLightColor;
-
-        Color currentAmb = RenderSettings.ambientLight;
-        float r = Time.deltaTime / ambChangeTime;
-        RenderSettings.ambientLight = UFUtils.MoveTowards(currentAmb, targetAmbient, r);
-
         float fov = UFUtils.ScaleFOV(Global.save.fov, 1f / DEFAULT_ASPECT);
 
         float realAspect = (float) Screen.width / Screen.height;
@@ -241,7 +218,8 @@ public class UFPlayerInfo : MonoBehaviour {
         playerMissingTime += Time.deltaTime;
         playerMissingFrames++;
         if(playerMissingTime > 1f && playerMissingFrames > 10)
-            UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(500f * Time.deltaTime, 0, true);
+            UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(500f * Time.deltaTime, 
+                UFPlayerLife.DamageType.exitLevel, true);
     }
 
     private void UpdateFPCamera(Camera playerCamera) {

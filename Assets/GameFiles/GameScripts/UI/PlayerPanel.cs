@@ -139,6 +139,7 @@ public class PlayerPanel : MonoBehaviour {
     private string FilterName(string name) {
         if(string.IsNullOrEmpty(name))
             return SaveData.PLAYER_DEFAULT_NAME;
+        name = name.Replace("@", "");
         return name;
     }
 

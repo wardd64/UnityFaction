@@ -321,6 +321,20 @@ public class UFEvent : MonoBehaviour {
         }
         return IDRef.Type.All;
 
+        case UFLevelStructure.Event.EventType.Heal:
+        if(bool1) {
+            UFLevel.GetPlayer<UFPlayerLife>().GainHealth(int1);
+            return IDRef.Type.None;
+        }
+        else {
+            Debug.LogError("Entity heal not implemented");
+            return IDRef.Type.Entity;
+        }
+
+        case UFLevelStructure.Event.EventType.Set_Gravity:
+        Physics.gravity = float1 * Vector3.down;
+        return IDRef.Type.None;
+
         default:
         Debug.LogError("Event type " + type + " not implemented");
         return IDRef.Type.None;
