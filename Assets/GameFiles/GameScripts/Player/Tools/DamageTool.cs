@@ -84,6 +84,12 @@ public class DamageTool : PlayerTool {
     private bool DealDamage(Transform target) {
         float damage = amplified ? AMP_DAMAGE : BASE_DAMAGE;
 
+        UFTrigger trig = target.GetComponent<UFTrigger>();
+        if(trig != null && trig.triggeredByWeapon) {
+            trig.ExternalTrigger();
+            return true;
+        }
+
         UFDestructible dstr = target.GetComponent<UFDestructible>();
         if(dstr != null) {
             dstr.DealDamage(damage);
@@ -98,5 +104,10 @@ public class DamageTool : PlayerTool {
 
         //no valid damage target
         return false;
+    }
+
+    protected override bool ValidTrigger(Collider trigger) {
+        UFTrigger trig = trigger.GetComponent<UFTrigger>();
+        return trig != null && trig.triggeredByWeapon && trig.resetsRemaining != 0;
     }
 }

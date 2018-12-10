@@ -117,10 +117,8 @@ public class UFLevel : MonoBehaviour {
 
     public static T GetPlayer<T>() where T : Component{
         UFPlayerMovement basePlayer = player;
-        if(basePlayer == null) {
-            Debug.LogError("Requested player while he was not spawned in!");
+        if(basePlayer == null)
             return null;
-        }
         return basePlayer.GetComponentInChildren<T>();
     }
 
@@ -165,4 +163,25 @@ public class UFLevel : MonoBehaviour {
         }
         return null;
     }
+
+    //dynamic level stuff
+
+    private float countDownTimer;
+
+    private void Update() {
+        if(countDownTimer > 0f) {
+            countDownTimer -= Time.deltaTime;
+            if(countDownTimer <= 0f)
+                countDownTimer = 0f;                
+        }
+    }
+
+    public void SetCountDown(float value) {
+        countDownTimer = value;
+    }
+
+    public float GetCountDownTime() {
+        return countDownTimer;
+    }
+    
 }

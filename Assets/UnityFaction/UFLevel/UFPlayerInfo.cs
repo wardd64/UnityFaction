@@ -215,6 +215,9 @@ public class UFPlayerInfo : MonoBehaviour {
     }
 
     private void Update() {
+        if(UFLevel.player == null)
+            return;
+
         playerMissingTime += Time.deltaTime;
         playerMissingFrames++;
         if(playerMissingTime > 1f && playerMissingFrames > 10)

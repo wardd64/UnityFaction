@@ -9,7 +9,6 @@ abstract public class PlayerTool : MonoBehaviour {
     //0: necessary tool, 1: standard tool, 2: extra tool
     public int priority;
     public LayerMask targetMask;
-    public bool rcDetectsTriggers;
 
     protected const float RAY_MAX = 1e+3f;
     protected bool amplified;
@@ -33,21 +32,27 @@ abstract public class PlayerTool : MonoBehaviour {
 
         Transform rayPoint = fpCamera.transform;
 
-        Ray ray = new Ray(rayPoint.position, rayPoint.forward);
-        RaycastHit[] hits = Physics.RaycastAll(ray, RAY_MAX, targetMask);
-
-        foreach(RaycastHit hit in hits) {
-            if(!rcDetectsTriggers && hit.collider.isTrigger)
-                continue;
-
-            if(hit.collider.GetComponentInParent<PlayerMovement>() != null)
-                continue;
-
-            if(hit.distance < bestHit.distance)
+        Ray forwardRay = new Ray(rayPoint.position, rayPoint.forward);
+        RaycastHit[] forwardHits = Physics.RaycastAll(forwardRay, RAY_MAX, targetMask);
+        foreach(RaycastHit hit in forwardHits) {
+            if(IsValidHit(hit) && hit.distance < bestHit.distance)
                 bestHit = hit;
         }
 
-        
+        /* if we find new hits traveling our ray backwards our raycast
+         * must have started within a collider. The last and therefore 
+         * innermost of those 'backHits' is the most desirable hit.
+         */
+        Vector3 rayEnd = rayPoint.position + rayPoint.forward * RAY_MAX;
+        Ray backRay = new Ray(rayEnd, -rayPoint.forward);
+        RaycastHit[] backHits = Physics.RaycastAll(backRay, RAY_MAX, targetMask);
+        if(backHits.Length > forwardHits.Length) {
+            foreach(RaycastHit backHit in backHits) {
+                if(!HitsInclude(forwardHits, backHit) && IsValidHit(backHit))
+                    bestHit = backHit;  
+            }
+        }
+
         Vector3 aimPoint = rayPoint.position + rayPoint.forward * RAY_MAX;
         float aimDist = RAY_MAX;
         float dist = bestHit.distance;
@@ -57,7 +62,7 @@ abstract public class PlayerTool : MonoBehaviour {
             //keep aim point a minimum distance away from the camera
             if(bestHit.distance < 1f) {
                 dist = (dist * dist + 1) / 2f;
-                aimPoint = ray.origin + dist * ray.direction;
+                aimPoint = forwardRay.origin + dist * forwardRay.direction;
             }
 
             aimDist = Vector3.Distance(aimPoint, aimRig.position);
@@ -69,8 +74,32 @@ abstract public class PlayerTool : MonoBehaviour {
         return bestHit;
     }
 
+    private bool HitsInclude(RaycastHit[] hits, RaycastHit hit) {
+        foreach(RaycastHit r in hits) {
+            if(r.collider == hit.collider)
+                return true;
+        }
+        return false;
+    }
+
     public void SetAmplified(bool value) {
         amplified = value;
+    }
+
+    private bool IsValidHit(RaycastHit hit) {
+        if(hit.collider.isTrigger) {
+            if(!this.ValidTrigger(hit.collider))
+                return false;
+        }
+
+        if(hit.collider.GetComponentInParent<PlayerMovement>() != null)
+            return false;
+
+        return true;
+    }
+
+    protected virtual bool ValidTrigger(Collider trigger) {
+        return false;
     }
 
     abstract public void DoUpdate(bool mainFire, bool alt);

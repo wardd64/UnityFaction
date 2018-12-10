@@ -10,7 +10,7 @@ public class PlayerMovement : UFPlayerMovement {
     public void RagdollUpdate() {
         Rigidbody ragHip = playerAnim.GetComponentInChildren<Rigidbody>();
         UFRoom room = UFLevel.GetRoom(ragHip.position);
-        if(room.InLiquid(ragHip.position)) {
+        if(room != null && room.InLiquid(ragHip.position)) {
             foreach(Rigidbody rb in playerAnim.GetComponentsInChildren<Rigidbody>()) {
                 rb.AddForce(10f * Vector3.up);
                 rb.velocity *= Mathf.Exp(-2f * Time.deltaTime);
@@ -23,7 +23,7 @@ public class PlayerMovement : UFPlayerMovement {
     }
 
     protected override bool IgnoreInput() {
-        return Global.igMenu.isOpen || Global.hud.chat.lockInput;
+        return Global.igMenu.isOpen || Global.hud.chat.listenToInput;
     }
 
     protected override bool AllowShortJump() {
@@ -91,14 +91,6 @@ public class PlayerMovement : UFPlayerMovement {
         break;
 
         }
-    }
-
-    public override void SetCountDown(float value) {
-        Global.hud.SetTimer(value);
-    }
-
-    public override float GetCountDownValue() {
-        return Global.hud.GetTimer();
     }
 
     public void ResetDoubleJump() {

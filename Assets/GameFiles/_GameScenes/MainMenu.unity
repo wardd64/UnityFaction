@@ -8615,7 +8615,7 @@ Prefab:
     - target: {fileID: 224993086568745102, guid: 9cdce21d2539b774cbfdf19287809595,
         type: 2}
       propertyPath: m_AnchoredPosition.y
-      value: -0.000019073486
+      value: 0.00002670288
       objectReference: {fileID: 0}
     - target: {fileID: 224918571619373406, guid: 9cdce21d2539b774cbfdf19287809595,
         type: 2}
@@ -8635,27 +8635,27 @@ Prefab:
     - target: {fileID: 224018365332836628, guid: 9cdce21d2539b774cbfdf19287809595,
         type: 2}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 224018365332836628, guid: 9cdce21d2539b774cbfdf19287809595,
         type: 2}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 224018365332836628, guid: 9cdce21d2539b774cbfdf19287809595,
         type: 2}
       propertyPath: m_AnchoredPosition.x
-      value: 89.495
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 224018365332836628, guid: 9cdce21d2539b774cbfdf19287809595,
         type: 2}
       propertyPath: m_AnchoredPosition.y
-      value: -20
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 224018365332836628, guid: 9cdce21d2539b774cbfdf19287809595,
         type: 2}
       propertyPath: m_SizeDelta.x
-      value: 178.99
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 114823233293235976, guid: 9cdce21d2539b774cbfdf19287809595,
         type: 2}
@@ -12940,6 +12940,69 @@ MonoBehaviour:
         m_CallState: 2
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
+--- !u!1 &925224275 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1046913140233402, guid: 9f75ed076cb157946af377fb188b7984,
+    type: 2}
+  m_PrefabInternal: {fileID: 1744088581}
+--- !u!114 &925224276
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 925224275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b8c4a61274f60b4ea5fb4299cfdbf14, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowLayerWeightsInspector: 1
+  ShowParameterInspector: 1
+  m_SynchronizeParameters:
+  - Type: 4
+    SynchronizeType: 1
+    Name: Airborne
+  - Type: 4
+    SynchronizeType: 1
+    Name: Crouch
+  - Type: 4
+    SynchronizeType: 1
+    Name: Moving
+  - Type: 1
+    SynchronizeType: 2
+    Name: MoveAngle
+  - Type: 9
+    SynchronizeType: 1
+    Name: Jump
+  m_SynchronizeLayers:
+  - SynchronizeType: 0
+    LayerIndex: 0
+--- !u!114 &925224277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 925224275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 3
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 925224276}
+  ObservedComponentsFoldoutOpen: 1
+  viewIdField: 3
+  instantiationId: 2
+  currentMasterID: -1
+  isRuntimeInstantiated: 0
 --- !u!1 &933917504
 GameObject:
   m_ObjectHideFlags: 0
@@ -16141,7 +16204,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1118886622}
   - component: {fileID: 1118886623}
-  - component: {fileID: 1118886624}
   m_Layer: 5
   m_Name: MatchProgress
   m_TagString: Untagged
@@ -16180,87 +16242,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerPrefab: {fileID: 1307390982073796, guid: 9f75ed076cb157946af377fb188b7984,
     type: 2}
---- !u!114 &1118886624
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1118886621}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -822479833, guid: dc443db3e92b4983b9738c1131f555cb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_NetworkPort: 7777
-  m_ServerBindToIP: 0
-  m_ServerBindAddress: 
-  m_NetworkAddress: localhost
-  m_DontDestroyOnLoad: 0
-  m_RunInBackground: 1
-  m_ScriptCRCCheck: 1
-  m_MaxDelay: 0.01
-  m_LogLevel: 2
-  m_PlayerPrefab: {fileID: 0}
-  m_AutoCreatePlayer: 0
-  m_PlayerSpawnMethod: 0
-  m_OfflineScene: MainMenu
-  m_OnlineScene: 
-  m_SpawnPrefabs: []
-  m_CustomConfig: 1
-  m_MaxConnections: 8
-  m_ConnectionConfig:
-    m_PacketSize: 1440
-    m_FragmentSize: 500
-    m_ResendTimeout: 1200
-    m_DisconnectTimeout: 2000
-    m_ConnectTimeout: 2000
-    m_MinUpdateTimeout: 10
-    m_PingTimeout: 500
-    m_ReducedPingTimeout: 100
-    m_AllCostTimeout: 20
-    m_NetworkDropThreshold: 5
-    m_OverflowDropThreshold: 5
-    m_MaxConnectionAttempt: 10
-    m_AckDelay: 33
-    m_SendDelay: 10
-    m_MaxCombinedReliableMessageSize: 100
-    m_MaxCombinedReliableMessageCount: 10
-    m_MaxSentMessageQueueSize: 512
-    m_AcksType: 1
-    m_UsePlatformSpecificProtocols: 0
-    m_InitialBandwidth: 0
-    m_BandwidthPeakFactor: 2
-    m_WebSocketReceiveBufferMaxSize: 0
-    m_UdpSocketReceiveBufferMaxSize: 0
-    m_SSLCertFilePath: 
-    m_SSLPrivateKeyFilePath: 
-    m_SSLCAFilePath: 
-    m_Channels: []
-  m_GlobalConfig:
-    m_ThreadAwakeTimeout: 1
-    m_ReactorModel: 0
-    m_ReactorMaximumReceivedMessages: 1024
-    m_ReactorMaximumSentMessages: 1024
-    m_MaxPacketSize: 2000
-    m_MaxHosts: 16
-    m_ThreadPoolSize: 1
-    m_MinTimerTimeout: 1
-    m_MaxTimerTimeout: 12000
-    m_MinNetSimulatorTimeout: 1
-    m_MaxNetSimulatorTimeout: 12000
-  m_Channels: 0500000000000000
-  m_UseWebSockets: 0
-  m_UseSimulator: 0
-  m_SimulatedLatency: 1
-  m_PacketLossPercentage: 0
-  m_MaxBufferedPackets: 16
-  m_AllowFragmentation: 1
-  m_MatchHost: mm.unet.unity3d.com
-  m_MatchPort: 443
-  matchName: default
-  matchSize: 4
-  isNetworkActive: 0
-  matchMaker: {fileID: 0}
 --- !u!1 &1126708101
 GameObject:
   m_ObjectHideFlags: 0
@@ -24584,7 +24565,7 @@ MonoBehaviour:
   m_LineType: 0
   m_HideMobileInput: 0
   m_CharacterValidation: 0
-  m_CharacterLimit: 50
+  m_CharacterLimit: 96
   m_OnEndEdit:
     m_PersistentCalls:
       m_Calls: []
@@ -25660,7 +25641,19 @@ Prefab:
       propertyPath: instantiationId
       value: 2
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 114250618706357174, guid: 9f75ed076cb157946af377fb188b7984,
+        type: 2}
+      propertyPath: viewIdField
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 114250618706357174, guid: 9f75ed076cb157946af377fb188b7984,
+        type: 2}
+      propertyPath: instantiationId
+      value: 3
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 114671249709708640, guid: 9f75ed076cb157946af377fb188b7984, type: 2}
+    - {fileID: 114060190485414860, guid: 9f75ed076cb157946af377fb188b7984, type: 2}
   m_SourcePrefab: {fileID: 100100000, guid: 9f75ed076cb157946af377fb188b7984, type: 2}
   m_IsPrefabAsset: 0
 --- !u!1 &1749295420
@@ -27949,7 +27942,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1919524566
 RectTransform:
   m_ObjectHideFlags: 0
@@ -29696,7 +29689,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: UnityFaction v1.3.0
+  m_Text: UnityFaction v1.3.1
 --- !u!222 &2003065895
 CanvasRenderer:
   m_ObjectHideFlags: 0

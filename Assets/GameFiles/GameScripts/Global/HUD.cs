@@ -24,7 +24,6 @@ public class HUD : MonoBehaviour {
     private const float PROGRESS_OFFSET = .1f;
 
     private bool inButtonRange;
-    private float timer;
     private Timer weaponTagPanelTimer = new Timer(4f, 0f);
 
     private void Start() {
@@ -33,6 +32,9 @@ public class HUD : MonoBehaviour {
     }
 
     private void Update() {
+        if(UFLevel.player == null)
+            return;
+
         buttonAlert.SetBool("Visible", inButtonRange);
         inButtonRange = false;
 
@@ -46,15 +48,7 @@ public class HUD : MonoBehaviour {
         healthGauge.transform.localScale = healthFrac * Vector3.one;
         armorGauge.fillAmount = armorFrac;
 
-        if(timer > 0f) {
-            timer -= Time.deltaTime;
-            if(timer <= 0f) {
-                timer = 0f;
-                timerPanel.SetActive(false);
-            }
-            else 
-                countdownText.text = UFUtils.GetTimeString(timer, 1);
-        }
+        SetTimer(UFLevel.singleton.GetCountDownTime());
 
         if(weaponTagPanelTimer.TickTrigger())
             weaponTagPanel.gameObject.SetActive(false);
@@ -124,12 +118,8 @@ public class HUD : MonoBehaviour {
     }
 
     public void SetTimer(float value) {
-        timer = value;
+        countdownText.text = UFUtils.GetTimeString(value, 1);
         timerPanel.SetActive(value > 0f);
-    }
-
-    public float GetTimer() {
-        return timer;
     }
 
     public void ChangeTool(PlayerTool[] tools, int toolIdx) {

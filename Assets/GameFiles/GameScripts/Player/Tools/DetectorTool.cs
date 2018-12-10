@@ -32,10 +32,6 @@ public class DetectorTool : PlayerTool {
 
         if(target.GetComponent<Collider>().isTrigger) {
 
-            UFItem item = target.GetComponent<UFItem>();
-            if(item != null)
-                return "Item";
-
             UFForceRegion force = target.GetComponent<UFForceRegion>();
             if(force != null) {
                 switch(force.type) {
@@ -173,5 +169,10 @@ public class DetectorTool : PlayerTool {
 
         Debug.Log("Could not recognize target: " + target);
         return "Unkown";
+    }
+
+    protected override bool ValidTrigger(Collider trigger) {
+        UFItem item = trigger.GetComponent<UFItem>();
+        return item == null;
     }
 }

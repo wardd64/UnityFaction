@@ -216,10 +216,7 @@ public class UFMover : MonoBehaviour {
     }
 
     private static bool InMoveRadius(Collider mover, Vector3 delta, CharacterController player) {
-        if(mover == null)
-            return false;
-
-        if(delta == Vector3.zero)
+        if(mover == null || player == null || delta == Vector3.zero)
             return false;
 
         Vector3 playerPos = player.transform.position + player.center;

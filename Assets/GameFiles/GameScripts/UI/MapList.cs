@@ -24,18 +24,20 @@ public class MapList : MonoBehaviour {
         }
     }
 
-    void Start () {
-        string[] maps = new string[mapData.nRow];
-        for(int i = 0; i < mapData.nRow; i++)
-            maps[i] = mapData.GetValue(i, "Scene name");
-        Global.save.InitializeRecords(maps);
-
+    private void Start () {
         for(int i = 0; i < mapData.nRow; i++) {
             MapListElement el = Instantiate(mleTemplate, mapListContent);
             SetMapElement(el, i);
         }
 
         Destroy(mapListContent.GetChild(0).gameObject);
+    }
+
+    public static string[] GetList() {
+        string[] maps = new string[mapData.nRow];
+        for(int i = 0; i < mapData.nRow; i++)
+            maps[i] = mapData.GetValue(i, "Scene name");
+        return maps;
     }
 
     private void SetMapElement(MapListElement el, int i) {

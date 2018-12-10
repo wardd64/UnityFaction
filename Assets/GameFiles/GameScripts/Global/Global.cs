@@ -39,7 +39,7 @@ public class Global : MonoBehaviour {
     private void Update() {
         //hud toggle
         bool hudState = hudInstance.gameObject.activeSelf ^ Input.GetKeyDown(KeyCode.Alpha2);
-        hudState &= InMatchScene();
+        hudState &= InMatchScene() && UFLevel.player != null;
         hudInstance.gameObject.SetActive(hudState);
     }
 
@@ -75,7 +75,6 @@ public class Global : MonoBehaviour {
     }
 
     public static void LoadMainMenu() {
-        
         SceneManager.LoadScene(global.menuScene);
     }
 }

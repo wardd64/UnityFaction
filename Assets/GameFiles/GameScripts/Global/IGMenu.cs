@@ -61,7 +61,7 @@ public class IGMenu : MonoBehaviour {
                 else
                     CloseMenu();
             }
-            else if(!Global.hud.chat.recentOpen)
+            else if(!Global.hud.chat.listenToInput)
                 OpenMenu();
         }
 

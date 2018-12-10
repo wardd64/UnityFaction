@@ -22,15 +22,14 @@ public class Chat : Photon.PunBehaviour, IChatClientListener {
     public float backGroundAlpha = 0.4f;
     public float refreshTime = 1f;
 
-    private bool receivingInput;
+    private int receivingInput;
     private float panelTimer, refreshTimer;
     private int skipShift;
     private const int SKIP_SHIFT = 2;
 
     private const string DEATH_SUF = "@ded";
 
-    public bool lockInput { get { return receivingInput; } }
-    public bool recentOpen { get { return panelTimer != 0f; } }
+    public bool listenToInput { get { return receivingInput > 0; } }
 
     private void Awake() {
         for(int i = 0; i < chatText.Length; i++) {
@@ -76,16 +75,16 @@ public class Chat : Photon.PunBehaviour, IChatClientListener {
         bool escapeChat = Global.input.GetKeyDown("escape");
         bool allowChatInput = !Global.igMenu.isOpen;
 
-        if(panelTimer < 0f)
-            panelTimer = 0f;
+        if(receivingInput == 1)
+            receivingInput = 0;
 
-        if(receivingInput) {
+        if(receivingInput > 0) {
             es.SetSelectedGameObject(chatInput.gameObject);
             chatInput.ActivateInputField();
             bool atLimit = chatInput.text.Length == chatInput.characterLimit;
             chatInput.caretColor = atLimit ? Color.clear : Color.white;
         }
-        if(!receivingInput)
+        if(receivingInput == 0)
             chatInput.text = "";
 
         if(allowChatInput && submitChat) {
@@ -98,18 +97,18 @@ public class Chat : Photon.PunBehaviour, IChatClientListener {
             else
                 CloseChat();
             chatInput.text = "";
-            receivingInput = false;
+            receivingInput = 0;
 
         }
-        else if(allowChatInput && !receivingInput && toggleChat) {
+        else if(allowChatInput && receivingInput == 0 && toggleChat) {
             ShowChat();
-            receivingInput = true;
+            receivingInput = 2;
             chatInput.gameObject.SetActive(true);
             es.SetSelectedGameObject(chatInput.gameObject);
         }
         else if(allowChatInput && escapeChat) {
-            receivingInput = false;
-            CloseChat();
+            receivingInput = receivingInput == 2 ? 1 : 0;
+            panelTimer = Mathf.Min(panelTimer, timerMax);
         }
 
         //fade in and out
@@ -129,7 +128,7 @@ public class Chat : Photon.PunBehaviour, IChatClientListener {
                 CloseChat();
         }
 
-        chatInput.gameObject.SetActive(receivingInput);
+        chatInput.gameObject.SetActive(receivingInput > 1);
 
         //shift overflow
         if(skipShift == 0) {
@@ -174,11 +173,13 @@ public class Chat : Photon.PunBehaviour, IChatClientListener {
     }
 
     public override void OnPhotonPlayerConnected(PhotonPlayer newPlayer) {
-        AddMessage(newPlayer.NickName, "Joined the game!", new Color(.6f, 1f, .6f));
+        AddMessage(newPlayer.NickName, "Joined the game!",
+            new Color(.7f, .7f, .7f), new Color(.6f, 1f, .6f));
     }
 
     public override void OnPhotonPlayerDisconnected(PhotonPlayer player) {
-        AddMessage(player.NickName, "Left the game!", new Color(1f, .6f, .6f));
+        AddMessage(player.NickName, "Left the game!",
+            new Color(.7f, .7f, .7f), new Color(1f, .6f, .6f));
     }
 
     public void DeathMessage(UFPlayerLife.DamageType type) {
@@ -205,10 +206,8 @@ public class Chat : Photon.PunBehaviour, IChatClientListener {
 
     public void DeathMessage(string message) {
         string name = PhotonNetwork.playerName;
-        if(PhotonNetwork.offlineMode) {
-            ownMessages.Enqueue(name + ":" + message);
-            AddMessage(name, message, new Color(1f, .2f, .2f));
-        }
+        if(PhotonNetwork.offlineMode)
+            AddMessage(name, message, Color.white, new Color(1f, .2f, .2f));
         else
             SendChatMessage(name, message + DEATH_SUF);
     }
@@ -245,27 +244,17 @@ public class Chat : Photon.PunBehaviour, IChatClientListener {
     }
 
     private void SendChatMessage(string name, string message) {
-        if(PhotonNetwork.offlineMode) {
+        AddMessage(name, message, Color.white, Color.white);
+
+        if(!PhotonNetwork.offlineMode) { 
             ownMessages.Enqueue(name + ":" + message);
-            AddMessage(name, message, Color.white);
-        }
-        else {
+
             if(chatClient.CanChatInChannel(channel)) {
-                ownMessages.Enqueue(name + ":" + message);
                 if(ownMessageTimer == 0f)
                     ownMessageTimer = float.Epsilon;
                 chatClient.PublishMessage(channel, message);
-            }
-            else {
-                bool normalChat = !message.EndsWith(DEATH_SUF);
-                if(normalChat)
-                    AddMessage("Client is still connecting to chat, please wait.", Color.red);
-            }
-                
+            }                
         }
-            
-        if(chatClient != null)
-            chatClient.Service();
     }
 
     /**
@@ -289,24 +278,13 @@ public class Chat : Photon.PunBehaviour, IChatClientListener {
     }
 
     /**
-	 * Locally adds a chat message coming from the given player
+	 * Locally adds a chat message
 	 */
-    public void AddMessage(string sender, string message, Color messageColor) {
+    public void AddMessage(string sender, string message, Color senderColor, Color messageColor) {
         if(panelTimer < timerMax)
             panelTimer = timerMax;
 
         ShiftMessages();
-
-        //check if message has us as a sender, if so, change the color
-        Color senderColor = new Color(.7f, .7f, .7f);
-        if(ownMessages.Count > 0) {
-            string matchMessage = sender + ":" + message;
-            if(matchMessage == ownMessages.Peek()) {
-                senderColor = Color.white;
-                ownMessages.Dequeue();
-                ownMessageTimer = ownMessages.Count > 0 ? float.Epsilon : 0f;
-            }
-        }
 
         //check if message has sender flag attached
         if(message.EndsWith(DEATH_SUF)) {
@@ -339,7 +317,7 @@ public class Chat : Photon.PunBehaviour, IChatClientListener {
 	 * Instantly closes the chat window
 	 */
     public void CloseChat() {
-        panelTimer = panelTimer > 0f ? -1f : 0f;
+        panelTimer = 0f;
         SetBackGroundAlpha(0f);
         SetTextAlpha(0f);
     }
@@ -392,16 +370,31 @@ public class Chat : Photon.PunBehaviour, IChatClientListener {
 
     public void OnGetMessages(string channelName, string[] senders, object[] messages) {
         int nbMessages = senders.Length;
-        for(int i = 0; i < nbMessages; i++)
-            AddMessage(senders[i], messages[i].ToString(), Color.white);
+        for(int i = 0; i < nbMessages; i++) {
+
+            //skip our own messages, these are already available
+            if(ownMessages.Count > 0) {
+                string matchMessage = senders[i] + ":" + messages[i];
+                if(matchMessage == ownMessages.Peek())
+                    continue;
+            }
+
+            AddMessage(senders[i], messages[i].ToString(), 
+                new Color(.7f, .7f, .7f), Color.white);
+        }     
     }
 
     public void OnPrivateMessage(string sender, object message, string channelName) {
-        AddMessage(sender, message.ToString(), Color.white);
+        AddMessage(sender, message.ToString(),
+            new Color(1f, .5f, 1f), Color.white);
     }
 
     public void OnSubscribed(string[] channels, bool[] results) {
-        AddMessage("Connected to chat!", Color.green);
+        foreach(string message in ownMessages) {
+            string[] parts = message.Split(':');
+            chatClient.PublishMessage(channel, parts[1]);
+        }
+        ownMessageTimer = float.Epsilon;
     }
 
     public void OnUnsubscribed(string[] channels) {}

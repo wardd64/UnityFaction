@@ -304,11 +304,11 @@ public class UFEvent : MonoBehaviour {
         return IDRef.Type.PushRegion;
 
         case UFLevelStructure.Event.EventType.Countdown_Begin:
-        UFLevel.GetPlayer<UFPlayerMovement>().SetCountDown(int1);
+        UFLevel.singleton.SetCountDown(int1);
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Countdown_End:
-        UFLevel.GetPlayer<UFPlayerMovement>().SetCountDown(0f);
+        UFLevel.singleton.SetCountDown(0f);
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Remove_Object:

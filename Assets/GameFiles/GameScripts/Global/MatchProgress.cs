@@ -36,12 +36,7 @@ public class MatchProgress : MonoBehaviour {
             PhotonNetwork.CreateRoom(null);
         }
 
-        if(UFLevel.player != null)
-            return;
-
-        GameObject player = PhotonNetwork.Instantiate(playerPrefab.name, Vector3.zero, Quaternion.identity, 0);
-        player.SetActive(true);
-        player.name = "Controlled Player";
+        Invoke("CreatePlayer", 2f);
 
         lowestDifficulty = Global.save.difficulty;
         totalTime = 0f;
@@ -52,6 +47,15 @@ public class MatchProgress : MonoBehaviour {
             matchTimer = STANDARD_MATCH_TIME;
 
         Global.hud.StartState();
+    }
+
+    private void CreatePlayer() {
+        if(UFLevel.player == null) {
+            GameObject player = PhotonNetwork.Instantiate(
+                playerPrefab.name, Vector3.zero, Quaternion.identity, 0);
+            player.SetActive(true);
+            player.name = "Controlled Player";
+        }
     }
 
     private void Update() {
@@ -133,8 +137,11 @@ public class MatchProgress : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// Reload current level.
+    /// </summary>
     public void Restart() {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        PhotonNetwork.LoadLevel(SceneManager.GetActiveScene().name);
         RestartSequence();
     }
 

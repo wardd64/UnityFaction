@@ -42,7 +42,6 @@ public class LevelLauncher : Photon.PunBehaviour {
         this.mapScene = mapScene;
         PhotonNetwork.offlineMode = true;
         PhotonNetwork.CreateRoom(null);
-        Global.hud.ConnectChat();
     }
 
     private void LaunchMultiplayer() {
@@ -50,9 +49,9 @@ public class LevelLauncher : Photon.PunBehaviour {
 
         string map = GetPreferredMap();
         if(map.StartsWith("@"))
-            SceneManager.LoadScene(int.Parse(map.Substring(1)));
+            PhotonNetwork.LoadLevel(int.Parse(map.Substring(1)));
         else
-            SceneManager.LoadScene(map);
+            PhotonNetwork.LoadLevel(map);
     }
 
     /// <summary>
@@ -157,6 +156,7 @@ public class LevelLauncher : Photon.PunBehaviour {
         foreach(RoomInfo room in rooms) {
             bool condition = room.PlayerCount != room.MaxPlayers;
             if(condition) {
+                Global.hud.ConnectChat();
                 PhotonNetwork.JoinRoom(room.Name);
                 return;
             }
@@ -168,10 +168,12 @@ public class LevelLauncher : Photon.PunBehaviour {
     }
 
     public override void OnJoinedRoom() {
+        Global.hud.ConnectChat();
         if(PhotonNetwork.offlineMode)
             PhotonNetwork.LoadLevel(mapScene);
-        else if(PhotonNetwork.isMasterClient)
-            LaunchMultiplayer();
+        else
+            if(PhotonNetwork.isMasterClient)
+                LaunchMultiplayer();
     }
 
     public void StopMultiplayer() {

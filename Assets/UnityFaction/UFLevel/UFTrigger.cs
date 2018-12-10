@@ -121,7 +121,14 @@ public class UFTrigger : MonoBehaviour {
     }
 
     /// <summary>
-    /// Activate this trigger over the network
+    /// Activate this trigger remotely (by weapon activtation)
+    /// </summary>
+    public void ExternalTrigger() {
+        Trigger();
+    }
+
+    /// <summary>
+    /// Sync this trigger press on secondary connected instances
     /// </summary>
     public void SyncTrigger() {
         permanentTriggered = true;

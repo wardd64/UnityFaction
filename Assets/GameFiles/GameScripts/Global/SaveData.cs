@@ -173,7 +173,12 @@ public class SaveData : MonoBehaviour {
     private int resets;
 
     //map records
-    private RecordHolder records;
+    private RecordHolder records { get {
+            if(recs == null)
+                InitializeRecords(MapList.GetList());
+            return recs;
+    } }
+    private RecordHolder recs;
     private string recordFile = "UFMapRecords.dat";
     private string recordFilePath { get {
             return Application.persistentDataPath + "/" + recordFile;
@@ -184,12 +189,12 @@ public class SaveData : MonoBehaviour {
     }
 
     public void InitializeRecords(string[] mapList) {
-        records = UFUtils.Load(recordFilePath) as RecordHolder;
-        if(records == null)
-            records = new RecordHolder(mapList);
+        recs = UFUtils.Load(recordFilePath) as RecordHolder;
+        if(recs == null)
+            recs = new RecordHolder(mapList);
         else
-            records.UpdateMaps(mapList);
-        UFUtils.Save(recordFilePath, records);
+            recs.UpdateMaps(mapList);
+        UFUtils.Save(recordFilePath, recs);
     }
 
     public void SetRecordText(string map, Text recordText) {

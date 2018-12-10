@@ -745,7 +745,6 @@ public class UFPlayerMovement : MonoBehaviour {
     }
 
     public virtual void InButtonRange(KeyCode useKey) { }
-    public virtual void SetCountDown(float value) { }
     public virtual float GetCountDownValue() { return 0f; }
     protected virtual void SetAnimation(string name, bool boolValue = false, float floatValue = 0f) { }
     protected virtual bool AllowShortJump() { return false; }
