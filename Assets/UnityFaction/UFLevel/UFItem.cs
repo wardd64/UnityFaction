@@ -113,6 +113,7 @@ public class UFItem : MonoBehaviour {
         }
     }
 
+    /*
     private void OnTriggerStay(Collider other) {
         if(!IsPlayer(other))
             return;
@@ -143,6 +144,7 @@ public class UFItem : MonoBehaviour {
             transform.GetChild(i).gameObject.SetActive(value);
     }
 
+    
     private bool IsPlayer(Collider c) {
         UFTriggerSensor uts = c.GetComponent<UFTriggerSensor>();
         return uts != null && uts.IsPlayer();
@@ -212,5 +214,5 @@ public class UFItem : MonoBehaviour {
         return false;
         }
     }
-
+    */
 }

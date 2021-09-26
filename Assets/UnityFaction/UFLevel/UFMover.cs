@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UFLevelStructure;
@@ -190,6 +190,7 @@ public class UFMover : MonoBehaviour {
     }
 
     private void PushPlayer(Rigidbody rb, Vector3 delta, float dt) {
+        /*
         CharacterController player = UFLevel.GetPlayer<CharacterController>();
         Collider col = rb.GetComponent<Collider>();
 
@@ -213,6 +214,7 @@ public class UFMover : MonoBehaviour {
                 return;
             }
         }
+        */
     }
 
     private static bool InMoveRadius(Collider mover, Vector3 delta, CharacterController player) {
@@ -478,8 +480,10 @@ public class UFMover : MonoBehaviour {
     }
 
     private void TriggerKeyLink(UFLevelStructure.Keyframe key) {
+        /*
         if(key.triggerID > 0)
             UFTrigger.Activate(key.triggerID);
+            */
     }
 
     private bool AtLastKeyInSequence() {

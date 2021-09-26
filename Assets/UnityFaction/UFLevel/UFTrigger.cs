@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UFLevelStructure;
 using UnityEngine;
@@ -55,6 +55,7 @@ public class UFTrigger : MonoBehaviour {
             GetComponent<Collider>().isTrigger = true;
         }
     }
+    
 
     private void Start() {
         permanent = resetsRemaining == 1; //if true, press should sync with multiplayer
@@ -77,8 +78,10 @@ public class UFTrigger : MonoBehaviour {
                     else
                         buttonTime = 0f;
 
+                    /*
                     if(resetsRemaining != 0)
                         UFLevel.GetPlayer<UFPlayerMovement>().InButtonRange(useKey);
+                        */
                 }
                 else
                     Trigger();
@@ -103,13 +106,17 @@ public class UFTrigger : MonoBehaviour {
     }
 
     private bool IsValid(Collider c) {
+        return true;
+        /*
         if(triggeredByWeapon)
             return false;
         if(triggeredByVehicle)
             return IsVehicle(c);
         return IsPlayer(c);
+        */
     }
 
+    /*
     private bool IsPlayer(Collider c) {
         UFTriggerSensor uts = c.GetComponent<UFTriggerSensor>();
         return uts != null && uts.IsPlayer();
@@ -119,6 +126,7 @@ public class UFTrigger : MonoBehaviour {
         UFTriggerSensor uts = c.GetComponent<UFTriggerSensor>();
         return uts != null && uts.type == UFTriggerSensor.Type.Vehicle;
     }
+    */
 
     /// <summary>
     /// Activate this trigger remotely (by weapon activtation)
@@ -139,7 +147,7 @@ public class UFTrigger : MonoBehaviour {
         //sync this trigger press over the network if necessary
         if(permanent && !permanentTriggered) { 
             permanentTriggered = true;
-            UFLevel.SyncTrigger(ownID);
+            //UFLevel.SyncTrigger(ownID);
         }
 
         if(resetsRemaining > 0)

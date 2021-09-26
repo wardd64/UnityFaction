@@ -36,11 +36,11 @@ public class UFEvent : MonoBehaviour {
         string2 = e.string2;
         links = e.links;
         color = e.color;
-
+        
         if(GetEventTypeClass(type) == EventTypeClass.None)
             Debug.LogWarning("Event " + name + " will have no effects since it is of unknown type: " + type);
     }
-
+    
     public void SetAudio(AudioClip clip, AudioMixerGroup musicChannel, AudioMixerGroup effectsChannel) {
         AudioSource sound = gameObject.AddComponent<AudioSource>();
         sound.volume = 1f;
@@ -63,13 +63,14 @@ public class UFEvent : MonoBehaviour {
 
         }
     }
-
+    
     private void Start() {
         EventTypeClass etc = GetEventTypeClass(type);
         if(etc == EventTypeClass.StartTrigger)
             Trigger(true);
     }
 
+    
     private void Update() {
         if(GetEventTypeClass(type) == EventTypeClass.Detector) {
             if(Detect())
@@ -145,7 +146,7 @@ public class UFEvent : MonoBehaviour {
         float dps = int1;
         if(int1 <= 0)
             dps = float.PositiveInfinity;
-        UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(Time.deltaTime * dps, int2, true);
+        //UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(Time.deltaTime * dps, int2, true);
         break;
 
         default:
@@ -171,14 +172,16 @@ public class UFEvent : MonoBehaviour {
     private bool Detect() {
 
         //preperatory variables
-        float countDownValue = UFLevel.GetPlayer<UFPlayerMovement>().GetCountDownValue();
+        //float countDownValue = UFLevel.GetPlayer<UFPlayerMovement>().GetCountDownValue();
 
         switch(type) {
+        /*
         case UFLevelStructure.Event.EventType.When_Countdown_Over:
         return countDownValue - Time.deltaTime <= 0f && countDownValue > 0f;
 
         case UFLevelStructure.Event.EventType.When_Countdown_Reaches:
         return countDownValue - Time.deltaTime <= int1 && countDownValue > int1;
+        */
 
         default:
         Debug.LogError("Event type " + type + " not implemented");
@@ -195,9 +198,11 @@ public class UFEvent : MonoBehaviour {
     private IDRef.Type DoEffect(bool positive) {
 
         //preperatory variables
+        /*
         Transform playerTr = UFLevel.GetPlayer<Transform>();
         UFPlayerLife playerLi = UFLevel.GetPlayer<UFPlayerLife>();
         UFPlayerMovement playerMo = UFLevel.GetPlayer<UFPlayerMovement>();
+        */
         AudioSource sound = this.GetComponent<AudioSource>();
 
         //find effect type and do its effects. Return IDRefts that were used up.
@@ -212,9 +217,11 @@ public class UFEvent : MonoBehaviour {
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Teleport_Player:
+            /*
         playerTr.position = transform.position;
         playerTr.GetComponent<CharacterController>().Move(Vector3.zero);
         playerMo.SetRotation(transform.rotation);
+        */
         return IDRef.Type.None;
 
         case UFLevelStructure.Event.EventType.Music_Start:
@@ -273,9 +280,11 @@ public class UFEvent : MonoBehaviour {
         float radius = float1;
         float damage = float2;
         bool geo = bool1;
+        /*
         float dist = (playerTr.position - transform.position).magnitude;
         if(dist < radius)
             playerLi.TakeDamage(damage, UFPlayerLife.DamageType.Explosive, false);
+            */
         if(geo)
             Debug.LogWarning("Explosion " + name + " requested geo mod; this will not work as of now!");
         GameObject explosionPrefab = obj as GameObject;
@@ -299,8 +308,10 @@ public class UFEvent : MonoBehaviour {
         return IDRef.Type.BoltEmitter;
 
         case UFLevelStructure.Event.EventType.Push_Region_State:
+            /*
         foreach(UFForceRegion pr in GetLinksOfType<UFForceRegion>(IDRef.Type.PushRegion))
             pr.Activate(positive);
+            */
         return IDRef.Type.PushRegion;
 
         case UFLevelStructure.Event.EventType.Countdown_Begin:
@@ -323,7 +334,7 @@ public class UFEvent : MonoBehaviour {
 
         case UFLevelStructure.Event.EventType.Heal:
         if(bool1) {
-            UFLevel.GetPlayer<UFPlayerLife>().GainHealth(int1);
+            //UFLevel.GetPlayer<UFPlayerLife>().GainHealth(int1);
             return IDRef.Type.None;
         }
         else {
@@ -485,6 +496,6 @@ public class UFEvent : MonoBehaviour {
 
         }
             
-
+    
     }
 }

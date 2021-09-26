@@ -10,7 +10,7 @@ public class UFLiquid : MonoBehaviour {
     public float alpha;
     public Color color;
 
-    private UFPlayerMovement player;
+    //private UFPlayerMovement player;
     private int nbCols;
 
     public float absoluteY { get {
@@ -38,6 +38,7 @@ public class UFLiquid : MonoBehaviour {
         visibility = liquid.visibility;
     }
 
+    /*
     private void Update() {
         if(player == null)
             return;
@@ -69,7 +70,9 @@ public class UFLiquid : MonoBehaviour {
         this.player.JumpOutLiquid();
         this.player = null;
     }
+    */
 
+    /*
     private static void ApplyDPS(UFPlayerLife player, Room.LiquidProperties.LiquidType type) {
         switch(type) {
 
@@ -82,6 +85,7 @@ public class UFLiquid : MonoBehaviour {
         break;
         }
     }
+    */
 
     public void SetLiquidVision() {
         RenderSettings.fog = true;

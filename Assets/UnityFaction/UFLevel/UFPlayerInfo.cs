@@ -194,6 +194,7 @@ public class UFPlayerInfo : MonoBehaviour {
             playerCamera.cullingMask &= ~skyMask; //remove skymask layers from direct player view
     }
 
+    /*
     public void UpdateCamera(Camera playerCamera) {
         float fov = UFUtils.ScaleFOV(Global.save.fov, 1f / DEFAULT_ASPECT);
 
@@ -213,7 +214,9 @@ public class UFPlayerInfo : MonoBehaviour {
             skyCamera.aspect = aspect;
         }
     }
+    */
 
+    /*
     private void Update() {
         if(UFLevel.player == null)
             return;
@@ -224,6 +227,7 @@ public class UFPlayerInfo : MonoBehaviour {
             UFLevel.GetPlayer<UFPlayerLife>().TakeDamage(500f * Time.deltaTime, 
                 UFPlayerLife.DamageType.exitLevel, true);
     }
+    */
 
     private void UpdateFPCamera(Camera playerCamera) {
         if(playerCamera.transform.childCount <= 0)
@@ -261,12 +265,14 @@ public class UFPlayerInfo : MonoBehaviour {
         return UFUtils.GetRandom(candidates).transform.posRot;
     }
 
+    /*
     private void OnTriggerStay(Collider other) {
         if(other.GetComponent<UFTriggerSensor>()) {
             playerMissingTime = 0f;
             playerMissingFrames = 0;
         }
     }
+    */
 
     public string GetLevelInfo() {
         return levelName + ", made by " + author;

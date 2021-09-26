@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UFLevelStructure;
 using UnityEngine;
@@ -23,7 +23,7 @@ public class UFForceRegion : MonoBehaviour {
     public Vector3 forwardDir;
 
     //dynamic variables
-    private UFPlayerMovement player;
+    //private UFPlayerMovement player;
 
     public void Set(ClimbingRegion climb) {
         AddTrigger(true, 0f, climb.cbTransform.extents);
@@ -73,6 +73,7 @@ public class UFForceRegion : MonoBehaviour {
         GetComponent<Collider>().isTrigger = true;
     }
 
+    /*
     private void Update() {
         if(player == null)
             return;
@@ -96,6 +97,7 @@ public class UFForceRegion : MonoBehaviour {
         break;
         }
     }
+    */
 
     private Vector3 GetForce(Vector3 point) {
         float power;
@@ -141,6 +143,8 @@ public class UFForceRegion : MonoBehaviour {
         return rel.x * rel.y * rel.z / b.size.x / b.size.y / b.size.z;
     }
 
+    /*
+
     private void OnTriggerEnter(Collider other) {
         UFPlayerMovement p = GetPlayer(other);
         if(p == null)
@@ -169,4 +173,5 @@ public class UFForceRegion : MonoBehaviour {
             return null;
         return c.transform.GetComponentInParent<UFPlayerMovement>();
     }
+    */
 }

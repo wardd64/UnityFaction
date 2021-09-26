@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UFLevelStructure;
@@ -31,26 +31,9 @@ public class UFLevel : MonoBehaviour {
             return ufGeo;
     } }
 
-    private static UFPlayerMovement ufPlayer;
-    public static UFPlayerMovement player { get {
-            if(ufPlayer == null) {
-                UFPlayerMovement[] candidates = FindObjectsOfType<UFPlayerMovement>();
-                foreach(UFPlayerMovement candidate in candidates) {
-                    if(candidate.isMine) {
-                        if(ufPlayer == null)
-                            ufPlayer = candidate;
-                        else
-                            PhotonNetwork.Destroy(candidate.gameObject);
-                    }
-                }
-            }
-            return ufPlayer;
-    } }
-
     [SerializeField]
     public List<IDRef> idDictionary;
     public List<UFRoom> rooms;
-    
 
     public void Awake(){
         if(singleton != this) {
@@ -97,29 +80,6 @@ public class UFLevel : MonoBehaviour {
             SetID(t.id, IDRef.Type.Target);
         foreach(Trigger d in level.triggers)
             SetID(d.transform.id, IDRef.Type.Trigger);
-
-        //add photon view for critical syncing
-        gameObject.AddComponent<PhotonView>();
-    }
-
-    public static void SyncTrigger(int id) {
-        singleton.GetComponent<PhotonView>().RPC("SyncTrigger_RPC", PhotonTargets.AllBufferedViaServer, id);
-    }
-
-    /// <summary>
-    /// Activate trigger with the given ID over the network, so it is synced
-    /// with all players, even those who join late
-    /// </summary>
-    [PunRPC]
-    private void SyncTrigger_RPC(int id) {
-        GetByID(id).objectRef.GetComponent<UFTrigger>().SyncTrigger();
-    }
-
-    public static T GetPlayer<T>() where T : Component{
-        UFPlayerMovement basePlayer = player;
-        if(basePlayer == null)
-            return null;
-        return basePlayer.GetComponentInChildren<T>();
     }
 
     private void SetID(int id, IDRef.Type type) {
