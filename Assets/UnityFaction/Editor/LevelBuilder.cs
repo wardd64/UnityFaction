@@ -16,12 +16,16 @@ public class LevelBuilder : EditorWindow {
 
     //GUI variables
     private bool showContents, showGeneralContents, showGeometryContents,
-        showObjectContents, showMoverContents, showBuildOptions;
+        showObjectContents, showMoverContents, showBuildSettings, showSeperateBuildOptions;
+    private GUIStyle contentFoldout;
 
     //Build options
-    public int levelLayer, playerLayer, skyLayer;
+    public int levelLayer, playerLayer, skyLayer, boundsLayer;
     public bool convexMovers, forceMultiplayer, forcePCFogSettings;
     public AudioMixerGroup musicChannel, ambientChannel, effectsChannel;
+
+    private void Awake() {
+    }
 
     /// <summary>
     /// Read RFL file and build its contents into the current Unity scene.
@@ -41,6 +45,12 @@ public class LevelBuilder : EditorWindow {
         LoadRFL(rflPath);
     }
 
+    [MenuItem("UnityFaction/Open Builder Window")]
+    public static void OpenBuilder() {
+        LevelBuilder builder = (LevelBuilder)EditorWindow.GetWindow(typeof(LevelBuilder));
+        builder.Show();
+    }
+
     private static void LoadRFL(string rflPath) {
         LevelBuilder builder = (LevelBuilder)EditorWindow.GetWindow(typeof(LevelBuilder));
         builder.Show();
@@ -57,6 +67,12 @@ public class LevelBuilder : EditorWindow {
     /// Level builder GUI
     /// </summary>
     private void OnGUI() {
+
+        //general info and style
+        contentFoldout = new GUIStyle("foldout");
+        contentFoldout.fontStyle = FontStyle.Bold;
+        contentFoldout.fontSize = 14;
+
         //title
         GUIStyle header = new GUIStyle();
         header.fontSize = 22;
@@ -66,16 +82,75 @@ public class LevelBuilder : EditorWindow {
         if(level == null) {
             AskNewRFL();
             AskRefRFL();
+            BuildSettingsGUI();
             return;
         }
-
-        //general info and style
+        
         string fileName = Path.GetFileNameWithoutExtension(lastRFLPath);
         GUILayout.Label("Loaded file: " + fileName, EditorStyles.largeLabel);
-        GUIStyle contentFoldout = new GUIStyle("foldout");
-        contentFoldout.fontStyle = FontStyle.Bold;
-        contentFoldout.fontSize = 14;
+        LevelContentsGUI();
 
+        //make root object to put the level under
+        if(root == null) {
+            if(GUILayout.Button("Make root", GetBigButtonGUIStyle()))
+                MakeRoot();
+            AskNewRFL();
+            AskRefRFL();
+        }
+        else
+        { 
+            MainBuildGUI();
+            BuildSeperateGUI();
+        }
+
+        BuildSettingsGUI();
+    }
+
+    private void BuildSeperateGUI() {
+        showSeperateBuildOptions = EditorGUILayout.Foldout(showSeperateBuildOptions, "Build seperate", contentFoldout);
+        if(showSeperateBuildOptions) {
+            if(GUILayout.Button("Build static geometry")) BuildStaticGeometry();
+            if(GUILayout.Button("Build lights")) BuildLights();
+            if(GUILayout.Button("Build player info")) BuildPlayerInfo();
+            if(GUILayout.Button("Build geomodder")) BuildGeoModder();
+            if(GUILayout.Button("Build movers")) BuildMovers();
+            if(GUILayout.Button("Build clutter")) BuildClutter();
+            if(GUILayout.Button("Build items")) BuildItems();
+            if(GUILayout.Button("Build triggers")) BuildTriggers();
+            if(GUILayout.Button("Build force regions")) BuildForceRegions();
+            if(GUILayout.Button("Build events")) BuildEvents();
+            if(GUILayout.Button("Build emitters")) BuildEmitters();
+            if(GUILayout.Button("Build ambient sounds")) BuildAmbSounds();
+            if(GUILayout.Button("Build decals")) BuildDecals();
+            //TODO entities?
+        }
+    }
+
+    private void BuildSettingsGUI() {
+        //Build one class of objects seperately + options for building
+        showBuildSettings = EditorGUILayout.Foldout(showBuildSettings, "Build settings", contentFoldout);
+
+        if(showBuildSettings) {
+            levelLayer = EditorGUILayout.LayerField("Level layer", levelLayer);
+            skyLayer = EditorGUILayout.LayerField("Sky layer", skyLayer);
+            boundsLayer = EditorGUILayout.LayerField("Bounds layer", boundsLayer);
+            playerLayer = EditorGUILayout.LayerField("player layer", playerLayer);
+            forceMultiplayer = EditorGUILayout.Toggle("Force multiplayer", forceMultiplayer);
+            forcePCFogSettings = EditorGUILayout.Toggle("Force PC Fog settings", forcePCFogSettings);
+            convexMovers = EditorGUILayout.Toggle("Mke mesh clldrs convex", convexMovers);
+            musicChannel = (AudioMixerGroup)EditorGUILayout.ObjectField("Music channel",
+                musicChannel, typeof(AudioMixerGroup), false);
+            effectsChannel = (AudioMixerGroup)EditorGUILayout.ObjectField("Effects channel",
+                effectsChannel, typeof(AudioMixerGroup), false);
+            ambientChannel = (AudioMixerGroup)EditorGUILayout.ObjectField("Ambient channel",
+                ambientChannel, typeof(AudioMixerGroup), false);
+
+            //TODO entities?
+        }
+    }
+
+    private void LevelContentsGUI() {
+        
         //show contents of the current level
         showContents = EditorGUILayout.Foldout(showContents, "View level contents", contentFoldout);
 
@@ -123,16 +198,9 @@ public class LevelBuilder : EditorWindow {
                 GUILayout.Label("      Moving groups: " + level.movingGroups.Length);
             }
         }
+    }
 
-        //make root object to put the level under
-        if(root == null) {
-            if(GUILayout.Button("Make root", GetBigButtonGUIStyle()))
-                MakeRoot();
-            AskNewRFL();
-            AskRefRFL();
-            return;
-        }
-
+    private void MainBuildGUI() {
         //reload the root script with ID references
         if(GUILayout.Button("Refresh level"))
             RefreshLevel();
@@ -142,39 +210,6 @@ public class LevelBuilder : EditorWindow {
         bigButton.fontSize = 26;
         if(GUILayout.Button("Build all", bigButton))
             BuildAll();
-
-        //Build one class of objects seperately + options for building
-        showBuildOptions = EditorGUILayout.Foldout(showBuildOptions, "Build options", contentFoldout);
-
-        if(showBuildOptions) {
-            levelLayer = EditorGUILayout.LayerField("Level layer", levelLayer);
-            skyLayer = EditorGUILayout.LayerField("Sky layer", skyLayer);
-            if(GUILayout.Button("Build static geometry")) BuildStaticGeometry();
-            if(GUILayout.Button("Build lights")) BuildLights();
-            playerLayer = EditorGUILayout.LayerField("player layer", playerLayer);
-            forceMultiplayer = EditorGUILayout.Toggle("Force multiplayer", forceMultiplayer);
-            forcePCFogSettings = EditorGUILayout.Toggle("Force PC Fog settings", forcePCFogSettings);
-            if(GUILayout.Button("Build player info")) BuildPlayerInfo();
-            if(GUILayout.Button("Build geomodder")) BuildGeoModder();
-            convexMovers = EditorGUILayout.Toggle("Mke mesh clldrs convex", convexMovers);
-            musicChannel = (AudioMixerGroup)EditorGUILayout.ObjectField("Music channel",
-                musicChannel, typeof(AudioMixerGroup), false);
-            effectsChannel = (AudioMixerGroup)EditorGUILayout.ObjectField("Effects channel",
-                effectsChannel, typeof(AudioMixerGroup), false);
-            if(GUILayout.Button("Build movers")) BuildMovers();
-            if(GUILayout.Button("Build clutter")) BuildClutter();
-            if(GUILayout.Button("Build items")) BuildItems();
-            if(GUILayout.Button("Build triggers")) BuildTriggers();
-            if(GUILayout.Button("Build force regions")) BuildForceRegions();
-            if(GUILayout.Button("Build events")) BuildEvents();
-            if(GUILayout.Button("Build emitters")) BuildEmitters();
-            ambientChannel = (AudioMixerGroup)EditorGUILayout.ObjectField("Ambient channel",
-                ambientChannel, typeof(AudioMixerGroup), false);
-            if(GUILayout.Button("Build ambient sounds")) BuildAmbSounds();
-            if(GUILayout.Button("Build decals")) BuildDecals();
-
-            //TODO entities?
-        }
     }
 
     public void BuildAll() {
@@ -471,6 +506,7 @@ public class LevelBuilder : EditorWindow {
     public void BuildPlayerInfo() {
         Transform p = MakeParent("PlayerInfo");
         UFPlayerInfo info = p.gameObject.AddComponent<UFPlayerInfo>();
+        info.gameObject.layer = boundsLayer;
 
         info.Set(level, levelLayer, playerLayer, skyLayer, lastRFLPath, forcePCFogSettings);
         if(forceMultiplayer)

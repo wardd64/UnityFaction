@@ -107,8 +107,10 @@ public class DetectorTool : PlayerTool {
                 return "Trigger";
             }
 
+            /*
             if(target.GetComponentInParent<UFPlayerInfo>())
                 return "Level\nBounds";
+            */
 
             if(target.GetComponentInParent<MapFinish>())
                 return "Finish\nTrigger";

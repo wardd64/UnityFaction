@@ -59,6 +59,75 @@ ModelImporter:
     100106: UpperArm_R
     100108: UpperLeg_L
     100110: UpperLeg_R
+    100112: Foot.L
+    100114: Foot.R
+    100116: Hand.L
+    100118: Hand.R
+    100120: Head_end
+    100122: IndexA.L
+    100124: IndexA.R
+    100126: IndexB.L
+    100128: IndexB.R
+    100130: IndexC.L
+    100132: IndexC.L_end
+    100134: IndexC.R
+    100136: IndexC.R_end
+    100138: LegControl.L
+    100140: LegControl.R
+    100142: LegIK.L
+    100144: LegIK.L_end
+    100146: LegIK.R
+    100148: LegIK.R_end
+    100150: LegPole.L
+    100152: LegPole.L_end
+    100154: LegPole.R
+    100156: LegPole.R_end
+    100158: LittleA.L
+    100160: LittleA.R
+    100162: LittleB.L
+    100164: LittleB.R
+    100166: LittleC.L
+    100168: LittleC.L_end
+    100170: LittleC.R
+    100172: LittleC.R_end
+    100174: LowerArm.L
+    100176: LowerArm.R
+    100178: LowerLeg.L
+    100180: LowerLeg.R
+    100182: MiddleA.L
+    100184: MiddleA.R
+    100186: MiddleB.L
+    100188: MiddleB.R
+    100190: MiddleC.L
+    100192: MiddleC.L_end
+    100194: MiddleC.R
+    100196: MiddleC.R_end
+    100198: RingA.L
+    100200: RingA.R
+    100202: RingB.L
+    100204: RingB.R
+    100206: RingC.L
+    100208: RingC.L_end
+    100210: RingC.R
+    100212: RingC.R_end
+    100214: Shoulder.L
+    100216: Shoulder.R
+    100218: ThumbA.L
+    100220: ThumbA.R
+    100222: ThumbB.L
+    100224: ThumbB.R
+    100226: ThumbC.L
+    100228: ThumbC.L_end
+    100230: ThumbC.R
+    100232: ThumbC.R_end
+    100234: Toes.L
+    100236: Toes.L_end
+    100238: Toes.R
+    100240: Toes.R_end
+    100242: UpperArm.L
+    100244: UpperArm.R
+    100246: UpperLeg.L
+    100248: UpperLeg.R
     400000: Chest
     400002: Cube
     400004: Foot_L
@@ -115,8 +184,78 @@ ModelImporter:
     400106: UpperArm_R
     400108: UpperLeg_L
     400110: UpperLeg_R
+    400112: Foot.L
+    400114: Foot.R
+    400116: Hand.L
+    400118: Hand.R
+    400120: Head_end
+    400122: IndexA.L
+    400124: IndexA.R
+    400126: IndexB.L
+    400128: IndexB.R
+    400130: IndexC.L
+    400132: IndexC.L_end
+    400134: IndexC.R
+    400136: IndexC.R_end
+    400138: LegControl.L
+    400140: LegControl.R
+    400142: LegIK.L
+    400144: LegIK.L_end
+    400146: LegIK.R
+    400148: LegIK.R_end
+    400150: LegPole.L
+    400152: LegPole.L_end
+    400154: LegPole.R
+    400156: LegPole.R_end
+    400158: LittleA.L
+    400160: LittleA.R
+    400162: LittleB.L
+    400164: LittleB.R
+    400166: LittleC.L
+    400168: LittleC.L_end
+    400170: LittleC.R
+    400172: LittleC.R_end
+    400174: LowerArm.L
+    400176: LowerArm.R
+    400178: LowerLeg.L
+    400180: LowerLeg.R
+    400182: MiddleA.L
+    400184: MiddleA.R
+    400186: MiddleB.L
+    400188: MiddleB.R
+    400190: MiddleC.L
+    400192: MiddleC.L_end
+    400194: MiddleC.R
+    400196: MiddleC.R_end
+    400198: RingA.L
+    400200: RingA.R
+    400202: RingB.L
+    400204: RingB.R
+    400206: RingC.L
+    400208: RingC.L_end
+    400210: RingC.R
+    400212: RingC.R_end
+    400214: Shoulder.L
+    400216: Shoulder.R
+    400218: ThumbA.L
+    400220: ThumbA.R
+    400222: ThumbB.L
+    400224: ThumbB.R
+    400226: ThumbC.L
+    400228: ThumbC.L_end
+    400230: ThumbC.R
+    400232: ThumbC.R_end
+    400234: Toes.L
+    400236: Toes.L_end
+    400238: Toes.R
+    400240: Toes.R_end
+    400242: UpperArm.L
+    400244: UpperArm.R
+    400246: UpperLeg.L
+    400248: UpperLeg.R
     2100000: unnamed
     2100002: None__Grid
+    2100004: No Name
     2300000: Cube
     3300000: Cube
     4300000: Cube
@@ -132,12 +271,21 @@ ModelImporter:
     7400016: Stand
     7400018: Crouch
     7400020: CrouchMove_0
+    7400022: MinerArmature|Airborne
+    7400024: MinerArmature|Jump
+    7400026: MinerArmature|Land
+    7400028: MinerArmature|Run_0
+    7400030: MinerArmature|Run_180
+    7400032: MinerArmature|Stand
+    7400034: MinerArmature|Crouch
+    7400036: MinerArmature|CrouchMove_0
     9500000: //RootNode
+    11100000: //RootNode
     13700000: Miner
     2186277476908879412: ImportLogs
   externalObjects: {}
   materials:
-    importMaterials: 1
+    importMaterials: 0
     materialName: 0
     materialSearch: 1
     materialLocation: 1
@@ -148,34 +296,9 @@ ModelImporter:
     optimizeGameObjects: 0
     motionNodeName: 
     rigImportErrors: 
-    rigImportWarnings: "Avatar Rig Configuration mis-match. Inbetween bone rotation
-      in configuration does not match rotation in animation file:\n\t'Chest' : rotation
-      error = 6.051580 deg\n"
+    rigImportWarnings: 
     animationImportErrors: 
-    animationImportWarnings: "\nClip 'Default Take' has import animation warnings
-      that might lower retargeting quality:\nNote: Activate translation DOF on avatar
-      to improve retargeting quality.\n\t'Chest' is inbetween humanoid transforms
-      and has rotation animation that will be discarded.\n\nClip 'Crouch' has import
-      animation warnings that might lower retargeting quality:\nNote: Activate translation
-      DOF on avatar to improve retargeting quality.\n\t'Chest' is inbetween humanoid
-      transforms and has rotation animation that will be discarded.\n\nClip 'CrouchMove_0'
-      has import animation warnings that might lower retargeting quality:\nNote: Activate
-      translation DOF on avatar to improve retargeting quality.\n\t'Chest' is inbetween
-      humanoid transforms and has rotation animation that will be discarded.\n\nClip
-      'Jump' has import animation warnings that might lower retargeting quality:\nNote:
-      Activate translation DOF on avatar to improve retargeting quality.\n\t'LowerLeg_L'
-      has scale animation that will be discarded.\n\t'Chest' is inbetween humanoid
-      transforms and has rotation animation that will be discarded.\n\nClip 'Land'
-      has import animation warnings that might lower retargeting quality:\nNote: Activate
-      translation DOF on avatar to improve retargeting quality.\n\t'Chest' is inbetween
-      humanoid transforms and has rotation animation that will be discarded.\n\nClip
-      'Run_0' has import animation warnings that might lower retargeting quality:\nNote:
-      Activate translation DOF on avatar to improve retargeting quality.\n\t'Chest'
-      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
-      'Run_180' has import animation warnings that might lower retargeting quality:\nNote:
-      Activate translation DOF on avatar to improve retargeting quality.\n\t'Foot_L'
-      has scale animation that will be discarded.\n\t'Chest' is inbetween humanoid
-      transforms and has rotation animation that will be discarded.\n"
+    animationImportWarnings: 
     animationRetargetingWarnings: 
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
@@ -185,14 +308,91 @@ ModelImporter:
     animationPositionError: 0.5
     animationScaleError: 0.5
     animationWrapMode: 0
-    extraExposedTransformPaths: []
+    extraExposedTransformPaths:
+    - MinerArmature
+    - MinerArmature/Root
+    - MinerArmature/Root/LegPole.L
+    - MinerArmature/Root/LegPole.L/LegPole.L_end
+    - MinerArmature/Root/Hip
+    - MinerArmature/Root/Hip/UpperLeg.L
+    - MinerArmature/Root/Hip/UpperLeg.L/LowerLeg.L
+    - MinerArmature/Root/Hip/UpperLeg.L/LowerLeg.L/Foot.L
+    - MinerArmature/Root/Hip/UpperLeg.L/LowerLeg.L/Foot.L/Toes.L
+    - MinerArmature/Root/Hip/UpperLeg.L/LowerLeg.L/Foot.L/Toes.L/Toes.L_end
+    - MinerArmature/Root/Hip/Spine
+    - MinerArmature/Root/Hip/Spine/Chest
+    - MinerArmature/Root/Hip/Spine/Chest/Neck
+    - MinerArmature/Root/Hip/Spine/Chest/Neck/Head
+    - MinerArmature/Root/Hip/Spine/Chest/Neck/Head/Head_end
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/IndexA.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/IndexA.L/IndexB.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/IndexA.L/IndexB.L/IndexC.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/IndexA.L/IndexB.L/IndexC.L/IndexC.L_end
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/MiddleA.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/MiddleA.L/MiddleB.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/MiddleA.L/MiddleB.L/MiddleC.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/MiddleA.L/MiddleB.L/MiddleC.L/MiddleC.L_end
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/RingA.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/RingA.L/RingB.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/RingA.L/RingB.L/RingC.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/RingA.L/RingB.L/RingC.L/RingC.L_end
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/LittleA.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/LittleA.L/LittleB.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/LittleA.L/LittleB.L/LittleC.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/LittleA.L/LittleB.L/LittleC.L/LittleC.L_end
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/ThumbA.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/ThumbA.L/ThumbB.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/ThumbA.L/ThumbB.L/ThumbC.L
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L/ThumbA.L/ThumbB.L/ThumbC.L/ThumbC.L_end
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/IndexA.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/IndexA.R/IndexB.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/IndexA.R/IndexB.R/IndexC.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/IndexA.R/IndexB.R/IndexC.R/IndexC.R_end
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/MiddleA.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/MiddleA.R/MiddleB.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/MiddleA.R/MiddleB.R/MiddleC.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/MiddleA.R/MiddleB.R/MiddleC.R/MiddleC.R_end
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/RingA.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/RingA.R/RingB.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/RingA.R/RingB.R/RingC.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/RingA.R/RingB.R/RingC.R/RingC.R_end
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/LittleA.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/LittleA.R/LittleB.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/LittleA.R/LittleB.R/LittleC.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/LittleA.R/LittleB.R/LittleC.R/LittleC.R_end
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/ThumbA.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/ThumbA.R/ThumbB.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/ThumbA.R/ThumbB.R/ThumbC.R
+    - MinerArmature/Root/Hip/Spine/Chest/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R/ThumbA.R/ThumbB.R/ThumbC.R/ThumbC.R_end
+    - MinerArmature/Root/Hip/UpperLeg.R
+    - MinerArmature/Root/Hip/UpperLeg.R/LowerLeg.R
+    - MinerArmature/Root/Hip/UpperLeg.R/LowerLeg.R/Foot.R
+    - MinerArmature/Root/Hip/UpperLeg.R/LowerLeg.R/Foot.R/Toes.R
+    - MinerArmature/Root/Hip/UpperLeg.R/LowerLeg.R/Foot.R/Toes.R/Toes.R_end
+    - MinerArmature/Root/LegControl.L
+    - MinerArmature/Root/LegControl.L/LegIK.L
+    - MinerArmature/Root/LegControl.L/LegIK.L/LegIK.L_end
+    - MinerArmature/Root/LegPole.R
+    - MinerArmature/Root/LegPole.R/LegPole.R_end
+    - MinerArmature/Root/LegControl.R
+    - MinerArmature/Root/LegControl.R/LegIK.R
+    - MinerArmature/Root/LegControl.R/LegIK.R/LegIK.R_end
+    - Miner
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Airborne
-      takeName: Airborne
-      firstFrame: -1
-      lastFrame: 19
+      name: MinerArmature|Airborne
+      takeName: MinerArmature|Airborne
+      firstFrame: 0
+      lastFrame: 20
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -217,10 +417,10 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
-      name: Jump
-      takeName: Jump
-      firstFrame: -1
-      lastFrame: 7
+      name: MinerArmature|Jump
+      takeName: MinerArmature|Jump
+      firstFrame: 0
+      lastFrame: 8
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -245,10 +445,10 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
-      name: Land
-      takeName: Land
-      firstFrame: -1
-      lastFrame: 5
+      name: MinerArmature|Land
+      takeName: MinerArmature|Land
+      firstFrame: 0
+      lastFrame: 6
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -273,10 +473,10 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
-      name: Run_0
-      takeName: Run_0
-      firstFrame: -1
-      lastFrame: 11
+      name: MinerArmature|Run_0
+      takeName: MinerArmature|Run_0
+      firstFrame: 0
+      lastFrame: 12
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -301,10 +501,10 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
-      name: Run_180
-      takeName: Run_180
-      firstFrame: -1
-      lastFrame: 11
+      name: MinerArmature|Run_180
+      takeName: MinerArmature|Run_180
+      firstFrame: 0
+      lastFrame: 12
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -329,10 +529,10 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
-      name: Stand
-      takeName: Stand
-      firstFrame: -1
-      lastFrame: 39
+      name: MinerArmature|Stand
+      takeName: MinerArmature|Stand
+      firstFrame: 0
+      lastFrame: 40
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -357,10 +557,10 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
-      name: Crouch
-      takeName: Crouch
-      firstFrame: -1
-      lastFrame: 39
+      name: MinerArmature|Crouch
+      takeName: MinerArmature|Crouch
+      firstFrame: 0
+      lastFrame: 40
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -385,10 +585,10 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
-      name: CrouchMove_0
-      takeName: CrouchMove_0
-      firstFrame: -1
-      lastFrame: 11
+      name: MinerArmature|CrouchMove_0
+      takeName: MinerArmature|CrouchMove_0
+      firstFrame: 0
+      lastFrame: 12
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -418,6 +618,7 @@ ModelImporter:
     globalScale: 1
     meshCompression: 0
     addColliders: 0
+    useSRGBMaterialColor: 1
     importVisibility: 1
     importBlendShapes: 1
     importCameras: 1
@@ -442,411 +643,14 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
   importAnimation: 1
   copyAvatar: 0
   humanDescription:
     serializedVersion: 2
-    human:
-    - boneName: Hip
-      humanName: Hips
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: UpperLeg_L
-      humanName: LeftUpperLeg
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: UpperLeg_R
-      humanName: RightUpperLeg
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: LowerLeg_L
-      humanName: LeftLowerLeg
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: LowerLeg_R
-      humanName: RightLowerLeg
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: Foot_L
-      humanName: LeftFoot
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: Foot_R
-      humanName: RightFoot
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: Spine
-      humanName: Spine
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: Neck
-      humanName: Neck
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: Head
-      humanName: Head
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: Shoulder_L
-      humanName: LeftShoulder
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: Shoulder_R
-      humanName: RightShoulder
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: UpperArm_L
-      humanName: LeftUpperArm
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: UpperArm_R
-      humanName: RightUpperArm
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: LowerArm_L
-      humanName: LeftLowerArm
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: LowerArm_R
-      humanName: RightLowerArm
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: Hand_L
-      humanName: LeftHand
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: Hand_R
-      humanName: RightHand
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: Toes_L
-      humanName: LeftToes
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: Toes_R
-      humanName: RightToes
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: ThumbA_L
-      humanName: Left Thumb Proximal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: ThumbB_L
-      humanName: Left Thumb Intermediate
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: ThumbC_L
-      humanName: Left Thumb Distal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: IndexA_L
-      humanName: Left Index Proximal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: IndexB_L
-      humanName: Left Index Intermediate
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: IndexC_L
-      humanName: Left Index Distal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: MiddleA_L
-      humanName: Left Middle Proximal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: MiddleB_L
-      humanName: Left Middle Intermediate
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: MiddleC_L
-      humanName: Left Middle Distal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: RingA_L
-      humanName: Left Ring Proximal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: RingB_L
-      humanName: Left Ring Intermediate
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: RingC_L
-      humanName: Left Ring Distal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: LittleA_L
-      humanName: Left Little Proximal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: LittleB_L
-      humanName: Left Little Intermediate
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: LittleC_L
-      humanName: Left Little Distal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: ThumbA_R
-      humanName: Right Thumb Proximal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: ThumbB_R
-      humanName: Right Thumb Intermediate
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: ThumbC_R
-      humanName: Right Thumb Distal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: IndexA_R
-      humanName: Right Index Proximal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: IndexB_R
-      humanName: Right Index Intermediate
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: IndexC_R
-      humanName: Right Index Distal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: MiddleA_R
-      humanName: Right Middle Proximal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: MiddleB_R
-      humanName: Right Middle Intermediate
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: MiddleC_R
-      humanName: Right Middle Distal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: RingA_R
-      humanName: Right Ring Proximal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: RingB_R
-      humanName: Right Ring Intermediate
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: RingC_R
-      humanName: Right Ring Distal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: LittleA_R
-      humanName: Right Little Proximal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: LittleB_R
-      humanName: Right Little Intermediate
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
-    - boneName: LittleC_R
-      humanName: Right Little Distal
-      limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
-        value: {x: 0, y: 0, z: 0}
-        length: 0
-        modified: 0
+    human: []
     skeleton:
     - name: Miner(Clone)
       parentName: 
@@ -1130,12 +934,12 @@ ModelImporter:
     armStretch: 0.05
     legStretch: 0.05
     feetSpacing: 0
-    rootMotionBoneName: 
+    rootMotionBoneName: Root
     hasTranslationDoF: 0
     hasExtraRoot: 1
     skeletonHasParents: 1
   lastHumanDescriptionAvatarSource: {instanceID: 0}
-  animationType: 3
+  animationType: 2
   humanoidOversampling: 1
   additionalBone: 0
   userData: 

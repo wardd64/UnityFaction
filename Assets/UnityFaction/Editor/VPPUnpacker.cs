@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.IO;
 using System;
 using System.Text;
@@ -65,7 +65,12 @@ public class VPPUnpacker {
             return;
 
         string[] files = Directory.GetFiles(importFolder);
+        int i = 1;
         foreach(string file in files) {
+            i++;
+            float progress = (float)i / files.Length;
+            string pdm = "Unpacking " + file + " (" + i + "/" + files.Length + ")";
+            EditorUtility.DisplayProgressBar("Unpacking VPP", pdm, progress);
             if(Path.GetExtension(file).ToLower() == ".vpp") {
                 string vppName = Path.GetFileNameWithoutExtension(file);
                 string exportFolder = importFolder + "/" + vppName;
@@ -103,8 +108,14 @@ public class VPPUnpacker {
         if(!Directory.Exists(assetPath))
             AssetDatabase.CreateFolder(sourcePath, assetFolder);
 
-        foreach(string vppPath in vppPaths)
+        int i = 1;
+        foreach(string vppPath in vppPaths) {
+            i++;
+            float progress = (float)i / vppPath.Length;
+            string pdm = "Unpacking " + vppPath + " (" + i + "/" + vppPath.Length + ")";
+            EditorUtility.DisplayProgressBar("Unpacking source VPP", pdm, progress);
             ReadFile(vppPath, GetRFSourcePath());
+        }
 
         Debug.Log("All contents have been moved succesfully!");
         AssetDatabase.Refresh();
