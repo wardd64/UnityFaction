@@ -11,6 +11,19 @@ RFTools
 Assets/UnityFaction/RFSource
 Assets/UnityFaction/RFSource.meta
 
+#VRChat specifics
+Assets/SerializedUdonPrograms.meta
+Assets/SerializedUdonPrograms/
+Assets/UdonSharp.meta
+Assets/UdonSharp/
+Assets/VRCSDK.meta
+Assets/VRCSDK/
+Assets/VRChat.meta
+Assets/VRChat/
+Logs/
+Packages/com.vrchat.vrcsdk3/
+
+
 #Standard Unity folders
 [Ll]ibrary/
 [Tt]emp/

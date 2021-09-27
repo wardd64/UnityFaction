@@ -31,8 +31,6 @@ public class UFMover : MonoBehaviour {
         keys = group.keys;
         type = group.type;
         startKey = group.startIndex;
-        foreach(UFLevelStructure.Keyframe key in keys)
-            UFLevel.SetObject(key.transform.id, gameObject);
         links = group.contents;
 
         isDoor = group.isDoor;
@@ -565,5 +563,82 @@ public class UFMover : MonoBehaviour {
         sound.clip = clip;
         sound.volume = volume;
         sound.Play();
+    }
+
+    public void ConvertToUdon(Transform[] keyTransforms) {
+        UFMoverUdon udon = gameObject.AddComponent<UFMoverUdon>();
+
+        //extract transforms to be moved by this mover
+        List<Transform> contents = new List<Transform>();
+        foreach(int link in links) {
+            GameObject g = UFLevel.GetByID(link).objectRef;
+            if(g != null)
+                contents.Add(g.transform);
+        }
+
+        //make sure all contents have (kinematic) rigidbodies
+        udon.content = new Rigidbody[contents.Count];
+        for(int i = 0; i < contents.Count; i++)
+        {
+            Rigidbody rb = contents[i].GetComponent<Rigidbody>();
+            if(rb == null)
+                rb = contents[i].gameObject.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            udon.content[i] = rb;
+        }
+
+        //turn off all contained colliders if needed
+        if(noPlayerCollide) {
+            foreach(Rigidbody rb in udon.content) {
+                Collider[] cols = rb.GetComponentsInChildren<Collider>();
+                foreach(Collider c in cols) {
+                    if(!c.isTrigger)
+                        c.enabled = false;
+                }
+            }
+        }
+        
+        udon.startKey = startKey;
+
+        int n = keyTransforms.Length;
+        udon.kf = new Transform[n];
+        udon.kf_accelTime = new float[n];
+        udon.kf_decelTime = new float[n];
+        udon.kf_departTravelTime = new float[n];
+        udon.kf_pauseTime = new float[n];
+        udon.kf_returnTravelTime = new float[n];
+        udon.kf_rotationAmount = new float[n];
+
+        for(int i = 0; i < keyTransforms.Length; i++) {
+            udon.kf[i] = keyTransforms[i];
+            udon.kf_accelTime[i] = keys[i].accelTime;
+            udon.kf_decelTime[i] = keys[i].decelTime;
+            udon.kf_departTravelTime[i] = keys[i].departTravelTime;
+            udon.kf_pauseTime[i] = keys[i].pauseTime;
+            udon.kf_returnTravelTime[i] = keys[i].returnTravelTime;
+            udon.kf_rotationAmount[i] = keys[i].rotationAmount;
+        }
+
+        udon.isDoor = isDoor;
+        udon.startsBackwards = startsBackwards;
+        udon.rotateInPlace = rotateInPlace;
+        udon.useTravTimeAsSpd = useTravTimeAsSpd;
+        udon.forceOrient = forceOrient;
+        udon.noPlayerCollide = noPlayerCollide;
+
+        udon.type = (int)type;
+
+        udon.startClip = startClip;
+        udon.loopClip = loopClip;
+        udon.stopClip = stopClip;
+        udon.closeClip = closeClip;
+        udon.startVol = startVol;
+        udon.loopVol = loopVol;
+        udon.stopVol = stopVol;
+        udon.closeVol = closeVol;
+
+        UFUtils.MakeUdonBehaviour(udon);
+        DestroyImmediate(this);
     }
 }

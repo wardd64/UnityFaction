@@ -8,6 +8,7 @@ using UFLevelStructure;
 using UnityEditorInternal;
 using UnityEditor.SceneManagement;
 using UnityEngine.Audio;
+using VRC.SDKBase;
 
 public class LevelBuilder : EditorWindow {
 
@@ -23,9 +24,6 @@ public class LevelBuilder : EditorWindow {
     public int levelLayer, playerLayer, skyLayer, boundsLayer;
     public bool convexMovers, forceMultiplayer, forcePCFogSettings;
     public AudioMixerGroup musicChannel, ambientChannel, effectsChannel;
-
-    private void Awake() {
-    }
 
     /// <summary>
     /// Read RFL file and build its contents into the current Unity scene.
@@ -226,6 +224,8 @@ public class LevelBuilder : EditorWindow {
         BuildEmitters();
         BuildAmbSounds();
         BuildDecals();
+
+        ConvertToUdon();
     }
 
     public void RefreshLevel() {
@@ -549,12 +549,20 @@ public class LevelBuilder : EditorWindow {
         Transform groupHolder = (new GameObject("Moving groups")).transform;
         groupHolder.SetParent(p);
 
+        Transform keyframeHolder = new GameObject("KeyFrames").transform;
+        keyframeHolder.SetParent(p);
+
         for(int i = 0; i < level.movingGroups.Length; i++) {
             MovingGroup group = level.movingGroups[i];
 
             //make new gameobject
-            GameObject g = new GameObject(group.name);
+            GameObject g = new GameObject("MG_" + i + "_" + group.name);
             g.transform.SetParent(groupHolder);
+            
+            for(int k = 0; k < group.keys.Length; k++) {
+                UFLevelStructure.Keyframe key = group.keys[k];
+                MakeUFObject<Transform>("kf_" + i + "_" + k, keyframeHolder, key.transform);
+            }
 
             //attach mover script and initialize
             UFMover mov = g.gameObject.AddComponent<UFMover>();
@@ -803,7 +811,7 @@ public class LevelBuilder : EditorWindow {
         UFUtils.SetTransform(g.transform, transform);
         UFLevel.SetObject(transform.id, g);
         if(typeof(T) == typeof(Transform))
-            return g.GetComponent<T>();
+            return g.transform as T;
         return g.AddComponent<T>();
     }
 
@@ -1581,7 +1589,6 @@ public class LevelBuilder : EditorWindow {
 
             //if not make mesh convex
             if(!coplanar) {
-                mc.inflateMesh = true;
                 mc.convex = true;
             }
         }
@@ -1776,6 +1783,50 @@ public class LevelBuilder : EditorWindow {
                     + mf.name + " because of " + e);
             }
         }
+    }
+
+    public void ConvertToUdon() {
+        UFMover[] movers = FindObjectsOfType<UFMover>();
+        foreach(UFMover mover in movers) {
+            Transform[] keyTransforms = new Transform[mover.keys.Length];
+            for(int i = 0; i < mover.keys.Length; i++)
+            {
+                UFLevelStructure.Keyframe kf = mover.keys[i];
+                keyTransforms[i] = UFLevel.GetByID(kf.transform.id).objectRef.transform;
+            }
+            mover.ConvertToUdon(keyTransforms);
+        }
+
+        foreach(UFRoom room in FindObjectsOfType<UFRoom>())
+            DestroyImmediate(room);
+
+        foreach(UFRoom room in FindObjectsOfType<UFRoom>())
+            DestroyImmediate(room);
+
+        foreach(UFItem item in FindObjectsOfType<UFItem>())
+            DestroyImmediate(item);
+
+        foreach(UFTrigger trigger in FindObjectsOfType<UFTrigger>())
+            DestroyImmediate(trigger);
+
+        foreach(UFForceRegion force in FindObjectsOfType<UFForceRegion>())
+            DestroyImmediate(force);
+
+        foreach(UFEvent e in FindObjectsOfType<UFEvent>())
+            DestroyImmediate(e);
+
+        foreach(UFParticleEmitter emit in FindObjectsOfType<UFParticleEmitter>())
+            DestroyImmediate(emit);
+
+        UFGeoModder geo = FindObjectOfType<UFGeoModder>();
+        DestroyImmediate(geo);
+
+        UFPlayerInfo player = FindObjectOfType<UFPlayerInfo>();
+        DestroyImmediate(player);
+        
+        //Destroy(root.GetComponent<UFLevel>());
+
+        root.localScale = .7f * Vector3.one;
     }
 }
 
