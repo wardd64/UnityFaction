@@ -5,6 +5,8 @@ using UFLevelStructure;
 
 public class UFLevel : MonoBehaviour {
 
+    public const float UFVR_SCALE = 1.077f;
+
     public static UFLevel singleton { get {
             if(instance == null)
                 instance = FindObjectOfType<UFLevel>();

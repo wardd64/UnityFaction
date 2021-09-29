@@ -498,4 +498,46 @@ public class UFEvent : MonoBehaviour {
             
     
     }
+
+
+
+    public void ConvertToUdon()
+    {
+        UFEventUdon udon = gameObject.AddComponent<UFEventUdon>();
+        
+        udon.type = (int)type;
+        udon.typeClass = (int)GetEventTypeClass(type);
+        udon.delay = delay;
+        udon.bool1 = bool1;
+        udon.bool2 = bool2;
+        udon.int1 = int1;
+        udon.int2 = int2;
+        udon.float1 = float1;
+        udon.float2 = float2;
+        udon.string1 = string1;
+        udon.string2 = string2;
+        udon.color = color;
+        udon.obj = obj;
+
+        // add any links that have, or soon will have a UdonBehaviour, 
+        // these are the only ones that can receive signals.
+        List<GameObject> ubLinks = new List<GameObject>();
+        foreach(int id in links) {
+            GameObject g = UFLevel.GetByID(id).objectRef;
+            if(g != null) {
+                if(g.GetComponent(typeof(VRC.Udon.UdonBehaviour)) != null)
+                    ubLinks.Add(g);
+                else if(g.GetComponent<UFEvent>() != null)
+                    ubLinks.Add(g);
+            }
+        }
+
+        udon.links = ubLinks.ToArray();
+        udon.linkType = new int[udon.links.Length];
+        for(int i = 0; i < udon.links.Length; i++)
+            udon.linkType[i] = (int)UFLevel.GetByID(links[i]).type;
+
+        UFUtils.MakeUdonBehaviour(udon);
+        DestroyImmediate(this);
+    }
 }

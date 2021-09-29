@@ -639,6 +639,5 @@ public class UFMover : MonoBehaviour {
         udon.closeVol = closeVol;
 
         UFUtils.MakeUdonBehaviour(udon);
-        DestroyImmediate(this);
     }
 }

@@ -211,6 +211,8 @@ public class LevelBuilder : EditorWindow {
     }
 
     public void BuildAll() {
+        root.transform.localScale = Vector3.one;
+
         BuildStaticGeometry();
         BuildLights();
         BuildPlayerInfo();
@@ -1785,6 +1787,9 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    /// <summary>
+    /// Convert UFLevel structure to Udon equivalents, compatible with VRChat.
+    /// </summary>
     public void ConvertToUdon() {
         UFMover[] movers = FindObjectsOfType<UFMover>();
         foreach(UFMover mover in movers) {
@@ -1797,36 +1802,50 @@ public class LevelBuilder : EditorWindow {
             mover.ConvertToUdon(keyTransforms);
         }
 
+        //change key links back to movers for event & trigger functionality
+        foreach(UFMover mover in movers) {
+            foreach(UFLevelStructure.Keyframe kf in mover.keys) {
+                UFLevel.GetByID(kf.transform.id).objectRef = mover.gameObject;
+            }
+            DestroyImmediate(mover);
+        }
+
+        //TODO handle liquids!
         foreach(UFRoom room in FindObjectsOfType<UFRoom>())
             DestroyImmediate(room);
 
-        foreach(UFRoom room in FindObjectsOfType<UFRoom>())
-            DestroyImmediate(room);
-
+        //TODO nice to have
         foreach(UFItem item in FindObjectsOfType<UFItem>())
             DestroyImmediate(item);
 
+        //TODO
+        foreach(UFClutter item in FindObjectsOfType<UFClutter>())
+            DestroyImmediate(item);
+
         foreach(UFTrigger trigger in FindObjectsOfType<UFTrigger>())
-            DestroyImmediate(trigger);
-
+            trigger.ConvertToUdon();
         foreach(UFForceRegion force in FindObjectsOfType<UFForceRegion>())
-            DestroyImmediate(force);
+            force.ConvertToUdon();
 
-        foreach(UFEvent e in FindObjectsOfType<UFEvent>())
-            DestroyImmediate(e);
-
+        //TODO detail, not important
         foreach(UFParticleEmitter emit in FindObjectsOfType<UFParticleEmitter>())
             DestroyImmediate(emit);
 
+        //TODO lots of events not implemented
+        foreach(UFEvent e in FindObjectsOfType<UFEvent>())
+            e.ConvertToUdon();
+
+        // No geomods for now
         UFGeoModder geo = FindObjectOfType<UFGeoModder>();
         DestroyImmediate(geo);
 
+        // TODO auto apply spawn points + find a way to use level skybox?
         UFPlayerInfo player = FindObjectOfType<UFPlayerInfo>();
         DestroyImmediate(player);
         
         //Destroy(root.GetComponent<UFLevel>());
 
-        root.localScale = .7f * Vector3.one;
+        root.localScale = UFLevel.UFVR_SCALE * Vector3.one;
     }
 }
 

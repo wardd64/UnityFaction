@@ -49,7 +49,7 @@ public class UFForceRegion : MonoBehaviour {
 
         power = push.strength;
         noPlayer = push.noPlayer;
-        massIndependant = push.massIndependent;
+        massIndependant = push.massIndependent | push.grounded;
         radial = push.radial;
         grounded = push.grounded;
         turbulence = push.turbulence;
@@ -174,4 +174,24 @@ public class UFForceRegion : MonoBehaviour {
         return c.transform.GetComponentInParent<UFPlayerMovement>();
     }
     */
+
+    public void ConvertToUdon()
+    {
+        UFForceRegionUdon udon = gameObject.AddComponent<UFForceRegionUdon>();
+
+        udon.forceType = (int)type;
+        udon.profile = (int)profile;
+        udon.soundType = (int)soundType;
+
+        udon.power = power * UFLevel.UFVR_SCALE;
+        udon.massIndependant = massIndependant;
+        udon.radial = radial;
+        udon.noPlayer = noPlayer;
+        udon.grounded = grounded;
+        udon.turbulence = turbulence;
+        udon.forwardDir = forwardDir;
+
+        UFUtils.MakeUdonBehaviour(udon);
+        DestroyImmediate(this);
+    }
 }

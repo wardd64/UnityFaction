@@ -32,6 +32,29 @@ UnityFaction may also be used for personal or commercial projects by anyone, as 
 content added to UnityFaction itself is made available for others.
 
 
+----------------------------------------------------------------------------------------
+------------------------------ VRChat development notes --------------------------------
+----------------------------------------------------------------------------------------
+
+This version of UnityFaction is adapted to export levels to VRChat. 
+Note that this is a massive overhaul, so this version is in no way usable to
+generate regular Unity levels.
+
+
+TODO:
+Items!!
+Clutter, in particular switches
+Connect switches back to their triggers using "Interact()"
+Experiment what works with "[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]"
+Mover script efficiency
+Liquids
+Skybox
+spawnpoints
+solution for geomodding
+
+Helpful links for documentation
+https://github-wiki-see.page/m/MerlinVR/UdonSharp/wiki/Events
+
 
 ----------------------------------------------------------------------------------------
 --------------------------------------- TODO -------------------------------------------

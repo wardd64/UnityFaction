@@ -272,4 +272,54 @@ public class UFTrigger : MonoBehaviour {
 
         return toReturn;
     }
+
+
+    public void ConvertToUdon()
+    {
+        UFTriggerUdon udon = gameObject.AddComponent<UFTriggerUdon>();
+
+        udon.requireUseKey = requireUseKey;
+        udon.oneWay = oneWay;
+        udon.auto = auto;
+        udon.resetsRemaining = resetsRemaining;
+        udon.resetDelay = resetDelay;
+
+        udon.insideDelay = insideDelay;
+        udon.buttonDelay = buttonDelay;
+
+        // add any links that have, or soon will have a UdonBehaviour, 
+        // these are the only ones that can receive signals.
+        List<GameObject> ubLinks = new List<GameObject>();
+        foreach(int id in links)
+        {
+            GameObject g = UFLevel.GetByID(id).objectRef;
+            if(g != null)
+            {
+                if(g.GetComponent(typeof(VRC.Udon.UdonBehaviour)) != null)
+                    ubLinks.Add(g);
+                else if(g.GetComponent<UFTrigger>() != null)
+                    ubLinks.Add(g);
+                else if(g.GetComponent<UFEvent>() != null)
+                    udon.switchObject = g;
+            }
+        }
+
+        udon.links = ubLinks.ToArray();
+
+        //do something similar for the switch reference
+        if(switchRef > 0)
+        {
+            GameObject g = UFLevel.GetByID(switchRef).objectRef;
+            if(g != null)
+            {
+                if(g.GetComponent(typeof(VRC.Udon.UdonBehaviour)) != null)
+                    udon.switchObject = g;
+            }
+        }
+
+        udon.requireUseKey &= udon.switchObject != null;
+
+        UFUtils.MakeUdonBehaviour(udon);
+        DestroyImmediate(this);
+    }
 }

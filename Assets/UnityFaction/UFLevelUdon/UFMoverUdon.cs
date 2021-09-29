@@ -30,6 +30,9 @@ public class UFMoverUdon : UdonSharpBehaviour
     public AudioClip startClip, loopClip, stopClip, closeClip;
     public float startVol, loopVol, stopVol, closeVol;
 
+    //signal triggers
+    public int signal, reverse;
+
     private const float MIN_TRAV_TIME = 1e-2f;
 
     //dynamic variables, used to control movement
@@ -50,7 +53,6 @@ public class UFMoverUdon : UdonSharpBehaviour
         sound = this.GetComponent<AudioSource>();
         
         ResetMotion();
-        Activate(true);
     }
 
     /// <summary>
@@ -84,7 +86,17 @@ public class UFMoverUdon : UdonSharpBehaviour
 
     private void Update()
     {
-        Debug.Log("Update for " + name + ": " + rotateInPlace + " " + time + " " + forward);
+        if(signal != 0) {
+            moving = signal > 0;
+            signal = 0;
+        }
+
+        if(reverse != 0)
+        {
+            Reverse(reverse > 0);
+            reverse = 0;
+        }
+
         if(!moving)
             return;
 
@@ -474,11 +486,6 @@ public class UFMoverUdon : UdonSharpBehaviour
         }
     }
 
-    public void Activate(bool positive)
-    {
-        moving = positive;
-    }
-
     public void Reverse(bool goForward)
     {
         if(!moving || forward == goForward)
@@ -491,13 +498,6 @@ public class UFMoverUdon : UdonSharpBehaviour
         forward = goForward;
 
         time = (1f - doneFrac) * GetRealTravTime();
-    }
-
-    public void ChangeRotationSpeed(float factor)
-    {
-        kf_departTravelTime[0] /= factor;
-        kf_returnTravelTime[0] /= factor;
-        time /= factor;
     }
 
     private void PlayClip(AudioClip clip, float volume)
