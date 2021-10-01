@@ -183,7 +183,7 @@ public class UFForceRegion : MonoBehaviour {
         udon.profile = (int)profile;
         udon.soundType = (int)soundType;
 
-        udon.power = power * UFLevel.UFVR_SCALE;
+        udon.power = power * UFLevel.UFVR_GLOBAL_SCALE;
         udon.massIndependant = massIndependant;
         udon.radial = radial;
         udon.noPlayer = noPlayer;

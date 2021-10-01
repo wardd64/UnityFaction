@@ -42,18 +42,22 @@ generate regular Unity levels.
 
 
 TODO:
-Items!!
-Clutter, in particular switches
-Connect switches back to their triggers using "Interact()"
+Test multiplayer
+
+particle emitter control
+set spawn points automatically
+
+more maps
+
 Experiment what works with "[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]"
 Mover script efficiency
+Find a way to move user when standing on a moving platform
 Liquids
 Skybox
-spawnpoints
 solution for geomodding
 
 Helpful links for documentation
-https://github-wiki-see.page/m/MerlinVR/UdonSharp/wiki/Events
+https://github.com/MerlinVR/UdonSharp/wiki/Events
 
 
 ----------------------------------------------------------------------------------------

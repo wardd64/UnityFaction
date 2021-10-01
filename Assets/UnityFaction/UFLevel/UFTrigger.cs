@@ -295,25 +295,27 @@ public class UFTrigger : MonoBehaviour {
             GameObject g = UFLevel.GetByID(id).objectRef;
             if(g != null)
             {
-                if(g.GetComponent(typeof(VRC.Udon.UdonBehaviour)) != null)
+                UFClutter switchCandidate = g.GetComponent<UFClutter>();
+                if(switchCandidate != null)
+                    SetSwitchUdon(udon, switchCandidate);
+                else if(g.GetComponent(typeof(VRC.Udon.UdonBehaviour)) != null)
                     ubLinks.Add(g);
                 else if(g.GetComponent<UFTrigger>() != null)
                     ubLinks.Add(g);
                 else if(g.GetComponent<UFEvent>() != null)
-                    udon.switchObject = g;
+                    ubLinks.Add(g);
             }
         }
 
         udon.links = ubLinks.ToArray();
 
         //do something similar for the switch reference
-        if(switchRef > 0)
-        {
+        if(switchRef > 0) {
             GameObject g = UFLevel.GetByID(switchRef).objectRef;
-            if(g != null)
-            {
-                if(g.GetComponent(typeof(VRC.Udon.UdonBehaviour)) != null)
-                    udon.switchObject = g;
+            if(g != null) {
+                UFClutter switchCandidate = g.GetComponent<UFClutter>();
+                if(switchCandidate != null)
+                    SetSwitchUdon(udon, switchCandidate);
             }
         }
 
@@ -321,5 +323,13 @@ public class UFTrigger : MonoBehaviour {
 
         UFUtils.MakeUdonBehaviour(udon);
         DestroyImmediate(this);
+    }
+
+    private void SetSwitchUdon(UFTriggerUdon udon, UFClutter switchCandidate) {
+        udon.switchObject = switchCandidate.gameObject;
+        AudioSource sound = switchCandidate.GetComponent<AudioSource>();
+        switchCandidate.ConvertToUdon(gameObject);
+        if(sound != null)
+            sound.volume = 1f;
     }
 }

@@ -49,12 +49,10 @@ public class UFForceRegionUdon : UdonSharpBehaviour
         break;
 
         case 1: //Jump pad (set velocity)
-        Debug.Log("Jump pad push: " + GetForce(point));
         localPlayer.SetVelocity(GetForce(point));
         break;
 
         case 2: //push region (shove player along)
-        Debug.Log("force region shove: " + GetForce(point));
         Vector3 p = localPlayer.GetPosition();
         Quaternion q = localPlayer.GetRotation();
         p += Time.deltaTime * GetForce(point);

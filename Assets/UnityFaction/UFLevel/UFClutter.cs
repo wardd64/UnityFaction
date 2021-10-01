@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UFLevelStructure;
@@ -77,5 +77,32 @@ public class UFClutter : MonoBehaviour {
                 g.AddComponent<SelfDestruct>().time = 5f;
             }
         }
+    }
+
+    public void RemoveIfNotSwitch() {
+        if(!isSwitch)
+            DestroyImmediate(this);
+    }
+
+    public void ConvertToUdon(GameObject triggerObject) {
+        UFClutterUdon udon = gameObject.AddComponent<UFClutterUdon>();
+
+        udon.trigger = triggerObject;
+
+        //move colliders to base object for switch interaction functionality
+        MeshCollider mc = GetComponentInChildren<MeshCollider>();
+        MeshFilter mf = mc.GetComponent<MeshFilter>();
+        if(mf != null & mc != null) {
+            MeshFilter mfNew = gameObject.AddComponent<MeshFilter>();
+            mfNew.sharedMesh = mf.sharedMesh;
+            DestroyImmediate(mf);
+            MeshCollider mcNew = gameObject.AddComponent<MeshCollider>();
+            mcNew.convex = mc.convex;
+            mcNew.isTrigger = mc.isTrigger;
+            DestroyImmediate(mc);
+        }
+
+        UFUtils.MakeUdonBehaviour(udon);
+        DestroyImmediate(this);
     }
 }

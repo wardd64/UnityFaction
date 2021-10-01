@@ -113,6 +113,32 @@ public class UFItem : MonoBehaviour {
         }
     }
 
+    public void ConvertToUdon() {
+        UFItemUdon udon = gameObject.AddComponent<UFItemUdon>();
+
+        udon.type = (int)type;
+        udon.count = count;
+        udon.respawnTime = respawnTime;
+
+        UFUtils.MakeUdonBehaviour(udon);
+        DestroyImmediate(this);
+    }
+
+    public string GetSoundClipName() {
+        switch(type) {
+
+        case ItemType.Gun:
+        case ItemType.GunAmmo:
+        case ItemType.SpecialWeapon:
+        case ItemType.Explosive:
+        case ItemType.ExplosiveAmmo: return "weapon_pickup";
+        case ItemType.Invulnerability: return "shield_pickup";
+        case ItemType.DamageAmp: return "damage_pickup";
+        default: return "powerup_pickup";
+
+        }
+    }
+
     /*
     private void OnTriggerStay(Collider other) {
         if(!IsPlayer(other))

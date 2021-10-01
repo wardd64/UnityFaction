@@ -6,7 +6,7 @@ using VRC.Udon;
 
 public class UFTriggerUdon : UdonSharpBehaviour
 {
-    
+
     public bool requireUseKey, oneWay, auto;
     public int resetsRemaining;
     public float resetDelay;
@@ -16,67 +16,57 @@ public class UFTriggerUdon : UdonSharpBehaviour
     public GameObject switchObject;
 
     //dynamic variables
+    public int signal;
     private bool permanent;
     private float insideTime, buttonTime;
     private bool inside, permanentTriggered;
 
-    private void Start()
-    {
+    private void Start() {
         permanent = resetsRemaining == 1; //if true, press should sync with multiplayer
         if(auto)
             Trigger();
     }
 
-    private void Update()
-    {
-        if(inside)
-        {
-            insideTime += Time.deltaTime;
-            if(insideTime >= insideDelay)
-            {
-                if(requireUseKey)
-                {
-                    //TODO resolve true when player is touching "switchRef" object!
-                    bool key = true;
-                    if(key)
-                    {
-                        buttonTime += Time.deltaTime;
-                        if(buttonTime >= buttonDelay)
-                            Trigger();
-                    }
-                    else
-                        buttonTime = 0f;
+    private void Update() {
+        if(signal > 0) {
+            Trigger();
+            signal = 0;
+        }
 
-                    /*
-                    if(resetsRemaining != 0)
-                        UFLevel.GetPlayer<UFPlayerMovement>().InButtonRange(useKey);
-                        */
+        if(inside) {
+            insideTime += Time.deltaTime;
+            if(insideTime >= insideDelay) {
+                if(requireUseKey) {
+                    buttonTime += Time.deltaTime;
+                    if(switchObject != null)
+                        FlagUdon(switchObject, "playerInRange", buttonTime >= buttonDelay);
+                    else if(buttonTime >= buttonDelay)
+                        Trigger();
                 }
                 else
                     Trigger();
             }
         }
-        else
+        else{
             insideTime = 0f;
+            buttonTime = 0f;
+        }
     }
 
-    public override void OnPlayerTriggerEnter(VRCPlayerApi player)
-    {
+    public override void OnPlayerTriggerEnter(VRCPlayerApi player) {
         if(!player.isLocal)
             return;
         inside = true;
     }
 
-    public override void OnPlayerTriggerExit(VRCPlayerApi player)
-    {
+    public override void OnPlayerTriggerExit(VRCPlayerApi player) {
         if(!player.isLocal)
             return;
         inside = false;
         UnTrigger();
     }
 
-    private bool IsValid(Collider c)
-    {
+    private bool IsValid(Collider c) {
         return true;
         /*
         if(triggeredByWeapon)
@@ -99,11 +89,9 @@ public class UFTriggerUdon : UdonSharpBehaviour
     }
     */
 
-    private void Trigger()
-    {
+    private void Trigger() {
         //sync this trigger press over the network if necessary
-        if(permanent && !permanentTriggered)
-        {
+        if(permanent && !permanentTriggered) {
             permanentTriggered = true;
         }
 
@@ -117,22 +105,25 @@ public class UFTriggerUdon : UdonSharpBehaviour
 
         foreach(GameObject link in links)
             TriggerUdon(link, "signal", true);
-
-        if(switchObject != null)
-            TriggerUdon(switchObject, "signal", true);
     }
 
-    private void UnTrigger()
-    {
+    private void UnTrigger() {
         insideTime = 0f;
         buttonTime = 0f;
         foreach(GameObject link in links)
             TriggerUdon(link, "deactivate", true);
+
+        if(switchObject != null)
+            FlagUdon(switchObject, "playerInRange", false);
     }
 
-    private void TriggerUdon(GameObject g, string signal, bool positive)
-    {
+    private void TriggerUdon(GameObject g, string signal, bool positive) {
         UdonBehaviour ub = (UdonBehaviour)g.GetComponent(typeof(UdonBehaviour));
         ub.SetProgramVariable(signal, positive ? 1 : -1);
+    }
+
+    private void FlagUdon(GameObject g, string signal, bool positive) {
+        UdonBehaviour ub = (UdonBehaviour)g.GetComponent(typeof(UdonBehaviour));
+        ub.SetProgramVariable(signal, positive);
     }
 }

@@ -1787,6 +1787,87 @@ public class LevelBuilder : EditorWindow {
         }
     }
 
+    private void InflateColliders(float r) {
+        Collider[] allColliders = FindObjectsOfType<Collider>();
+        foreach(Collider c in allColliders) {
+            if(c.isTrigger)
+                continue;
+            else if(c is BoxCollider) {
+                BoxCollider box = (BoxCollider)c;
+                box.size += 2f * r * Vector3.one;
+            }
+            else if(c is SphereCollider) {
+                SphereCollider sphere = (SphereCollider)c;
+                sphere.radius += 2f * r;
+            }
+            else if(c is MeshCollider)
+                InflateMeshCollider((MeshCollider)c, r);
+            else
+                Debug.LogWarning("Unkown Collider type for inflation: " + c.name);
+        }
+    }
+
+    private void InflateMeshCollider(MeshCollider mc, float r) {
+
+        GameObject g = mc.gameObject;
+        MeshFilter mf = mc.GetComponent<MeshFilter>();
+
+        Renderer re = mc.GetComponent<Renderer>();
+        bool makeNewObject = re != null && re.enabled;
+
+        if(makeNewObject) {
+            g = new GameObject("CollisionMesh_infl");
+            g.transform.SetParent(mc.transform);
+            g.transform.localPosition = Vector3.zero;
+            g.transform.localRotation = Quaternion.identity;
+            g.transform.localScale = Vector3.one;
+
+            mf = g.AddComponent<MeshFilter>();
+        }
+
+        mf.sharedMesh = InflateMesh(mc.sharedMesh, r);
+
+        if(makeNewObject) {
+            MeshCollider mcNew = g.AddComponent<MeshCollider>();
+            mcNew.convex = mc.convex;
+
+            DestroyImmediate(mc);
+        }
+    }
+
+    /// <summary>
+    /// Inflation algorithm, designed to not split up vertices that share a position.
+    /// TODO handle better case where 2 vertices have opposite normals
+    /// TODO make O(N) with better neighbour search algorithm
+    /// </summary>
+    private Mesh InflateMesh(Mesh mesh, float r) {
+        Mesh inflatedMesh = new Mesh();
+        inflatedMesh.name = mesh.name + "_infl";
+
+        //TODO inflation algorithm will have trouble with some weird edge cases..
+
+        Vector3[] verts = mesh.vertices;
+        Vector3[] normals = mesh.normals;
+        Vector3[] infl = new Vector3[verts.Length];
+        for(int i = 0; i < verts.Length; i++) {
+            for(int j = 0; j < verts.Length; j++) {
+                if(verts[j] == verts[i])
+                    infl[j] = Vector3.ProjectOnPlane(infl[j], normals[i]) + r * normals[i];
+            }
+        }
+
+        for(int i = 0; i < verts.Length; i++)
+            verts[i] += infl[i];
+
+        inflatedMesh.vertices = verts;
+        inflatedMesh.triangles = mesh.triangles;
+        inflatedMesh.normals = mesh.normals;
+        inflatedMesh.RecalculateBounds();
+        inflatedMesh.RecalculateTangents();
+
+        return inflatedMesh;
+    }
+
     /// <summary>
     /// Convert UFLevel structure to Udon equivalents, compatible with VRChat.
     /// </summary>
@@ -1810,20 +1891,32 @@ public class LevelBuilder : EditorWindow {
             DestroyImmediate(mover);
         }
 
-        //TODO handle liquids!
+        //reduce sound level so newly added stuff is relatively louder
+        foreach(AudioSource sound in FindObjectsOfType<AudioSource>())
+            sound.volume *= .7f;
+
+        InflateColliders(UFLevel.UFVR_COLLIDER_INFLATE);
+
+        //TODO handle liquids somehow?
         foreach(UFRoom room in FindObjectsOfType<UFRoom>())
             DestroyImmediate(room);
+        
+        foreach(UFItem item in FindObjectsOfType<UFItem>()) {
+            AudioSource itemSound = item.gameObject.AddComponent<AudioSource>();
+            itemSound.clip = GetClip(item.GetSoundClipName());
+            itemSound.spatialBlend = 0f;
+            itemSound.playOnAwake = false;
+            item.ConvertToUdon();
+        }
 
-        //TODO nice to have
-        foreach(UFItem item in FindObjectsOfType<UFItem>())
-            DestroyImmediate(item);
-
-        //TODO
-        foreach(UFClutter item in FindObjectsOfType<UFClutter>())
-            DestroyImmediate(item);
-
+        //Special sequence to match switches to triggers
+        foreach(UFClutter clut in FindObjectsOfType<UFClutter>())
+            clut.RemoveIfNotSwitch();
         foreach(UFTrigger trigger in FindObjectsOfType<UFTrigger>())
             trigger.ConvertToUdon();
+        foreach(UFClutter clut in FindObjectsOfType<UFClutter>())
+            DestroyImmediate(clut);
+
         foreach(UFForceRegion force in FindObjectsOfType<UFForceRegion>())
             force.ConvertToUdon();
 
@@ -1842,10 +1935,9 @@ public class LevelBuilder : EditorWindow {
         // TODO auto apply spawn points + find a way to use level skybox?
         UFPlayerInfo player = FindObjectOfType<UFPlayerInfo>();
         DestroyImmediate(player);
-        
-        //Destroy(root.GetComponent<UFLevel>());
 
-        root.localScale = UFLevel.UFVR_SCALE * Vector3.one;
+        //Destroy(root.GetComponent<UFLevel>());
+        root.localScale = UFLevel.UFVR_GLOBAL_SCALE * Vector3.one;
     }
 }
 
