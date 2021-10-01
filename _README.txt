@@ -42,6 +42,11 @@ generate regular Unity levels.
 
 
 TODO:
+Test DeathRunFun
+
+Make bonus rig at start, teleporters? Checkpoint system
+Make bonus rig at finish, clear official reward
+
 Test multiplayer
 
 particle emitter control
