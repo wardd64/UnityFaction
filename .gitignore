@@ -19,6 +19,13 @@ Assets/UnityFaction/RFSource.meta
 [Bb]uilds/
 Assets/AssetStoreTools*
 
+#VRChat tools
+Assets/UdonSharp*
+Assets/SerializedUdonPrograms*
+Assets/VRChat*
+Assets/VRCSDK*
+Packages/com.vrchat.vrcsdk3/
+
 # Visual Studio cache directory
 .vs/
 

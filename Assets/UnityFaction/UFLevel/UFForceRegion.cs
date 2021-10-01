@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UFLevelStructure;
 using UnityEngine;
@@ -49,10 +49,10 @@ public class UFForceRegion : MonoBehaviour {
 
         power = push.strength;
         noPlayer = push.noPlayer;
-        massIndependant = push.massIndependent;
+        massIndependant = push.massIndependent | push.grounded;
         radial = push.radial;
-        grounded = push.grounded;
-        turbulence = push.turbulence;
+		grounded = push.grounded;
+		turbulence = push.turbulence;
 
         if(push.jumpPad)
             this.type = ForceType.SetVel;
