@@ -537,6 +537,10 @@ public class UFEvent : MonoBehaviour {
         for(int i = 0; i < udon.links.Length; i++)
             udon.linkType[i] = (int)UFLevel.GetByID(links[i]).type;
 
+        AudioSource audio = GetComponent<AudioSource>();
+        if(audio != null)
+            audio.volume = .25f; //make sure music is not too loud
+
         UFUtils.MakeUdonBehaviour(udon);
         DestroyImmediate(this);
     }

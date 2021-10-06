@@ -3,6 +3,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 
+[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class UFForceRegionUdon : UdonSharpBehaviour
 {
 

@@ -102,6 +102,19 @@ public class LevelBuilder : EditorWindow {
         }
 
         BuildSettingsGUI();
+
+        MakeRoot();
+    }
+
+    private void VRCPostProcessingGUI() {
+        if(GUILayout.Button("VRC post processing", GetBigButtonGUIStyle())) {
+            foreach(VRC_SpatialAudioSource sa in FindObjectsOfType<VRC_SpatialAudioSource>()) {
+                if(sa.name.StartsWith("Clutter"))
+                    sa.Gain = 45f;
+                else
+                    sa.Gain = 40f;
+            }
+        }
     }
 
     private void BuildSeperateGUI() {
@@ -145,6 +158,8 @@ public class LevelBuilder : EditorWindow {
 
             //TODO entities?
         }
+
+        VRCPostProcessingGUI();
     }
 
     private void LevelContentsGUI() {
@@ -622,6 +637,7 @@ public class LevelBuilder : EditorWindow {
             if(c.isSwitch) {
                 AudioSource switchSound = g.AddComponent<AudioSource>();
                 switchSound.spatialBlend = 1f;
+                switchSound.volume = 1f;
                 switchSound.playOnAwake = false;
                 switchSound.clip = GetClip("Switch_01");
                 switchSound.outputAudioMixerGroup = effectsChannel;
@@ -1788,7 +1804,7 @@ public class LevelBuilder : EditorWindow {
     }
 
     private void InflateColliders(float r) {
-        Collider[] allColliders = FindObjectsOfType<Collider>();
+        Collider[] allColliders = root.GetComponentsInChildren<Collider>(false);
         foreach(Collider c in allColliders) {
             if(c.isTrigger)
                 continue;
@@ -1891,10 +1907,6 @@ public class LevelBuilder : EditorWindow {
             DestroyImmediate(mover);
         }
 
-        //reduce sound level so newly added stuff is relatively louder
-        foreach(AudioSource sound in FindObjectsOfType<AudioSource>())
-            sound.volume *= .7f;
-
         InflateColliders(UFLevel.UFVR_COLLIDER_INFLATE);
 
         //TODO handle liquids somehow?
@@ -1904,7 +1916,8 @@ public class LevelBuilder : EditorWindow {
         foreach(UFItem item in FindObjectsOfType<UFItem>()) {
             AudioSource itemSound = item.gameObject.AddComponent<AudioSource>();
             itemSound.clip = GetClip(item.GetSoundClipName());
-            itemSound.spatialBlend = 0f;
+            itemSound.spatialBlend = 1f;
+            itemSound.volume = 1f;
             itemSound.playOnAwake = false;
             item.ConvertToUdon();
         }

@@ -40,29 +40,47 @@ This version of UnityFaction is adapted to export levels to VRChat.
 Note that this is a massive overhaul, so this version is in no way usable to
 generate regular Unity levels.
 
+Helpful links for documentation
+https://github.com/MerlinVR/UdonSharp/wiki/Events
 
-TODO:
-Test DeathRunFun
+Level preperation checklist
+    Add VRC world component
+        jump impulse = 5.4
+        walkSpeed = 4
+        runSpeed = 8
+        strafeSpeed = 7
+    set spawn points (todo auto)
+    set checkpoints
 
-Make bonus rig at start, teleporters? Checkpoint system
+Level post processing checklist
+    Lighting
+    add VRC spatial audio components to
+        Items
+        Clutter
+        Non global movers and events if desired
+    VRC post processing
+    Fix impossible challenges
+        Parts where character is supposed to follow a platform
+        Almost any kind of rotating platforming
+
+
+  
+
+Development TODO:
+
+Test again!
 Make bonus rig at finish, clear official reward
-
-Test multiplayer
-
 particle emitter control
 set spawn points automatically
 
 more maps
 
-Experiment what works with "[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]"
-Mover script efficiency
-Find a way to move user when standing on a moving platform
+Way to improve interaction with moving platforms? Detect when player is standing on mover and teleport them??
 Liquids
 Skybox
 solution for geomodding
 
-Helpful links for documentation
-https://github.com/MerlinVR/UdonSharp/wiki/Events
+
 
 
 ----------------------------------------------------------------------------------------

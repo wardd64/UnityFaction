@@ -7,7 +7,7 @@ public class UFLevel : MonoBehaviour {
 
     //Settings for VRChat conversion
     public const float UFVR_GLOBAL_SCALE = 1.000f;
-    public const float UFVR_COLLIDER_INFLATE = 0.140f;
+    public const float UFVR_COLLIDER_INFLATE = 0.200f;
 
     public static UFLevel singleton { get {
             if(instance == null)

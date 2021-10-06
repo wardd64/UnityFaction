@@ -772,13 +772,14 @@ public class UFUtils {
         return toReturn;
     }
 
-    public static VRC.Udon.UdonBehaviour MakeUdonBehaviour(UdonSharp.UdonSharpBehaviour u) {
+    public static VRC.Udon.UdonBehaviour MakeUdonBehaviour(UdonSharp.UdonSharpBehaviour u, 
+        VRC.SDKBase.Networking.SyncType syncMethod = VRC.SDKBase.Networking.SyncType.Continuous) {
 #if UNITY_EDITOR
         GameObject g = u.gameObject;
         UdonSharp.UdonSharpBehaviour[] c = new UdonSharp.UdonSharpBehaviour[] { u };
         UdonSharpEditor.UdonSharpEditorUtility.ConvertToUdonAutomatic(c);
         VRC.Udon.UdonBehaviour ub = g.GetComponent<VRC.Udon.UdonBehaviour>();
-        ub.SyncMethod = VRC.SDKBase.Networking.SyncType.Continuous;
+        ub.SyncMethod = syncMethod;
         return ub;
 #else
         return null;

@@ -1,12 +1,9 @@
 
-using System;
 using UdonSharp;
-using UFLevelStructure;
 using UnityEngine;
-using UnityEngine.Audio;
 using VRC.SDKBase;
-using VRC.Udon;
 
+[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class UFMoverUdon : UdonSharpBehaviour
 {
     private AudioSource sound;
@@ -43,12 +40,21 @@ public class UFMoverUdon : UdonSharpBehaviour
     private bool completedSequence;
     private Quaternion baseRot;
 
-    //algo variables to avoid out and ref
+    private Quaternion recordRot;
+    private Vector3 recordPos;
+
+    private VRCPlayerApi localPlayer;
+
+    //algorithm helper variables, some used to avoid out and ref
     private float T;
     private float Ta, Td;
+    private float x1, x2, t1, t2;
+    private float V, sum;
 
     private void Start()
     {
+        localPlayer = Networking.LocalPlayer;
+
         rb = this.GetComponent<Rigidbody>();
         sound = this.GetComponent<AudioSource>();
         
@@ -72,27 +78,27 @@ public class UFMoverUdon : UdonSharpBehaviour
         //set appropriate starting position (for path movers)
         if(!rotateInPlace && lastKey > 0)
         {
-            RecordPosition();
+            recordPos = rb.position;
             rb.position = kf[startKey].position;
-            ApplyDeltas(1f);
+            ApplyDeltas();
         }
 
         if(rotateInPlace || forceOrient)
             rb.rotation = Quaternion.identity;
     }
 
-    Quaternion recordRot;
-    Vector3 recordPos;
 
     private void Update()
     {
+        if(Vector3.Distance(rb.position, localPlayer.GetPosition()) > 30f)
+            return;
+
         if(signal != 0) {
             moving = signal > 0;
             signal = 0;
         }
 
-        if(reverse != 0)
-        {
+        if(reverse != 0) {
             Reverse(reverse > 0);
             reverse = 0;
         }
@@ -100,7 +106,8 @@ public class UFMoverUdon : UdonSharpBehaviour
         if(!moving)
             return;
 
-        RecordPosition();
+        recordRot = rb.rotation;
+        recordPos = rb.position;
 
         float dt = Time.deltaTime;
         time += dt;
@@ -112,50 +119,32 @@ public class UFMoverUdon : UdonSharpBehaviour
                 PathUpdate();
         }
         
-        ApplyDeltas(dt);
+        ApplyDeltas();
     }
 
-    private void RecordPosition()
-    {
-        recordRot = rb.rotation;
-        recordPos = rb.position;
-    }
-
-    private void ApplyDeltas(float dt)
-    {
+    private void ApplyDeltas() {
         if(rotateInPlace)
         {
             Quaternion deltaRot = rb.rotation * Quaternion.Inverse(recordRot);
-
             foreach(Rigidbody rb in content)
             {
-
-                Vector3 newPos = RotateAroundPivot(rb.position, this.rb.position, deltaRot);
-                Vector3 deltaPos = newPos - rb.position;
-
-                rb.position = newPos;
-                rb.velocity = deltaPos / dt;
+                Vector3 dir = deltaRot * (rb.position - this.rb.position);
+                rb.position = this.rb.position + dir;
                 rb.rotation = deltaRot * rb.rotation;
-                rb.angularVelocity = GetAxis(deltaRot);
             }
         }
         else
         {
             Vector3 deltaPos = rb.position - recordPos;
-
             foreach(Rigidbody rb in content)
-            {
-                rb.position = rb.position + deltaPos;
-                rb.velocity = deltaPos / dt;
-            }
+                rb.position += deltaPos;
         }
     }
 
     /// <summary>
     /// Advance pause time, return true if movement is still paused
     /// </summary>
-    private bool PauseUpdate()
-    {
+    private bool PauseUpdate() {
         if(!paused)
             return false;
 
@@ -173,14 +162,16 @@ public class UFMoverUdon : UdonSharpBehaviour
     /// <summary>
     /// Update movement as rotation around the first keyframe
     /// </summary>
-    private void RotateUpdate()
-    {
+    private void RotateUpdate() {
         //Get movement parameters (rotations ignore all but the first key)
         float travTime = GetNextTravTime();
         float angle = (forward ? 1f : -1f) * kf_rotationAmount[0];
 
+        Ta = kf_accelTime[0];
+        Td = kf_decelTime[0];
+
         //Calculate movement
-        float x = GetXByTravTime(time, travTime, angle, 0, 0);
+        float x = GetX_TX(time, travTime, angle);
 
         //apply rotation
         Vector3 axis = kf[0].rotation * Vector3.up;
@@ -189,8 +180,6 @@ public class UFMoverUdon : UdonSharpBehaviour
         if(time > travTime)
         {
             //keyframe is finished, wrap up
-            TriggerKeyLink(0);
-
             rb.rotation = Quaternion.AngleAxis(angle, axis) * baseRot;
 
             time -= travTime;
@@ -208,8 +197,7 @@ public class UFMoverUdon : UdonSharpBehaviour
     /// <summary>
     /// Update movement as pathing from one keyframe to another
     /// </summary>
-    private void PathUpdate()
-    {
+    private void PathUpdate() {
         //get movement parameters
         int nextKey = GetNextKey();
         Vector3 fro = kf[lastKey].position;
@@ -217,16 +205,17 @@ public class UFMoverUdon : UdonSharpBehaviour
         float distance = (to - fro).magnitude;
         float travTime = GetNextTravTime();
 
+        Ta = kf_accelTime[lastKey];
+        Td = kf_decelTime[nextKey];
+
         //calculate movement
         float x;
-        if(useTravTimeAsSpd)
-        {
-            float speed = travTime;
-            x = GetXBySpeed(time, speed, distance, lastKey, nextKey);
+        if(useTravTimeAsSpd) {
+            x = GetX_VX(time, distance, travTime);
             travTime = T;
         }
         else
-            x = GetXByTravTime(time, travTime, distance, lastKey, nextKey);
+            x = GetX_TX(time, travTime, distance);
 
         //apply position and rotation
         rb.position = Vector3.MoveTowards(fro, to, x);
@@ -235,8 +224,6 @@ public class UFMoverUdon : UdonSharpBehaviour
         if(time > travTime)
         {
             //keyframe is finished, wrap up
-
-            TriggerKeyLink(nextKey);
             lastKey = nextKey;
 
             rb.position = to;
@@ -254,39 +241,6 @@ public class UFMoverUdon : UdonSharpBehaviour
     }
 
     /// <summary>
-    /// Return distance that mover should have traveled from its last keyframe.
-    /// In the case of rotation this returns the angle that should be covered.
-    /// </summary>
-    /// <param name="time">Time since last keyframe</param>
-    /// <param name="travTime">Time to travel between keyframes</param>
-    /// <param name="distance">Distance between keys (or angle)</param>
-    /// <param name="accelKey">Key index that holds acceleration time</param>
-    /// <param name="decelKey">Key index that holds deceleleration time</param>
-    private float GetXByTravTime(float time, float travTime, float distance, int accelKey, int decelKey)
-    {
-        Ta = kf_accelTime[accelKey];
-        Td = kf_decelTime[decelKey];
-        return GetX_TX(time, travTime, distance);
-    }
-
-    /// <summary>
-    /// Return distance that mover should have traveled from its last keyframe.
-    /// This version takes in a max speed value and yields the total travel time.
-    /// </summary>
-    /// <param name="time">Time since last keyframe</param>
-    /// <param name="speed">Maximum speed that mover is allowed travel (can be degrees/second)</param>
-    /// <param name="distance">Distance between keys (or angle)</param>
-    /// <param name="accelKey">Key index that holds acceleration time</param>
-    /// <param name="decelKey">Key index that holds deceleleration time</param>
-    /// <param name="travTime">Total time needed to travel between keyframes</param>
-    private float GetXBySpeed(float time, float speed, float distance, int accelKey, int decelKey)
-    {
-        Ta = kf_accelTime[accelKey];
-        Td = kf_decelTime[decelKey];
-        return GetX_VX(time, distance, speed);
-    }
-
-    /// <summary>
     /// Return interpolated x position based on total travel time and distance
     /// </summary>
     private float GetX_TX(float t, float T, float X)
@@ -295,7 +249,7 @@ public class UFMoverUdon : UdonSharpBehaviour
             return X;
 
         ConstrainAccelTimes(T);
-        float V = X / (T - ((Ta + Td) / 2f));
+        V = X / (T - ((Ta + Td) / 2f));
 
         return GetX_TV(t, T, V);
     }
@@ -329,7 +283,7 @@ public class UFMoverUdon : UdonSharpBehaviour
         Ta = Mathf.Max(0f, Ta);
         Td = Mathf.Max(0f, Td);
 
-        float sum = Ta + Td;
+        sum = Ta + Td;
         if(sum > maxSum)
         {
             Ta = maxSum * Ta / sum;
@@ -343,44 +297,36 @@ public class UFMoverUdon : UdonSharpBehaviour
     private float GetX_TV(float t, float T, float V)
     {
         t = Mathf.Clamp(t, 0f, T);
-
-        //calculate helper params
-        float x1 = V * Ta / 2f;
-        float x2 = V * (T - Ta - Td);
-        float t1 = t - Ta;
-        float t2 = t - T + Td;
-
-        //calculate x
+        
+        x1 = V * Ta / 2f;
+        t1 = t - Ta;
+        
         if(t < Ta)
             return V * t * t / Ta / 2f;
         else if(t <= T - Td)
             return x1 + V * t1;
-        else
+        else {
+            x2 = V * (T - Ta - Td);
+            t2 = t - T + Td;
             return x1 + x2 + (V * t2) - (V * t2 * t2 / Td / 2f);
+        }
     }
 
-    /// <summary>
-    /// If forcOrient == true this method will reorient this mover along the given travel direction
-    /// </summary>
-    private void ForceOrient(Vector3 dir)
-    {
+    private void ForceOrient(Vector3 dir) {
         if(!forceOrient)
             return;
 
         rb.rotation = Quaternion.LookRotation(dir);
     }
 
-    private int GetNextKey()
-    {
-        if(forward)
-        {
+    private int GetNextKey() {
+        if(forward) {
             if(lastKey == kf.Length - 1)
                 return 0;
             else
                 return lastKey + 1;
         }
-        else
-        {
+        else {
             if(lastKey == 0)
                 return kf.Length - 1;
             else
@@ -392,8 +338,7 @@ public class UFMoverUdon : UdonSharpBehaviour
     /// Returns travel time to be used on next section of the path.
     /// Note that this value encodes a speed if the corresponding flag is active.
     /// </summary>
-    private float GetNextTravTime()
-    {
+    private float GetNextTravTime() {
         if(rotateInPlace)
             return forward ? kf_departTravelTime[0] : kf_returnTravelTime[0];
 
@@ -408,32 +353,23 @@ public class UFMoverUdon : UdonSharpBehaviour
     /// Also returns travel time of the next section when using "useTravTimeAsSpd".
     /// the time parameter should always be constrained between 0 and this value.
     /// </summary>
-    private float GetRealTravTime()
-    {
+    private float GetRealTravTime() {
         float travTime = GetNextTravTime();
-        if(!rotateInPlace && useTravTimeAsSpd)
-        {
+        if(!rotateInPlace && useTravTimeAsSpd) {
             float speed = travTime;
             int nextKey = GetNextKey();
             Vector3 fro = kf[lastKey].position;
             Vector3 to = kf[nextKey].position;
             float distance = (to - fro).magnitude;
-            GetXBySpeed(time, speed, distance, lastKey, nextKey);
+            Ta = kf_accelTime[lastKey];
+            Td = kf_decelTime[nextKey];
+            GetX_VX(time, distance, speed);
             travTime = T;
         }
         return travTime;
     }
 
-    private void TriggerKeyLink(int key)
-    {
-        /*
-        if(key.triggerID > 0)
-            UFTrigger.Activate(key.triggerID);
-            */
-    }
-
-    private bool AtLastKeyInSequence()
-    {
+    private bool AtLastKeyInSequence() {
         bool loopType = type == 4; // MovingGroup.MovementType.LoopOnce;
         loopType |= type == 5; // MovingGroup.MovementType.LoopInfinite;
 
@@ -447,10 +383,8 @@ public class UFMoverUdon : UdonSharpBehaviour
             return lastKey == 0;
     }
 
-    private void FinishSequence()
-    {
-        switch(type)
-        {
+    private void FinishSequence() {
+        switch(type) {
         case 6: // MovingGroup.MovementType.Lift:
         case 1: // MovingGroup.MovementType.OneWay:
         forward = !forward;
@@ -461,8 +395,7 @@ public class UFMoverUdon : UdonSharpBehaviour
         forward = !forward;
         if(!completedSequence)
             completedSequence = true;
-        else
-        {
+        else {
             completedSequence = false;
             moving = false;
         }
@@ -486,8 +419,7 @@ public class UFMoverUdon : UdonSharpBehaviour
         }
     }
 
-    public void Reverse(bool goForward)
-    {
+    public void Reverse(bool goForward) {
         if(!moving || forward == goForward)
             return;
 
@@ -498,42 +430,5 @@ public class UFMoverUdon : UdonSharpBehaviour
         forward = goForward;
 
         time = (1f - doneFrac) * GetRealTravTime();
-    }
-
-    private void PlayClip(AudioClip clip, float volume)
-    {
-        if(clip == null)
-            return;
-
-        sound.clip = clip;
-        sound.volume = volume;
-        sound.Play();
-    }
-
-
-    //Utility methods
-    private Vector3 RotateAroundPivot(Vector3 point, Vector3 pivot, Quaternion rotation)
-    {
-        Vector3 dir = point - pivot;
-        Vector3 rotatedDir = rotation * dir;
-        return pivot + rotatedDir;
-    }
-
-    private Vector3 GetAxis(Quaternion q) {
-        Vector3 v = Vector3.forward;
-        float angle = GetQuatAngle(q);
-        return angle * Vector3.Cross(v, q * v).normalized;
-    }
-
-    private float GetQuatAngle(Quaternion q) {
-        float angle = Quaternion.Angle(Quaternion.identity, q);
-
-        if(angle < 45f) {
-            Vector3 v = Vector3.forward;
-            float sinRad = Vector3.Cross(v, q * v).magnitude;
-            return Mathf.Asin(sinRad) * Mathf.Rad2Deg;
-        }
-        else
-            return angle;
     }
 }
